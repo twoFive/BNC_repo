@@ -1,0 +1,24 @@
+# Pliki Excel - binarne, nie do Git
+*.xlsm
+*.xlsx
+*.xls
+
+# Tymczasowe pliki Office
+~$*
+
+# Foldery z plikami binarnymi
+Releases/
+Working/
+CacheFolder/
+
+# Wyjątek: chcemy commitować .frx mimo że są binarne (są częścią eksportu UserForm)
+!Source/Forms/*.frx
+
+# OS / IDE
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code session data
+.claude/
