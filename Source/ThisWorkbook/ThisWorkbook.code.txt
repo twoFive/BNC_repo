@@ -20,10 +20,7 @@ Private Sub Workbook_Open()
 
     ' 2. Decyzja: setup czy main?
     If mod_UserCacheSync.IsSetupCompleted() Then
-        ' TODO(M3): odkomentuj 'frm_Main.Show' i usun MsgBox po implementacji frm_Main.
-        MsgBox "Witaj ponownie. Formularz glowny (frm_Main) bedzie dodany w M3.", _
-               vbInformation, "BNC_Sender"
-        'frm_Main.Show
+        frm_Main.Show
     Else
         frm_Setup.Show
     End If

@@ -35,6 +35,59 @@ Bieżąca lista zadań. Szczegółowy plan: [`../BNC_Sender_PlanWdrozenia_FazaA.
 - [ ] **(ręcznie)** Eksport `frm_Setup.frm` + `.frx` do `Source/Forms/`
 - [ ] **(ręcznie)** Eksport `ThisWorkbook.cls` do `Source/ThisWorkbook/`
 
-## M3..M7
+## M3 — Main form (kod gotowy)
 
-Patrz plan implementacji.
+- [x] M3.1: `frm_Main.LAYOUT.md` + `frm_Main.code-behind.txt`
+- [ ] **(ręcznie w VBE)** Utworzyć UserForm `frm_Main` z kontrolkami zgodnie z LAYOUT
+- [ ] **(ręcznie w VBE)** Wkleić code-behind
+- [ ] **(ręcznie)** Smoke: AddToList × 3, Send (z Outlookiem!), zobacz w `ws_DataCache` że Status=sent
+
+## M4 — Mail sender (kod gotowy)
+
+- [x] M4.1: `mod_MailSender.bas` + `Test_mod_MailSender`
+- [ ] **(ręcznie)** Import `mod_MailSender.bas`, re-import `mod_Tests.bas`
+- [ ] **(ręcznie)** `mod_Tests.Test_mod_MailSender` — testuje DetermineRecipient bez wysyłki
+- [ ] **(ręcznie UAT)** Test handlowca: EmailKierownika≠EmailHandlowca, Send → kierownik dostaje mail
+- [ ] **(ręcznie UAT)** Test kierownika: EmailKierownika=EmailHandlowca, Send → BNC dostaje mail
+- [ ] **(ręcznie UAT)** Test błędu: wyłącz Outlook, Send → komunikat błędu, plik tymczasowy nie zostaje
+
+## M5 — Log + Export (kod gotowy)
+
+- [x] M5.1: `mod_Export.bas` + `Test_mod_Export`
+- [x] M5.2: `frm_Log.LAYOUT.md` + `frm_Log.code-behind.txt`
+- [ ] **(ręcznie)** Import `mod_Export.bas`, re-import `mod_Tests.bas`
+- [ ] **(ręcznie w VBE)** Utworzyć UserForm `frm_Log` z kontrolkami
+- [ ] **(ręcznie w VBE)** Wkleić code-behind
+- [ ] **(ręcznie)** Smoke: otwórz frm_Log, sprawdź statystyki, eksportuj, sprawdź plik
+
+## Kolejność import/paste w następnej sesji
+
+> **Cel**: minimalna liczba "compile error" przy pracy w VBE.
+
+1. **Moduły** (kolejność dowolna):
+   - `mod_MailSender.bas` — Import File
+   - `mod_Export.bas` — Import File
+   - `mod_Tests.bas` — **Remove** stary, **Import** nowy (z 6 testami zamiast 4)
+2. **UserForms** (utwórz **shells** najpierw — Insert→UserForm × 2, nazwij `frm_Main` i `frm_Log`):
+   - Powód: w `frm_Setup.btn_Save` jest `frm_Main.Show`, w `frm_Main.btn_ShowLog` jest `frm_Log.Show`. Nawet pusty shell wystarczy do kompilacji.
+3. **Dodaj kontrolki** do `frm_Main` (per `frm_Main.LAYOUT.md`) → wklej code-behind
+4. **Dodaj kontrolki** do `frm_Log` (per `frm_Log.LAYOUT.md`) → wklej code-behind
+5. **Re-paste**: `frm_Setup.code-behind.txt` (z direct `frm_Main.Show` zamiast placeholdera)
+6. **Re-paste**: `ThisWorkbook.code.txt` (z direct `frm_Main.Show`)
+7. `Ctrl+S`, `mod_Tests.RunAllTests` w Immediate
+
+## M6 — Polish + UAT
+
+- [ ] Każda procedura `Public` ma `On Error GoTo ErrorHandler`
+- [ ] Komunikaty błędów dla usera są zrozumiałe
+- [ ] Tab order na formularzach
+- [ ] Akceleratory klawiszowe (Alt+S, Alt+A)
+- [ ] Implementacja `frm_Tutorial` (odłożona z M2.2)
+- [ ] UAT z 3-5 testowymi userami
+
+## M7 — Release v1.0.0
+
+- [ ] Bump version `BNC_Sender_v1.0.0.xlsm`
+- [ ] Eksport finalny do `Source/`
+- [ ] Git tag `v1.0.0`
+- [ ] Wgraj na OneDrive firmowy

@@ -118,12 +118,8 @@ Private Sub btn_Save_Click()
     mod_Utils.LogInfo "Setup zakonczony pomyslnie - user=" & CStr(userData("EmailHandlowca"))
 
     ' 6. Zamknij setup, otworz frm_Main.
-    ' TODO(M3): odkomentuj 'frm_Main.Show' i usun MsgBox po implementacji frm_Main.
     Me.Hide
-    MsgBox "Setup zakonczony pomyslnie." & vbCrLf & vbCrLf & _
-           "Formularz glowny (frm_Main) bedzie dodany w M3.", _
-           vbInformation, "BNC_Sender"
-    'frm_Main.Show
+    frm_Main.Show
     Exit Sub
 
 FolderError:

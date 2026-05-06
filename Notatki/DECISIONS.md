@@ -70,4 +70,40 @@ Wartości są nadal zapisywane w `ws_UserCache` (przez `SaveUserData`), więc re
 
 ---
 
+## ADR-004: Plik tymczasowy w `%TEMP%` jako mail attachment (transient artifact)
+
+**Data**: 2026-05-06
+**Status**: zatwierdzona
+
+**Decyzja**: `mod_MailSender.GenerateTempFile` tworzy plik `BNC_Wniosek_<yyyymmdd_hhnnss>.xlsx` w folderze `%TEMP%` użytkownika, dodaje jako załącznik do maila przez Outlook COM, i **kasuje natychmiast po wysyłce** (`CleanupTempFile` w success path + w `ErrorHandler`).
+
+**Uzasadnienie**: 
+- `%TEMP%` (`C:\Users\[login]\AppData\Local\Temp\`) to obszar pisany przez użytkownika bez UAC, wykluczony z synchronizacji OneDrive i z backupów korporacyjnych.
+- Plik jest **transient** — służy tylko jednej operacji (attachment do `MailItem.Send`). Pozostawienie go zaśmiecałoby dysk i konfundowało usera ("po co mam plik `BNC_Wniosek_20260506_142311.xlsx`?").
+- Historia zgłoszeń ma swoje miejsce w `BNC_DataCache.xlsx` (zarządzane przez `mod_DataCacheSync.SyncToFile`) — to **prawdziwy** backup. Plik tymczasowy to artefakt wysyłki, nie kopia bezpieczeństwa.
+
+**Konsekwencje**:
+- `CleanupTempFile` musi być w error handlerze — jeśli `Send` padnie, plik nadal się posprząta (chronimy przed zaśmiecaniem przy retry).
+- Jeśli antywirus blokuje EXCEL.EXE tworzący pliki w `%TEMP%`, send padnie. To pokryte w ticket do IT (sekcja 2 z `02_system_architecture.md`).
+
+---
+
+## ADR-005: Centralizacja decyzji "kierownik vs handlowiec" w `mod_MailSender.DetermineRecipient`
+
+**Data**: 2026-05-06
+**Status**: zatwierdzona
+
+**Decyzja**: `mod_MailSender` jest **jedynym** modułem implementującym logikę decyzji `IsUserManager() ? wprost-do-BNC : do-kierownika`. Reszta aplikacji (UserForms, inne moduły) **nie wie** o roli usera w kontekście wysyłki — zna tylko `mod_UserCacheSync.IsUserManager()` jako odczyt rozróżnienia, ale routing jest enkapsulowany.
+
+**Uzasadnienie**: 
+- Encapsulation: zmiana logiki routingu (np. dodanie CC, zmiana subject) ma jeden punkt edycji.
+- Testowalność: `DetermineRecipient` jest **public** (wyjątek od preferencji `Private` dla helperów) — bo to czysta funkcja bez side effects, a publiczność umożliwia automated test (`Test_mod_MailSender` weryfikuje obie gałęzie decision diamond bez wysyłania prawdziwego maila).
+- Zgodność z planem: dokumentacja `05_module_architecture.md` jasno pisze _"mod_MailSender jest jedynym modulem, w ktorym jest implementowana decyzja kierownik vs handlowiec"_ — to wymaganie projektowe, nie tylko nasz wybór.
+
+**Konsekwencje**:
+- `frm_Main.btn_SendBatch_Click` woła `mod_MailSender.SendBatch()` bez znajomości routingu — pokazuje confirmation z `IsUserManager()` tylko dla UX (info kogo email leci), ale nie podejmuje decyzji.
+- `EmailRecipient` w `ws_DataCache` jest zapisywany przez `mod_DataCacheSync.MarkAsSent` z wartością otrzymaną od `mod_MailSender` — **rzeczywisty** adresat (nie "logiczny"), bo to fundament audit trail dla reklamacji "BNC nie dostało zgłoszenia" (z `04_data_model.md`).
+
+---
+
 <!-- Kolejne ADR-y dodawaj poniżej w trakcie implementacji modułów -->

@@ -21,6 +21,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **M2.2 (policy)**: `txt_EmailBNC` i `txt_CacheFolderPath` w `frm_Setup` są **hardcoded i locked** (ADR-003). Zamiast `btn_Browse` (folder picker) — `btn_CreateCacheFolder` tworzący folder na hardkodowanej ścieżce. Niezawodność > elastyczność.
 - **M2.2 (UX)**: samouczek wyniesiony z inline `txt_Tutorial` do osobnego formularza `frm_Tutorial` (placeholder `btn_ShowTutorial` w M2, implementacja `frm_Tutorial` odłożona do M6/M7).
 - **Repo**: `Notatki/NOTES.md` w `.gitignore` — lokalny notatnik decyzji autora, nie commitowany.
+- **M3**: `frm_Main.LAYOUT.md` + `frm_Main.code-behind.txt` — główny ekran usera (header z info o roli, sekcja nowego zgłoszenia, ListBox pending z 5 kolumnami, przyciski Send/Log/Add/Clear). RefreshPendingList przez 2D array assign (10× szybsze niż `AddItem` pętli).
+- **M4**: `mod_MailSender.bas` — `SendBatch()` jako pełny pipeline (GetPending → GenerateTempFile → DetermineRecipient → SendMailWithAttachment → MarkAsSent → CleanupTempFile). `DetermineRecipient` public dla testowalności.
+- **M5.1**: `mod_Export.bas` — `ExportDataCache(targetPath)` (literal copy `BNC_DataCache.xlsx`) + `GetSuggestedExportFileName` (`BNC_Eksport_<Nazwisko>_<yyyy-mm-dd>.xlsx`).
+- **M5.2**: `frm_Log.LAYOUT.md` + `frm_Log.code-behind.txt` — historia z statystykami pending/sent + Save As dialog dla eksportu.
+- **M2.3 + M2.2 (final)**: `ThisWorkbook.code.txt` i `frm_Setup.code-behind.txt` zaktualizowane na direct `frm_Main.Show` (placeholder MsgBox usunięty).
+- **M4 + M5**: ADR-004 (plik tymczasowy w %TEMP% jako transient artifact), ADR-005 (centralizacja routingu w mod_MailSender).
 
 ## [0.1.0] — TBD
 
