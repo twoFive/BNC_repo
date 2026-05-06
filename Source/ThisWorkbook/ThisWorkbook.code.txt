@@ -3,7 +3,7 @@
 '  UWAGA: ThisWorkbook to specjalny modul klasy generowany przez Excel
 '  - nie da sie go zaimportowac jako nowy. Otworz w VBE drzewo
 '  Microsoft Excel Objects -> ThisWorkbook (dwuklik), wklej PONIZSZY kod
-'  (mozesz zostawic istniejaca pusta deklaracje Option Explicit jesli jest).
+'  zastepujac ewentualnie istniejacy.
 '
 '  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.3)
 ' ============================================================================
@@ -20,12 +20,10 @@ Private Sub Workbook_Open()
 
     ' 2. Decyzja: setup czy main?
     If mod_UserCacheSync.IsSetupCompleted() Then
-        ' M3 - frm_Main jeszcze moze nie istniec. Defensywnie:
-        If FormExists("frm_Main") Then
-            frm_Main.Show
-        Else
-            mod_Utils.LogInfo "Setup OK, ale frm_Main jeszcze niezaimplementowany (M3)."
-        End If
+        ' TODO(M3): odkomentuj 'frm_Main.Show' i usun MsgBox po implementacji frm_Main.
+        MsgBox "Witaj ponownie. Formularz glowny (frm_Main) bedzie dodany w M3.", _
+               vbInformation, "BNC_Sender"
+        'frm_Main.Show
     Else
         frm_Setup.Show
     End If
@@ -36,14 +34,3 @@ ErrorHandler:
     MsgBox "Blad podczas startu aplikacji: " & Err.Description, _
            vbExclamation, "BNC_Sender"
 End Sub
-
-' Helper: czy formularz o danej nazwie istnieje w projekcie?
-' Pozwala na bezpieczne odpalenie aplikacji w trakcie rozwoju, gdy frm_Main
-' jeszcze nie istnieje (M3 niewdrozony).
-Private Function FormExists(formName As String) As Boolean
-    On Error Resume Next
-    Dim vbc As Object
-    Set vbc = ThisWorkbook.VBProject.VBComponents(formName)
-    FormExists = (Not vbc Is Nothing)
-    On Error GoTo 0
-End Function
