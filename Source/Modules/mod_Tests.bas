@@ -14,6 +14,7 @@ Public Sub RunAllTests()
     Test_mod_Utils
     Test_mod_UserCacheSync
     Test_mod_DataCacheSync
+    Test_mod_Validation
     Debug.Print "==================== RunAllTests END   ===================="
 End Sub
 
@@ -203,6 +204,75 @@ Public Sub Test_mod_DataCacheSync()
     ThisWorkbook.Save
 
     Debug.Print "----- Test_mod_DataCacheSync DONE -----"
+End Sub
+
+' ----- mod_Validation -----------------------------------------------------
+
+Public Sub Test_mod_Validation()
+    Debug.Print "----- Test_mod_Validation -----"
+
+    ' --- Walidacje atomowe ---
+    AssertEqual "ValidateEmail OK", True, mod_Validation.ValidateEmail("test@example.com")
+    AssertEqual "ValidateEmail bad", False, mod_Validation.ValidateEmail("not-email")
+
+    AssertEqual "ValidateClientFK pos", True, mod_Validation.ValidateClientFK("12345")
+    AssertEqual "ValidateClientFK zero", False, mod_Validation.ValidateClientFK("0")
+    AssertEqual "ValidateClientFK neg", False, mod_Validation.ValidateClientFK("-1")
+    AssertEqual "ValidateClientFK text", False, mod_Validation.ValidateClientFK("abc")
+
+    AssertEqual "ValidateNonEmpty ok", True, mod_Validation.ValidateNonEmpty("hello")
+    AssertEqual "ValidateNonEmpty spaces", False, mod_Validation.ValidateNonEmpty("   ")
+    AssertEqual "ValidateNonEmpty empty", False, mod_Validation.ValidateNonEmpty("")
+
+    AssertEqual "ValidateLength in", True, mod_Validation.ValidateLength("abcde", 3, 10)
+    AssertEqual "ValidateLength too short", False, mod_Validation.ValidateLength("ab", 3, 10)
+    AssertEqual "ValidateLength too long", False, mod_Validation.ValidateLength("abcdefghijk", 3, 10)
+
+    AssertEqual "ValidateMonthYear yyyy-mm", True, mod_Validation.ValidateMonthYear("2026-05")
+    AssertEqual "ValidateMonthYear bad month", False, mod_Validation.ValidateMonthYear("2026-13")
+    AssertEqual "ValidateMonthYear empty", False, mod_Validation.ValidateMonthYear("")
+    AssertEqual "ValidateMonthYear text", False, mod_Validation.ValidateMonthYear("not-a-date")
+
+    AssertEqual "ValidateFolderPath drive", True, mod_Validation.ValidateFolderPath("C:\Foo\")
+    AssertEqual "ValidateFolderPath unc", True, mod_Validation.ValidateFolderPath("\\server\share")
+    AssertEqual "ValidateFolderPath bad", False, mod_Validation.ValidateFolderPath("Foo")
+
+    ' --- ValidateSetupData (zlozone) ---
+    Dim setup As Object
+    Set setup = CreateObject("Scripting.Dictionary")
+    setup("Imie") = "Jan"
+    setup("Nazwisko") = "Kowalski"
+    setup("EmailHandlowca") = "jan@firma.pl"
+    setup("CNA_HandlowcaID") = "12345"
+    setup("NrOddzialu") = "W001"
+    setup("EmailKierownika") = "kier@firma.pl"
+    setup("EmailBNC") = "bnc@firma.pl"
+    setup("CacheFolderPath") = "C:\BNC_CacheFolder\"
+    AssertEqual "ValidateSetupData OK", "", mod_Validation.ValidateSetupData(setup)
+
+    setup("EmailHandlowca") = "broken-email"
+    AssertEqual "ValidateSetupData bad email", _
+        True, (Len(mod_Validation.ValidateSetupData(setup)) > 0)
+    setup("EmailHandlowca") = "jan@firma.pl"  ' przywroc
+
+    setup("CNA_HandlowcaID") = "abc"
+    AssertEqual "ValidateSetupData bad CNA", _
+        True, (Len(mod_Validation.ValidateSetupData(setup)) > 0)
+
+    ' --- ValidateReportData ---
+    Dim rep As Object
+    Set rep = CreateObject("Scripting.Dictionary")
+    rep("KlientFK") = "999"
+    rep("NazwaKlienta") = "Acme Sp. z o.o."
+    rep("MiesiacZgloszenia") = "2026-05"
+    rep("Fields") = "extra info"
+    AssertEqual "ValidateReportData OK", "", mod_Validation.ValidateReportData(rep)
+
+    rep("NazwaKlienta") = "ab"  ' za krotkie
+    AssertEqual "ValidateReportData short name", _
+        True, (Len(mod_Validation.ValidateReportData(rep)) > 0)
+
+    Debug.Print "----- Test_mod_Validation DONE -----"
 End Sub
 
 ' ----- Helpery testow ------------------------------------------------------

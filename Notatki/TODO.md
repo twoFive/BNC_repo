@@ -24,6 +24,17 @@ Bieżąca lista zadań. Szczegółowy plan: [`../BNC_Sender_PlanWdrozenia_FazaA.
 - [ ] **(ręcznie)** Uruchomić `mod_Tests.RunAllTests` z Immediate Window — wszystkie PASS
 - [ ] **(ręcznie)** Sprawdzić, że `BNC_DataCache.xlsx` i `BNC_UserCache.xlsx` powstają w `CacheFolderPath`
 
-## M2..M7
+## M2 — Setup form
+
+- [x] M2.1: `mod_Validation.bas` + `Test_mod_Validation`
+- [ ] M2.2: `frm_Setup` — layout spec + code-behind template (form tworzony ręcznie w VBE)
+- [ ] M2.3: `ThisWorkbook.cls` — `Workbook_Open` jako entry point
+- [ ] **(ręcznie w VBE)** Import `mod_Validation.bas`, uruchomić `Test_mod_Validation`
+- [ ] **(ręcznie w VBE)** Utworzyć UserForm `frm_Setup` zgodnie z layout spec, wkleić code-behind
+- [ ] **(ręcznie w VBE)** Wkleić kod `Workbook_Open` w istniejącą `ThisWorkbook`
+- [ ] **(ręcznie)** Eksport `frm_Setup.frm` + `.frx` do `Source/Forms/`
+- [ ] **(ręcznie)** Eksport `ThisWorkbook.cls` do `Source/ThisWorkbook/`
+
+## M3..M7
 
 Patrz plan implementacji.
