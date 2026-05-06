@@ -1,0 +1,174 @@
+' ============================================================================
+'  frm_Main - code-behind (wklej do okna kodu UserForm w VBE)
+'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M3)
+'         doc_v2/extracted/03_data_flow.md (Flow A: dodawanie zgloszenia)
+'
+'  UWAGA: refresh listy ListBox wykonujemy przez wlasciwosc List (2D array)
+'  zamiast AddItem + List(i, j) - to znacznie szybsze przy duzych batchach
+'  i nie powoduje migotania.
+' ============================================================================
+
+Option Explicit
+
+' ----- Lifecycle -----------------------------------------------------------
+
+Private Sub UserForm_Initialize()
+    ' Header - info o userze.
+    lbl_UserInfo.Caption = "Zalogowany: " & _
+        CStr(mod_UserCacheSync.GetUserField("Imie")) & " " & _
+        CStr(mod_UserCacheSync.GetUserField("Nazwisko")) & _
+        " (CNA: " & CStr(mod_UserCacheSync.GetUserField("CNA_HandlowcaID")) & _
+        ", oddzial: " & CStr(mod_UserCacheSync.GetUserField("NrOddzialu")) & ")"
+
+    If mod_UserCacheSync.IsUserManager() Then
+        lbl_RoleInfo.Caption = "Tryb: KIEROWNIK (wnioski wysylane wprost do BNC)"
+    Else
+        lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysylane do kierownika)"
+    End If
+
+    ' Default miesiac zgloszenia = biezacy.
+    txt_MiesiacZgloszenia.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
+
+    ' Headers ListBox (gdy ColumnHeads = True).
+    SetListBoxHeaders
+
+    RefreshPendingList
+End Sub
+
+' ----- Buttons -------------------------------------------------------------
+
+Private Sub btn_AddToList_Click()
+    ' 1. Zbierz dane z pol.
+    Dim reportData As Object
+    Set reportData = CreateObject("Scripting.Dictionary")
+    reportData("KlientFK") = Trim$(txt_KlientFK.Text)
+    reportData("NazwaKlienta") = Trim$(txt_NazwaKlienta.Text)
+    reportData("MiesiacZgloszenia") = Trim$(txt_MiesiacZgloszenia.Text)
+    reportData("Fields") = Trim$(txt_Fields.Text)
+
+    ' 2. Walidacja.
+    Dim errMsg As String
+    errMsg = mod_Validation.ValidateReportData(reportData)
+    If Len(errMsg) > 0 Then
+        MsgBox errMsg, vbExclamation, "Blad walidacji"
+        Exit Sub
+    End If
+
+    ' 3. INSERT do ws_DataCache.
+    Dim newID As Long
+    newID = mod_DataCacheSync.AppendRecord(reportData)
+    mod_Utils.LogInfo "Dodano zgloszenie ID=" & newID
+
+    ' 4. Wyczysc formularz, odswiez liste.
+    ClearFormFields
+    RefreshPendingList
+End Sub
+
+Private Sub btn_Clear_Click()
+    ClearFormFields
+End Sub
+
+Private Sub btn_SendBatch_Click()
+    Dim pending As Collection
+    Set pending = mod_DataCacheSync.GetPendingRecords()
+
+    If pending.Count = 0 Then
+        MsgBox "Brak zgloszen do wyslania.", vbInformation, "BNC_Sender"
+        Exit Sub
+    End If
+
+    ' Potwierdzenie z info o trybie.
+    Dim msg As String
+    If mod_UserCacheSync.IsUserManager() Then
+        msg = "Wyslac " & pending.Count & " zgloszen wprost do BNC?"
+    Else
+        msg = "Wyslac " & pending.Count & " zgloszen do kierownika " & _
+              "(" & CStr(mod_UserCacheSync.GetUserField("EmailKierownika")) & ")?"
+    End If
+    If MsgBox(msg, vbYesNo + vbQuestion, "Potwierdzenie wysylki") <> vbYes Then Exit Sub
+
+    ' Disable przyciski podczas wysylki - prevent double-click.
+    DisableActionButtons True
+    Application.Cursor = xlWait
+
+    Dim success As Boolean
+    success = mod_MailSender.SendBatch()
+
+    Application.Cursor = xlDefault
+    DisableActionButtons False
+
+    If success Then
+        MsgBox "Batch wyslany pomyslnie.", vbInformation, "BNC_Sender"
+        RefreshPendingList
+    Else
+        MsgBox "Blad wysylki. Sprawdz Immediate Window (Ctrl+G) dla szczegolow.", _
+               vbExclamation, "Blad wysylki"
+    End If
+End Sub
+
+Private Sub btn_ShowLog_Click()
+    Me.Hide
+    frm_Log.Show
+End Sub
+
+' ----- Helpers -------------------------------------------------------------
+
+Private Sub ClearFormFields()
+    txt_KlientFK.Text = ""
+    txt_NazwaKlienta.Text = ""
+    txt_Fields.Text = ""
+    ' MiesiacZgloszenia zostaje (user moze dodac kilka zgloszen na ten sam miesiac).
+    On Error Resume Next
+    txt_KlientFK.SetFocus
+    On Error GoTo 0
+End Sub
+
+' Ustawia naglowki kolumn ListBox. Wymaga ColumnHeads=True w designerze.
+' Bez wlasciwego data source (RowSource), naglowki nadawane przez .List
+' albo przez specjalny zaczepowy zapis - w VBA UserForm trzeba zrobic obejscie:
+' wpisac dane ze sztucznym pierwszym wierszem ktory pelni role naglowka.
+' My uzywamy ColumnHeads=False i wlasnego Label-baru nie jest potrzebny,
+' bo dane sa czytelne same w sobie (ID, FK, Nazwa, Miesiac, Fields).
+'
+' Tu robimy NIC - zostawiamy ColumnHeads jak ustawione w designerze.
+' Funkcja jest zachowana jako placeholder na wypadek refaktoru.
+Private Sub SetListBoxHeaders()
+    ' Intentionally empty - ColumnHeads naglowki nie sa trywialne w VBA UserForm.
+End Sub
+
+' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List
+' jednym ruchem - to ~10x szybsze niz AddItem + List(i, j) w petli.
+Private Sub RefreshPendingList()
+    Dim pending As Collection
+    Set pending = mod_DataCacheSync.GetPendingRecords()
+
+    lbl_BatchCount.Caption = "Lista zgloszen do wyslania (" & pending.Count & ")"
+
+    lst_PendingBatch.Clear
+    If pending.Count = 0 Then Exit Sub
+
+    Dim arr() As Variant
+    ReDim arr(0 To pending.Count - 1, 0 To 4)
+
+    Dim i As Long
+    Dim record As Object
+    i = 0
+    For Each record In pending
+        arr(i, 0) = record("ReportID")
+        arr(i, 1) = record("KlientFK")
+        arr(i, 2) = record("NazwaKlienta")
+        arr(i, 3) = record("MiesiacZgloszenia")
+        arr(i, 4) = record("Fields")
+        i = i + 1
+    Next record
+
+    lst_PendingBatch.List = arr
+End Sub
+
+' Disable Add/Send podczas wysylki, zeby user nie kliknal dwa razy.
+Private Sub DisableActionButtons(disabled As Boolean)
+    btn_AddToList.Enabled = Not disabled
+    btn_SendBatch.Enabled = Not disabled
+    btn_Clear.Enabled = Not disabled
+    btn_ShowLog.Enabled = Not disabled
+End Sub

@@ -1,0 +1,124 @@
+' ============================================================================
+'  frm_Log - code-behind (wklej do okna kodu UserForm w VBE)
+'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M5.2)
+' ============================================================================
+
+Option Explicit
+
+' ----- Lifecycle -----------------------------------------------------------
+
+Private Sub UserForm_Initialize()
+    LoadRecords
+End Sub
+
+' ----- Buttons -------------------------------------------------------------
+
+Private Sub btn_Export_Click()
+    ' 1. Sugerowana nazwa pliku.
+    Dim suggested As String
+    suggested = mod_Export.GetSuggestedExportFileName()
+
+    ' 2. Save As dialog.
+    Dim targetPath As String
+    targetPath = ShowSaveDialog(suggested)
+    If Len(targetPath) = 0 Then Exit Sub  ' user anulowal
+
+    ' 3. Eksport.
+    Application.Cursor = xlWait
+    Dim ok As Boolean
+    ok = mod_Export.ExportDataCache(targetPath)
+    Application.Cursor = xlDefault
+
+    If ok Then
+        MsgBox "Wyeksportowano do:" & vbCrLf & targetPath, _
+               vbInformation, "Eksport"
+    Else
+        MsgBox "Blad eksportu. Sprawdz Immediate Window (Ctrl+G) dla szczegolow.", _
+               vbExclamation, "Blad eksportu"
+    End If
+End Sub
+
+Private Sub btn_Back_Click()
+    Me.Hide
+    frm_Main.Show
+End Sub
+
+' ----- Helpers -------------------------------------------------------------
+
+Private Sub LoadRecords()
+    Dim allRecords As Collection
+    Set allRecords = mod_DataCacheSync.GetAllRecords()
+
+    Dim pendingCount As Long, sentCount As Long
+    Dim record As Object
+    For Each record In allRecords
+        If CStr(record("Status")) = "pending" Then
+            pendingCount = pendingCount + 1
+        Else
+            sentCount = sentCount + 1
+        End If
+    Next record
+
+    lbl_Stats.Caption = "Wszystkich: " & allRecords.Count & _
+                       "   |   Pending: " & pendingCount & _
+                       "   |   Sent: " & sentCount
+
+    lst_AllRecords.Clear
+    If allRecords.Count = 0 Then Exit Sub
+
+    ' Buduj 2D array, najnowsze rekordy na gorze (odwracamy kolejnosc).
+    Dim n As Long
+    n = allRecords.Count
+    Dim arr() As Variant
+    ReDim arr(0 To n - 1, 0 To 5)
+
+    Dim i As Long, idx As Long
+    i = 0
+    For Each record In allRecords
+        idx = n - 1 - i  ' odwrotna kolejnosc - najnowsze na gorze
+        arr(idx, 0) = record("ReportID")
+        arr(idx, 1) = record("KlientFK")
+        arr(idx, 2) = record("NazwaKlienta")
+        arr(idx, 3) = record("Status")
+        arr(idx, 4) = FormatRecipient(CStr(record("EmailRecipient")))
+        arr(idx, 5) = FormatTimestamp(record("BatchSentTimestamp"))
+        i = i + 1
+    Next record
+
+    lst_AllRecords.List = arr
+End Sub
+
+' Recipient pusty (pending) -> "-".
+Private Function FormatRecipient(s As String) As String
+    If Len(Trim$(s)) = 0 Then
+        FormatRecipient = "-"
+    Else
+        FormatRecipient = s
+    End If
+End Function
+
+' Timestamp pusty (pending) -> "-", inaczej yyyy-mm-dd.
+Private Function FormatTimestamp(v As Variant) As String
+    If IsEmpty(v) Or v = "" Then
+        FormatTimestamp = "-"
+    ElseIf IsDate(v) Then
+        FormatTimestamp = Format(v, "yyyy-mm-dd")
+    Else
+        FormatTimestamp = CStr(v)
+    End If
+End Function
+
+Private Function ShowSaveDialog(defaultName As String) As String
+    Dim result As Variant
+    result = Application.GetSaveAsFilename( _
+        InitialFileName:=defaultName, _
+        FileFilter:="Excel Files (*.xlsx), *.xlsx", _
+        Title:="Zapisz eksport jako")
+
+    If TypeName(result) = "Boolean" Then
+        ' False znaczy ze user anulowal
+        ShowSaveDialog = ""
+    Else
+        ShowSaveDialog = CStr(result)
+    End If
+End Function
