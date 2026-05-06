@@ -13,6 +13,7 @@ Public Sub RunAllTests()
     Debug.Print "==================== RunAllTests START ===================="
     Test_mod_Utils
     Test_mod_UserCacheSync
+    Test_mod_DataCacheSync
     Debug.Print "==================== RunAllTests END   ===================="
 End Sub
 
@@ -125,6 +126,83 @@ Public Sub Test_mod_UserCacheSync()
     ThisWorkbook.Save
 
     Debug.Print "----- Test_mod_UserCacheSync DONE -----"
+End Sub
+
+' ----- mod_DataCacheSync ---------------------------------------------------
+
+' UWAGA: ten test pisze do ws_DataCache (jeden tymczasowy rekord) i kasuje
+' go na koncu. Operuje na realnej tabeli, ale czysci po sobie.
+Public Sub Test_mod_DataCacheSync()
+    Debug.Print "----- Test_mod_DataCacheSync -----"
+
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets("ws_DataCache")
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Debug.Print "  [SKIP] arkusz ws_DataCache nie istnieje - wymagany manualny setup z M0"
+        Exit Sub
+    End If
+
+    ' --- AppendRecord ---
+    Dim newRecord As Object
+    Set newRecord = CreateObject("Scripting.Dictionary")
+    newRecord("KlientFK") = 99999
+    newRecord("NazwaKlienta") = "_TEST_Klient_DoUsuniecia_"
+    newRecord("MiesiacZgloszenia") = mod_Utils.GetCurrentMonthYear()
+    newRecord("Fields") = "smoke test fields"
+
+    Dim newID As Long
+    newID = mod_DataCacheSync.AppendRecord(newRecord)
+    Debug.Print "  AppendRecord -> ReportID=" & newID
+    AssertEqual "AppendRecord returned >0", True, (newID > 0)
+
+    ' --- GetPendingRecords zawiera nowy rekord ---
+    Dim pending As Collection
+    Set pending = mod_DataCacheSync.GetPendingRecords()
+    Dim found As Boolean
+    Dim rec As Object
+    For Each rec In pending
+        If CLng(rec("ReportID")) = newID Then
+            found = True
+            AssertEqual "pending.Status", "pending", CStr(rec("Status"))
+            AssertEqual "pending.NazwaKlienta", "_TEST_Klient_DoUsuniecia_", CStr(rec("NazwaKlienta"))
+            Exit For
+        End If
+    Next rec
+    AssertEqual "GetPendingRecords contains new ID", True, found
+
+    ' --- MarkAsSent zmienia status ---
+    Dim ids As New Collection
+    ids.Add newID
+    mod_DataCacheSync.MarkAsSent ids, "test_recipient@example.com"
+
+    Dim allRecs As Collection
+    Set allRecs = mod_DataCacheSync.GetAllRecords()
+    Dim verifiedSent As Boolean
+    For Each rec In allRecs
+        If CLng(rec("ReportID")) = newID Then
+            AssertEqual "MarkAsSent.Status", "sent", CStr(rec("Status"))
+            AssertEqual "MarkAsSent.EmailRecipient", "test_recipient@example.com", CStr(rec("EmailRecipient"))
+            verifiedSent = True
+            Exit For
+        End If
+    Next rec
+    AssertEqual "MarkAsSent verified", True, verifiedSent
+
+    ' --- cleanup tymczasowego rekordu ---
+    Dim r As Long
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
+    For r = lastRow To 2 Step -1
+        If CStr(ws.Cells(r, 1).Value) = CStr(newID) Then
+            ws.Rows(r).Delete
+            Exit For
+        End If
+    Next r
+    ThisWorkbook.Save
+
+    Debug.Print "----- Test_mod_DataCacheSync DONE -----"
 End Sub
 
 ' ----- Helpery testow ------------------------------------------------------

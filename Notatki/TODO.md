@@ -16,11 +16,13 @@ Bieżąca lista zadań. Szczegółowy plan: [`../BNC_Sender_PlanWdrozenia_FazaA.
 
 ## M1 — Foundation (`mod_Utils`, `mod_UserCacheSync`, `mod_DataCacheSync`)
 
-- [ ] Wygenerować szablony `.bas` do importu w VBE
-- [ ] M1.1: `mod_Utils` — implementacja + test
-- [ ] M1.2: `mod_UserCacheSync` — implementacja + test (sync do xlsx)
-- [ ] M1.3: `mod_DataCacheSync` — implementacja + test (sync do xlsx)
-- [ ] Eksport modułów do `Source/Modules/`, commit per moduł
+- [x] M1.1: `mod_Utils.bas` + `mod_Tests.bas` (Test_mod_Utils)
+- [x] M1.2: `mod_UserCacheSync.bas` + Test_mod_UserCacheSync
+- [x] M1.3: `mod_DataCacheSync.bas` + Test_mod_DataCacheSync
+- [x] ADR-001 (Repository Pattern), ADR-002 (sync bez clipboard)
+- [ ] **(ręcznie w VBE)** File > Import File... dla wszystkich 4 plików `.bas`
+- [ ] **(ręcznie)** Uruchomić `mod_Tests.RunAllTests` z Immediate Window — wszystkie PASS
+- [ ] **(ręcznie)** Sprawdzić, że `BNC_DataCache.xlsx` i `BNC_UserCache.xlsx` powstają w `CacheFolderPath`
 
 ## M2..M7
 
