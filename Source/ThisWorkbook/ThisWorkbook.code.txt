@@ -1,0 +1,49 @@
+' ============================================================================
+'  ThisWorkbook - kod do wklejenia w istniejacej klasie ThisWorkbook w VBE.
+'  UWAGA: ThisWorkbook to specjalny modul klasy generowany przez Excel
+'  - nie da sie go zaimportowac jako nowy. Otworz w VBE drzewo
+'  Microsoft Excel Objects -> ThisWorkbook (dwuklik), wklej PONIZSZY kod
+'  (mozesz zostawic istniejaca pusta deklaracje Option Explicit jesli jest).
+'
+'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.3)
+' ============================================================================
+
+Option Explicit
+
+Private Sub Workbook_Open()
+    On Error GoTo ErrorHandler
+
+    ' 1. Auto-recreate plikow cache jesli nie istnieja (no-op gdy
+    '    CacheFolderPath nie ustawiony - przed pierwszym setupem).
+    mod_UserCacheSync.EnsureCacheFileExists
+    mod_DataCacheSync.EnsureCacheFileExists
+
+    ' 2. Decyzja: setup czy main?
+    If mod_UserCacheSync.IsSetupCompleted() Then
+        ' M3 - frm_Main jeszcze moze nie istniec. Defensywnie:
+        If FormExists("frm_Main") Then
+            frm_Main.Show
+        Else
+            mod_Utils.LogInfo "Setup OK, ale frm_Main jeszcze niezaimplementowany (M3)."
+        End If
+    Else
+        frm_Setup.Show
+    End If
+    Exit Sub
+
+ErrorHandler:
+    mod_Utils.LogError "ThisWorkbook.Workbook_Open", Err.Number, Err.Description
+    MsgBox "Blad podczas startu aplikacji: " & Err.Description, _
+           vbExclamation, "BNC_Sender"
+End Sub
+
+' Helper: czy formularz o danej nazwie istnieje w projekcie?
+' Pozwala na bezpieczne odpalenie aplikacji w trakcie rozwoju, gdy frm_Main
+' jeszcze nie istnieje (M3 niewdrozony).
+Private Function FormExists(formName As String) As Boolean
+    On Error Resume Next
+    Dim vbc As Object
+    Set vbc = ThisWorkbook.VBProject.VBComponents(formName)
+    FormExists = (Not vbc Is Nothing)
+    On Error GoTo 0
+End Function

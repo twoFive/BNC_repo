@@ -14,6 +14,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **M1.3**: `mod_DataCacheSync.bas` — Repository Pattern dla `ws_DataCache`, autoincrement `ReportID`, snapshot `CNA`/`NrOddzialu` przy zapisie
 - **M1**: ADR-001 (Repository Pattern), ADR-002 (sync bez clipboard)
 - **M2.1**: `mod_Validation.bas` — atomowe walidacje (email, FK, długość, miesiąc, folder) + `ValidateSetupData` / `ValidateReportData`
+- **M2.2**: `frm_Setup.LAYOUT.md` (spec layoutu) + `frm_Setup.code-behind.txt` (kod do wklejenia w VBE) — UserForm z rejestracją handlowca, samouczkiem, browse folder dialog
+- **M2.3**: `ThisWorkbook.code.txt` — `Workbook_Open` jako entry point z auto-recreate cache i decision setup-vs-main
 
 ## [0.1.0] — TBD
 
