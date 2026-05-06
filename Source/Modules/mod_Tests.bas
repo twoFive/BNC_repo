@@ -15,6 +15,8 @@ Public Sub RunAllTests()
     Test_mod_UserCacheSync
     Test_mod_DataCacheSync
     Test_mod_Validation
+    Test_mod_MailSender
+    Test_mod_Export
     Debug.Print "==================== RunAllTests END   ===================="
 End Sub
 
@@ -273,6 +275,102 @@ Public Sub Test_mod_Validation()
         True, (Len(mod_Validation.ValidateReportData(rep)) > 0)
 
     Debug.Print "----- Test_mod_Validation DONE -----"
+End Sub
+
+' ----- mod_MailSender ------------------------------------------------------
+
+' UWAGA: ten test NIE wysyla maila - testuje tylko DetermineRecipient
+' (czysta funkcja). Pelna sciezka wysylki SendBatch wymaga manualnego UAT
+' z Outlookiem (M4.1.3-4.1.5 w planie).
+'
+' Test manipuluje EmailKierownika w UserCache zeby sprawdzic obie galezie
+' decision diamond, na koncu przywraca oryginalna wartosc.
+Public Sub Test_mod_MailSender()
+    Debug.Print "----- Test_mod_MailSender -----"
+
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets("ws_UserCache")
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Debug.Print "  [SKIP] arkusz ws_UserCache nie istnieje"
+        Exit Sub
+    End If
+
+    ' Backup oryginalnych wartosci
+    Dim origKierownika As String, origHandlowca As String
+    origKierownika = CStr(mod_UserCacheSync.GetUserField("EmailKierownika"))
+    origHandlowca = CStr(mod_UserCacheSync.GetUserField("EmailHandlowca"))
+
+    ' Scenariusz 1: HANDLOWIEC (kierownika != handlowca) -> mail do kierownika
+    mod_UserCacheSync.SetUserField "EmailHandlowca", "handlowiec@firma.pl"
+    mod_UserCacheSync.SetUserField "EmailKierownika", "kierownik@firma.pl"
+
+    Dim r As Object
+    Set r = mod_MailSender.DetermineRecipient()
+    AssertEqual "Handlowiec.To = kierownik", "kierownik@firma.pl", CStr(r("To"))
+    AssertEqual "Handlowiec.Subject ma 'akceptacji'", _
+        True, (InStr(CStr(r("Subject")), "akceptacji") > 0)
+    AssertEqual "Handlowiec.Body ma EmailBNC", _
+        True, (InStr(CStr(r("Body")), CStr(mod_UserCacheSync.GetUserField("EmailBNC"))) > 0)
+
+    ' Scenariusz 2: KIEROWNIK (kierownika == handlowca) -> mail wprost do BNC
+    mod_UserCacheSync.SetUserField "EmailKierownika", "handlowiec@firma.pl"
+
+    Set r = mod_MailSender.DetermineRecipient()
+    AssertEqual "Kierownik.To = EmailBNC", _
+        CStr(mod_UserCacheSync.GetUserField("EmailBNC")), CStr(r("To"))
+    AssertEqual "Kierownik.Subject NIE ma 'akceptacji'", _
+        False, (InStr(CStr(r("Subject")), "akceptacji") > 0)
+
+    ' Przywroc oryginalne wartosci
+    mod_UserCacheSync.SetUserField "EmailHandlowca", origHandlowca
+    mod_UserCacheSync.SetUserField "EmailKierownika", origKierownika
+
+    Debug.Print "----- Test_mod_MailSender DONE -----"
+End Sub
+
+' ----- mod_Export ----------------------------------------------------------
+
+Public Sub Test_mod_Export()
+    Debug.Print "----- Test_mod_Export -----"
+
+    ' GetSuggestedExportFileName - format BNC_Eksport_<Nazwisko>_<data>.xlsx
+    Dim suggested As String
+    suggested = mod_Export.GetSuggestedExportFileName()
+    Debug.Print "  GetSuggestedExportFileName: " & suggested
+    AssertEqual "Suggested startsWith BNC_Eksport_", _
+        True, (Left$(suggested, 12) = "BNC_Eksport_")
+    AssertEqual "Suggested endsWith .xlsx", _
+        True, (Right$(suggested, 5) = ".xlsx")
+
+    ' ExportDataCache - probuje skopiowac, jesli zrodlo nie istnieje -> False
+    Dim folderPath As String
+    folderPath = CStr(mod_UserCacheSync.GetUserField("CacheFolderPath"))
+    If Len(folderPath) = 0 Then
+        Debug.Print "  [SKIP] CacheFolderPath nie ustawiony - wymagany setup"
+        Exit Sub
+    End If
+
+    ' Test: kopia do %TEMP% - bezpieczna lokalizacja
+    Dim targetPath As String
+    targetPath = mod_Utils.JoinPath(Environ("TEMP"), "BNC_Test_Export_" & _
+                 Format(Now(), "yyyymmddhhnnss") & ".xlsx")
+
+    ' Upewnij sie ze BNC_DataCache.xlsx istnieje (auto-recreate jesli nie).
+    mod_DataCacheSync.EnsureCacheFileExists
+
+    Dim ok As Boolean
+    ok = mod_Export.ExportDataCache(targetPath)
+    AssertEqual "ExportDataCache success", True, ok
+    AssertEqual "Target file exists after export", True, mod_Utils.FileExists(targetPath)
+
+    ' Cleanup pliku testowego
+    On Error Resume Next
+    Kill targetPath
+    On Error GoTo 0
+
+    Debug.Print "----- Test_mod_Export DONE -----"
 End Sub
 
 ' ----- Helpery testow ------------------------------------------------------
