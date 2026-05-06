@@ -22,3 +22,6 @@ Thumbs.db
 
 # Claude Code session data
 .claude/
+
+# Lokalny notatnik decyzji projektowych (tylko dla autora, nie commitowany)
+Notatki/NOTES.md

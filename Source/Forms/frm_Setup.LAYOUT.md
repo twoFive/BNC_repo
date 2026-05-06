@@ -61,17 +61,20 @@ Dodawaj z **Toolbox** (`Ctrl+T` jeśli niewidoczny). Dla każdej kontrolki ustaw
 |---|---|---|
 | Label | `lbl_HeaderCache` | `Caption = "── Lokalizacja plików cache ──"` |X
 | ~~Label `lbl_CacheFolderPath`~~ | — | **USUŃ** label który dodałeś (zastąpiony buttonem niżej) |
-| CommandButton | `btn_CreateCacheFolder` | `Caption = "Utwórz folder cache na dysku C:"` |
+| CommandButton | `btn_CreateCacheFolder` | `Caption = "Utwórz folder cache na dysku C:"` | X
 | TextBox | `txt_CacheFolderPath` | `MaxLength = 260`, `Text = "C:\BNC_CacheFolder\"`, `Locked = True`, `Enabled = False`, `BackColor = &H8000000F&` |
 | ~~CommandButton `btn_Browse`~~ | — | **POMIŃ** — usunięty (niepotrzebny przy hardcoded path) |
 
 ### Sekcja: samouczek
 
+> **Design**: samouczek **nie jest inline** w `frm_Setup`. Pod `lbl_HeaderTutorial` jest CommandButton który (docelowo) otworzy osobny formularz `frm_Tutorial` z pełną treścią. W M2 `frm_Tutorial` **jeszcze nie istnieje** — `btn_ShowTutorial_Click` pokazuje tymczasowo MsgBox-placeholder. Implementacja `frm_Tutorial` jest **odłożona do końca M6/M7** (pre-release polish).
+
 | Typ | Name | Caption / Properties |
 |---|---|---|
 | Label | `lbl_HeaderTutorial` | `Caption = "── Samouczek ──"` |
-| TextBox | `txt_Tutorial` | `MultiLine = True`, `ScrollBars = 2 - fmScrollBarsVertical`, `Locked = True`, `Height = 120` |
+| CommandButton | `btn_ShowTutorial` | `Caption = "Pokaż samouczek"` |
 | CheckBox | `chk_DontShowTutorial` | `Caption = "Nie pokazuj samouczka ponownie"` |
+| ~~TextBox `txt_Tutorial`~~ | — | **POMIŃ** — wyniesione do osobnego `frm_Tutorial` (M6/M7) |
 
 ### Sekcja: przyciski (na dole)
 

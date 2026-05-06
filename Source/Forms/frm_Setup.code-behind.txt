@@ -16,8 +16,6 @@ Private Const HARDCODED_CACHE_FOLDER As String = "C:\BNC_CacheFolder\"
 ' ----- Lifecycle -----------------------------------------------------------
 
 Private Sub UserForm_Initialize()
-    txt_Tutorial.Text = GetTutorialText()
-
     ' Pola hardcoded - polityka projektowa (ADR-003).
     txt_EmailBNC.Text = HARDCODED_EMAIL_BNC
     txt_EmailBNC.Locked = True
@@ -41,6 +39,15 @@ Private Sub UserForm_Initialize()
 End Sub
 
 ' ----- Buttons -------------------------------------------------------------
+
+' Samouczek - placeholder. Docelowo otworzy osobny frm_Tutorial (M6/M7).
+' Patrz: frm_Setup.LAYOUT.md sekcja "samouczek".
+Private Sub btn_ShowTutorial_Click()
+    ' TODO(M6/M7): zastapic MsgBox wywolaniem 'frm_Tutorial.Show'
+    ' po implementacji formularza samouczka.
+    MsgBox "Samouczek bedzie dostepny w finalnej wersji aplikacji.", _
+           vbInformation, "Samouczek"
+End Sub
 
 ' Tworzy folder cache na dysku zgodnie z polityka projektowa.
 ' Wywolanie EnsureFolderExists jest idempotentne - jesli folder juz istnieje,
@@ -132,25 +139,5 @@ Private Sub btn_Cancel_Click()
     End If
 End Sub
 
-' ----- Helpers -------------------------------------------------------------
-
-Private Function GetTutorialText() As String
-    Dim t As String
-    t = "BNC_Sender - samouczek" & vbCrLf & vbCrLf
-    t = t & "Aplikacja sluzy do zglaszania nowych klientow do programu BNC " & _
-            "(Bonus New Client)." & vbCrLf & vbCrLf
-    t = t & "JAK TO DZIALA" & vbCrLf
-    t = t & "1. Wprowadzasz pojedyncze zgloszenia w formularzu glownym." & vbCrLf
-    t = t & "2. Mozesz dodac kilka zgloszen przed wysylka - tworza one batch." & vbCrLf
-    t = t & "3. Klikasz 'Wyslij Wniosek BNC' - caly batch leci jednym mailem." & vbCrLf & vbCrLf
-    t = t & "ROLA W APLIKACJI" & vbCrLf
-    t = t & "- Jezeli email kierownika jest taki sam jak Twoj email sluzbowy, " & _
-            "aplikacja uznaje Cie za kierownika i wysyla wnioski wprost do BNC." & vbCrLf
-    t = t & "- W przeciwnym razie wnioski leca do kierownika z prosba o " & _
-            "weryfikacje i przekazanie do BNC." & vbCrLf & vbCrLf
-    t = t & "PLIKI CACHE" & vbCrLf
-    t = t & "Aplikacja trzyma kopie historii w folderze cache (xlsx). To kopia " & _
-            "bezpieczenstwa - mozesz ja przejrzec w dowolnym Excelu, ale nie edytuj " & _
-            "recznie - aplikacja je nadpisuje przy kazdej zmianie." & vbCrLf
-    GetTutorialText = t
-End Function
+' Helper GetTutorialText() zostal usuniety w M2.2 - tresc samouczka bedzie
+' w code-behind frm_Tutorial po jego implementacji (M6/M7).

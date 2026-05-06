@@ -19,6 +19,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 
 ### Changed
 - **M2.2 (policy)**: `txt_EmailBNC` i `txt_CacheFolderPath` w `frm_Setup` są **hardcoded i locked** (ADR-003). Zamiast `btn_Browse` (folder picker) — `btn_CreateCacheFolder` tworzący folder na hardkodowanej ścieżce. Niezawodność > elastyczność.
+- **M2.2 (UX)**: samouczek wyniesiony z inline `txt_Tutorial` do osobnego formularza `frm_Tutorial` (placeholder `btn_ShowTutorial` w M2, implementacja `frm_Tutorial` odłożona do M6/M7).
+- **Repo**: `Notatki/NOTES.md` w `.gitignore` — lokalny notatnik decyzji autora, nie commitowany.
 
 ## [0.1.0] — TBD
 
