@@ -1,17 +1,31 @@
 ' ============================================================================
 '  frm_Setup - code-behind (wklej do okna kodu UserForm w VBE)
 '  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.2)
+'         Notatki/DECISIONS.md (ADR-003: hardcoded EmailBNC + CacheFolderPath)
 ' ============================================================================
 
 Option Explicit
+
+' ----- Hardcoded constants (polityka projektowa, ADR-003) ------------------
+' EmailBNC i CacheFolderPath sa staloymi, niedostepnymi userowi do edycji.
+' Ustawiane w Initialize jako bezpiecznik na wypadek gdyby ktos zmienil
+' Locked=False w designerze.
+Private Const HARDCODED_EMAIL_BNC As String = "jessica.cant@swim.omg"
+Private Const HARDCODED_CACHE_FOLDER As String = "C:\BNC_CacheFolder\"
 
 ' ----- Lifecycle -----------------------------------------------------------
 
 Private Sub UserForm_Initialize()
     txt_Tutorial.Text = GetTutorialText()
-    txt_CacheFolderPath.Text = "C:\BNC_CacheFolder\"
 
-    ' Jezeli setup byl juz zrobiony (np. powtarzamy konfiguracje) - prefill.
+    ' Pola hardcoded - polityka projektowa (ADR-003).
+    txt_EmailBNC.Text = HARDCODED_EMAIL_BNC
+    txt_EmailBNC.Locked = True
+    txt_CacheFolderPath.Text = HARDCODED_CACHE_FOLDER
+    txt_CacheFolderPath.Locked = True
+
+    ' Jezeli setup byl juz zrobiony - prefill pol edytowalnych.
+    ' EmailBNC i CacheFolderPath nie sa prefillowane bo zawsze sa stale.
     If mod_UserCacheSync.IsSetupCompleted() Then
         txt_Imie.Text = CStr(mod_UserCacheSync.GetUserField("Imie"))
         txt_Nazwisko.Text = CStr(mod_UserCacheSync.GetUserField("Nazwisko"))
@@ -19,10 +33,6 @@ Private Sub UserForm_Initialize()
         txt_CNA.Text = CStr(mod_UserCacheSync.GetUserField("CNA_HandlowcaID"))
         txt_NrOddzialu.Text = CStr(mod_UserCacheSync.GetUserField("NrOddzialu"))
         txt_EmailKierownika.Text = CStr(mod_UserCacheSync.GetUserField("EmailKierownika"))
-        txt_EmailBNC.Text = CStr(mod_UserCacheSync.GetUserField("EmailBNC"))
-        Dim folderPath As String
-        folderPath = CStr(mod_UserCacheSync.GetUserField("CacheFolderPath"))
-        If Len(folderPath) > 0 Then txt_CacheFolderPath.Text = folderPath
 
         Dim dontShow As Variant
         dontShow = mod_UserCacheSync.GetUserField("DontShowTutorial")
@@ -32,14 +42,38 @@ End Sub
 
 ' ----- Buttons -------------------------------------------------------------
 
-Private Sub btn_Browse_Click()
-    Dim folderPath As String
-    folderPath = SelectFolder()
-    If Len(folderPath) > 0 Then txt_CacheFolderPath.Text = folderPath
+' Tworzy folder cache na dysku zgodnie z polityka projektowa.
+' Wywolanie EnsureFolderExists jest idempotentne - jesli folder juz istnieje,
+' nic sie nie dzieje (i to jest OK, user dostaje neutralne potwierdzenie).
+Private Sub btn_CreateCacheFolder_Click()
+    Dim path As String
+    path = Trim$(txt_CacheFolderPath.Text)
+
+    On Error GoTo CreateError
+
+    Dim alreadyExisted As Boolean
+    alreadyExisted = mod_Utils.FolderExists(path)
+
+    mod_Utils.EnsureFolderExists path
+
+    If alreadyExisted Then
+        MsgBox "Folder cache juz istnial:" & vbCrLf & path, _
+               vbInformation, "Folder cache"
+    Else
+        MsgBox "Folder cache utworzony:" & vbCrLf & path, _
+               vbInformation, "Folder cache"
+    End If
+    Exit Sub
+
+CreateError:
+    mod_Utils.LogError "frm_Setup.btn_CreateCacheFolder_Click", _
+                       Err.Number, Err.Description
+    MsgBox "Nie udalo sie utworzyc folderu cache:" & vbCrLf & path & vbCrLf & vbCrLf & _
+           "Blad: " & Err.Description, vbExclamation, "Blad folderu cache"
 End Sub
 
 Private Sub btn_Save_Click()
-    ' 1. Zbierz dane z pol
+    ' 1. Zbierz dane z pol (EmailBNC i CacheFolderPath sa hardcoded).
     Dim userData As Object
     Set userData = CreateObject("Scripting.Dictionary")
     userData("Imie") = Trim$(txt_Imie.Text)
@@ -48,8 +82,8 @@ Private Sub btn_Save_Click()
     userData("CNA_HandlowcaID") = Trim$(txt_CNA.Text)
     userData("NrOddzialu") = Trim$(txt_NrOddzialu.Text)
     userData("EmailKierownika") = Trim$(txt_EmailKierownika.Text)
-    userData("EmailBNC") = Trim$(txt_EmailBNC.Text)
-    userData("CacheFolderPath") = Trim$(txt_CacheFolderPath.Text)
+    userData("EmailBNC") = HARDCODED_EMAIL_BNC
+    userData("CacheFolderPath") = HARDCODED_CACHE_FOLDER
     userData("DataRejestracji") = Now()
     userData("SetupCompleted") = True
     userData("DontShowTutorial") = CBool(chk_DontShowTutorial.Value)
@@ -62,7 +96,8 @@ Private Sub btn_Save_Click()
         Exit Sub
     End If
 
-    ' 3. Folder cache - jesli nie istnieje, utworz
+    ' 3. Folder cache - jesli nie istnieje, utworz (defensywnie, gdyby user
+    '    zapomnial kliknac btn_CreateCacheFolder).
     On Error GoTo FolderError
     mod_Utils.EnsureFolderExists CStr(userData("CacheFolderPath"))
     On Error GoTo 0
@@ -98,18 +133,6 @@ Private Sub btn_Cancel_Click()
 End Sub
 
 ' ----- Helpers -------------------------------------------------------------
-
-Private Function SelectFolder() As String
-    Dim fd As Object
-    Set fd = Application.FileDialog(msoFileDialogFolderPicker)
-    fd.Title = "Wybierz folder cache"
-    fd.AllowMultiSelect = False
-    If fd.Show = -1 Then
-        SelectFolder = fd.SelectedItems(1)
-    Else
-        SelectFolder = ""
-    End If
-End Function
 
 Private Function GetTutorialText() As String
     Dim t As String

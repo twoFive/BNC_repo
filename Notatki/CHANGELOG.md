@@ -17,6 +17,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **M2.2**: `frm_Setup.LAYOUT.md` (spec layoutu) + `frm_Setup.code-behind.txt` (kod do wklejenia w VBE) — UserForm z rejestracją handlowca, samouczkiem, browse folder dialog
 - **M2.3**: `ThisWorkbook.code.txt` — `Workbook_Open` jako entry point z auto-recreate cache i decision setup-vs-main
 
+### Changed
+- **M2.2 (policy)**: `txt_EmailBNC` i `txt_CacheFolderPath` w `frm_Setup` są **hardcoded i locked** (ADR-003). Zamiast `btn_Browse` (folder picker) — `btn_CreateCacheFolder` tworzący folder na hardkodowanej ścieżce. Niezawodność > elastyczność.
+
 ## [0.1.0] — TBD
 
 - Faza A: implementacja MVP z hybrid cache i workflow kierownika

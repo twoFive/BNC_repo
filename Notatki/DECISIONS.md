@@ -43,4 +43,31 @@ Format ADR: krótki opis decyzji, uzasadnienie, konsekwencje.
 
 ---
 
+## ADR-003: `txt_EmailBNC` i `CacheFolderPath` jako hardcoded (niezawodność > elastyczność)
+
+**Data**: 2026-05-06
+**Status**: zatwierdzona (na podstawie `Notatki/NOTES.md`)
+
+**Decyzja**: W `frm_Setup` dwa pola, które logicznie należą do "konfiguracji":
+1. `txt_EmailBNC` — adres zespołu BNC (testowo: `jessica.cant@swim.omg`)
+2. `txt_CacheFolderPath` — ścieżka folderu cache (`C:\BNC_CacheFolder\`)
+
+są **hardcoded i tylko-do-odczytu** (`Locked = True`, `Enabled = False`). User nie może ich edytować w UI. Zamiast Windows folder picker (`btn_Browse`) — przycisk `btn_CreateCacheFolder` który **tworzy folder na hardkodowanej ścieżce** wywołując `mod_Utils.EnsureFolderExists`.
+
+**Uzasadnienie**: trust-based system w którym handlowcy (~50-100 userów) konfigurują aplikację samodzielnie ma inherent risk błędnej konfiguracji:
+- Adres BNC wpisany z literówką → maile lecą w eter, audit trail w `EmailRecipient` pokazuje błędny adres
+- Folder cache na sieciowym dysku nieosiągalnym z drugiego biura → sync padnie cyklicznie, user zauważy po miesiącu
+- Folder cache w OneDrive/Dropbox → dwustronna synchronizacja może powodować conflicts z lokalną kopią xlsx
+
+Wartość elastyczności (każdy user może mieć inny folder/adres) jest niska — wszyscy handlowcy wysyłają do tego samego BNC, wszyscy potrzebują tej samej struktury cache. **Niezawodność wygrywa**.
+
+Wartości są nadal zapisywane w `ws_UserCache` (przez `SaveUserData`), więc reszta aplikacji (`mod_MailSender`, `mod_DataCacheSync.SyncToFile`) odczytuje je standardową ścieżką przez `mod_UserCacheSync.GetUserField` — bez świadomości polityki hardcoded.
+
+**Konsekwencja**:
+- Zmiana `EmailBNC` (np. produkcyjne wdrożenie z prawdziwym adresem) wymaga edycji constanta `HARDCODED_EMAIL_BNC` w code-behind `frm_Setup` + redeploy xlsm. To **nie jest** zmiana konfiguracji per-user, to zmiana wersji aplikacji.
+- Constanty (`HARDCODED_EMAIL_BNC`, `HARDCODED_CACHE_FOLDER`) są w jednym miejscu — `frm_Setup` code-behind. W razie potrzeby można je przenieść do `mod_Utils` jako Public Const, ale nie ma na to potrzeby w fazie A.
+- Bezpiecznik: code-behind nadpisuje `txt_EmailBNC.Text` i `txt_CacheFolderPath.Text` w `UserForm_Initialize` — nawet jeśli ktoś przypadkiem odznaczy `Locked` w designerze, wartości i tak są ustawiane z `Const`-ów.
+
+---
+
 <!-- Kolejne ADR-y dodawaj poniżej w trakcie implementacji modułów -->
