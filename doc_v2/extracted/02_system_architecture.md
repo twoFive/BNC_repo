@@ -1,98 +1,142 @@
-Architektura systemu - faza A
+# Architektura systemu — faza A
 
-Komponenty aplikacji BNC_Sender i ich rozmieszczenie
+> **Komponenty aplikacji BNC_Sender i ich rozmieszczenie**
+> Źródło: `doc_v2/BNC_fazaA_02_system_architecture.pdf`
+> Powiązane: [`05_module_architecture.md`](05_module_architecture.md), [`03_data_flow.md`](03_data_flow.md), [`04_data_model.md`](04_data_model.md)
 
-                                                       Diagram: Architektura systemu
+---
 
-Cel diagramu
+## Cel
 
-Diagram architektury systemu pokazuje, z jakich komponentow sklada sie aplikacja
-BNC_Sender w fazie A oraz gdzie kazdy komponent fizycznie zyje. Faza A nie wymaga
-zadnej infrastruktury serwerowej - cala aplikacja dziala na komputerze handlowca, a
-jedyny serwer w grze to firmowy Exchange do dystrybucji maili.
+Architektura systemu pokazuje, **z jakich komponentów** składa się aplikacja BNC_Sender w fazie A oraz **gdzie każdy komponent fizycznie żyje**.
 
-BNC faza A - Architektura systemu  Strona 1
-Cztery warstwy systemu
+Faza A nie wymaga żadnej infrastruktury serwerowej — cała aplikacja działa **na komputerze handlowca**, a jedyny serwer w grze to firmowy Exchange do dystrybucji maili.
 
-Warstwa dystrybucji to OneDrive firmowy zawierajacy release pliku
-BNC_Sender_v0.1.0.xlsm. Warstwa komputera handlowca zawiera plik xlsm (z
-UserForms, modulami i ukrytymi arkuszami ws_UserCache, ws_DataCache jako primary
-storage), lokalny folder cache C:\BNC_CacheFolder\ z synchronizowanymi plikami xlsx
-(BNC_UserCache.xlsx, BNC_DataCache.xlsx) oraz Outlook lokalny do wysylki maili.
-Warstwa sieciowa to standardowy serwer Exchange firmowy. Warstwa adresatow to
-skonfigurowane podczas setup skrzynki: zespolu BNC oraz kierownika handlowca.
+---
 
-Hybrid cache - kluczowy wzorzec architektoniczny
+## Cztery warstwy systemu
 
-Aplikacja stosuje wzorzec write-through cache. Primary storage to ukryte arkusze (very
-hidden) wewnatrz pliku xlsm. Synchronized backup to dwa osobne pliki xlsx zapisywane
-w lokalnym folderze. Po kazdej zmianie w worksheet aplikacja synchronizuje zmiane do
-odpowiedniego xlsx. To daje szybkie operacje (worksheet w pamieci) i bezpieczenstwo
-(kopia poza plikiem xlsm na wypadek korupcji).
+| Warstwa | Co zawiera | Lokalizacja |
+|---|---|---|
+| **Dystrybucji** | Release pliku `BNC_Sender_v0.1.0.xlsm` | OneDrive firmowy |
+| **Komputera handlowca** | Plik xlsm (UserForms, moduły, ukryte arkusze `ws_UserCache`/`ws_DataCache` jako primary storage) + lokalny cache (`BNC_UserCache.xlsx`, `BNC_DataCache.xlsx`) + Outlook lokalny | `C:\…\BNC_Sender_v*.xlsm` + `C:\BNC_CacheFolder\` |
+| **Sieciowa** | Standardowy serwer Exchange firmowy | Infrastruktura IT |
+| **Adresatów** | Skrzynki zespołu BNC oraz kierownika handlowca (skonfigurowane w setup) | Outlook poza siecią |
 
-Wysylka batch przez Outlook COM
+---
 
-Mail z zalacznikiem xlsx jest wysylany przez Outlook Application COM. Plik xlsx do
-wysylki jest generowany ad-hoc z aktualnych pending zgloszen w ws_DataCache,
-zapisany w folderze tymczasowym (%TEMP%), dodany jako zalacznik, i kasowany po
-wyslaniu. Adresat jest decydowany dynamicznie - jezeli user jest kierownikiem
-(EmailKierownika == EmailHandlowca), mail leci wprost do BNC. Jezeli user jest
-handlowcem, mail leci do jego kierownika z prosba o weryfikacje i przekazanie do BNC.
+## Hybrid cache — kluczowy wzorzec architektoniczny
 
-BNC faza A - Architektura systemu  Strona 2
-Wymagania dla dzialu IT
+Aplikacja stosuje **write-through cache**:
 
-Ponizsza sekcja jest sformulowana jako gotowy ticket do dzialu IT. Mozesz skopiowac ja
-w calosci i wyslac jako mail lub wkleic do systemu zgloszen.
+- **Primary storage**: ukryte arkusze (`Visible = xlSheetVeryHidden`) wewnątrz pliku xlsm.
+- **Synchronized backup**: dwa osobne pliki `.xlsx` w lokalnym folderze cache.
 
-Temat: Konfiguracja srodowiska dla aplikacji BNC_Sender
+Po **każdej** zmianie w worksheet aplikacja synchronizuje zmianę do odpowiedniego xlsx. To daje:
+- **Szybkie operacje** — worksheet jest w pamięci.
+- **Bezpieczeństwo** — kopia poza plikiem xlsm na wypadek korupcji macro-enabled workbooka.
+
+Implementacja: [`mod_UserCacheSync`](../../Source/Modules/mod_UserCacheSync.bas), [`mod_DataCacheSync`](../../Source/Modules/mod_DataCacheSync.bas). ADR: [ADR-001](../../Notatki/DECISIONS.md), [ADR-002](../../Notatki/DECISIONS.md).
+
+---
+
+## Wysyłka batch przez Outlook COM
+
+Mail z załącznikiem xlsx jest wysyłany przez **Outlook Application COM** (`CreateObject("Outlook.Application")`). Pipeline:
+
+1. Plik xlsx do wysyłki **generowany ad-hoc** z aktualnych pending zgłoszeń w `ws_DataCache`.
+2. Zapisany w **folderze tymczasowym** (`%TEMP%`).
+3. **Dodany jako załącznik** do nowego `MailItem`.
+4. **Kasowany** po wysłaniu (`CleanupTempFile` w success path **i** w error handlerze).
+
+Adresat decydowany **dynamicznie** (decision diamond):
+
+```
+If EmailKierownika == EmailHandlowca Then
+    ' user jest kierownikiem -> mail wprost do BNC
+Else
+    ' user jest handlowcem -> mail do kierownika z prośbą o przekazanie
+End If
+```
+
+Implementacja: [`mod_MailSender`](../../Source/Modules/mod_MailSender.bas). ADR: [ADR-004](../../Notatki/DECISIONS.md), [ADR-005](../../Notatki/DECISIONS.md).
+
+---
+
+## Wymagania dla działu IT
+
+> Sekcja sformułowana jako **gotowy ticket** do działu IT — można skopiować w całości i wysłać jako mail lub wkleić do systemu zgłoszeń.
+
+```
+Temat: Konfiguracja środowiska dla aplikacji BNC_Sender
 
 Witam,
 
-Wdrazamy aplikacje wewnetrzna BNC_Sender (plik Excel z makrami VBA) dla zespolu
-handlowcow. Aplikacja dziala lokalnie na komputerze kazdego usera, bez wlasnego serwera -
-jedynym uzywanym zasobem firmowym jest Outlook do wysylki maili.
+Wdrażamy aplikację wewnętrzną BNC_Sender (plik Excel z makrami VBA) dla zespołu
+handlowców. Aplikacja działa lokalnie na komputerze każdego usera, bez własnego
+serwera — jedynym używanym zasobem firmowym jest Outlook do wysyłki maili.
 
-Prosze o nastepujace ustawienia po stronie IT:
+Proszę o następujące ustawienia po stronie IT:
 
 1. Trusted Locations w Excel
-Dodanie folderu, w ktorym userzy beda trzymac plik aplikacji (np. C:\Aplikacje\BNC) jako
-Trusted Location w Excel Trust Center. Bez tego makra w pliku xlsm zostana zablokowane
-przy otwarciu, a aplikacja przestanie dzialac.
+   Dodanie folderu, w którym userzy będą trzymać plik aplikacji
+   (np. C:\Aplikacje\BNC) jako Trusted Location w Excel Trust Center.
+   Bez tego makra w pliku xlsm zostaną zablokowane przy otwarciu, a aplikacja
+   przestanie działać.
 
-2. Wyjatek antywirusa dla EXCEL.EXE w %TEMP%
-Aplikacja generuje pliki xlsx w folderze tymczasowym usera (%TEMP%) i kasuje je po
-wyslaniu maila. Niektore polityki antywirusowe blokuja takie operacje. Prosze o dodanie
-wyjatku dla procesu EXCEL.EXE tworzacego pliki xlsx w lokalizacji %TEMP%.
+2. Wyjątek antywirusa dla EXCEL.EXE w %TEMP%
+   Aplikacja generuje pliki xlsx w folderze tymczasowym usera (%TEMP%) i kasuje
+   je po wysłaniu maila. Niektóre polityki antywirusowe blokują takie operacje.
+   Proszę o dodanie wyjątku dla procesu EXCEL.EXE tworzącego pliki xlsx
+   w lokalizacji %TEMP%.
 
 3. Outlook Programmatic Access
-Aplikacja wysyla maile przez Outlook COM (MailItem.Send). Domyslnie Outlook moze
-pokazywac userowi popup security warning przy kazdym wywolaniu. Prosze o ustawienie
-polityki 'Trust access to the Outlook object model' dla aplikacji firmowych lub konkretnie dla
-folderu z BNC_Sender.
+   Aplikacja wysyła maile przez Outlook COM (MailItem.Send). Domyślnie Outlook
+   może pokazywać userowi popup security warning przy każdym wywołaniu.
+   Proszę o ustawienie polityki "Trust access to the Outlook object model"
+   dla aplikacji firmowych lub konkretnie dla folderu z BNC_Sender.
 
 4. Sterownik ACE OLEDB (rezerwowo)
-W fazie A aplikacja nie korzysta z ADO ani baz danych Access. W fazie B planowana jest
-migracja do bazy danych - wtedy bedzie potrzebny ACE OLEDB w wersji zgodnej z bitowoscia
-Office (najczesciej 64-bit). Prosze o weryfikacje, ze sterownik jest lub bedzie dostepny przez
-GPO.
+   W fazie A aplikacja nie korzysta z ADO ani baz danych Access. W fazie B
+   planowana jest migracja do bazy danych — wtedy będzie potrzebny ACE OLEDB
+   w wersji zgodnej z bitowością Office (najczęściej 64-bit). Proszę o
+   weryfikację, że sterownik jest lub będzie dostępny przez GPO.
+```
 
-Mechanizm pliku tymczasowego w %TEMP%
+---
 
-%TEMP% to zmienna srodowiskowa Windows wskazujaca na folder tymczasowych plikow
-konkretnego usera. Standardowo: C:\Users\[login]\AppData\Local\Temp\. Folder jest
-writable dla zalogowanego usera bez dodatkowych uprawnien admin, jest
-auto-czyszczony przez Windows Storage Sense, jest wykluczony z synchronizacji
-OneDrive i z backupow korporacyjnych - co jest dokladnie tym, czego potrzebujemy dla
-plikow tymczasowych.
+## Mechanizm pliku tymczasowego w `%TEMP%`
 
-BNC faza A - Architektura systemu  Strona 3
-Sciezka migracji do fazy B
+`%TEMP%` to zmienna środowiskowa Windows wskazująca na folder tymczasowych plików konkretnego usera. Standardowa lokalizacja:
 
-Architektura zostala zaprojektowana tak, ze migracja do fazy B (dodanie bazy danych
-Access oraz wprowadzenie tbl_Clients ze slownikiem klientow) wymaga modyfikacji tylko
-warstwy synchronizacji - mod_DataCacheSync zostanie zastapiony lub uzupelniony przez
-mod_DataAccess. Reszta architektury pozostaje bez zmian.
+```
+C:\Users\<login>\AppData\Local\Temp\
+```
 
-BNC faza A - Architektura systemu  Strona 4
-
+Charakterystyki istotne dla aplikacji:
+
+- **Writable** dla zalogowanego usera bez UAC (to jego własny obszar).
+- **Auto-czyszczony** przez Windows Storage Sense (po kilkunastu dniach).
+- **Wykluczony** z synchronizacji OneDrive domyślnie.
+- **Wykluczony** z backupów w większości polityk korporacyjnych.
+- **Niewidoczny** dla usera w Eksploratorze (bo `AppData` jest hidden).
+
+Czyli **dokładnie to**, czego potrzebujemy dla plików tymczasowych: brak konfliktów synchronizacji, brak zaśmiecania backupów, automatyczny cleanup w razie czego.
+
+ADR: [ADR-004 (`%TEMP%` jako transient artifact)](../../Notatki/DECISIONS.md).
+
+---
+
+## Ścieżka migracji do fazy B
+
+Architektura została zaprojektowana tak, że migracja do **fazy B** (dodanie bazy danych Access oraz wprowadzenie `tbl_Clients` ze słownikiem klientów) wymaga modyfikacji **tylko warstwy synchronizacji**:
+
+- `mod_DataCacheSync` zostanie **zastąpiony** lub uzupełniony przez `mod_DataAccess` (klasyczny Repository Pattern z ADO).
+- `mod_UserCacheSync` może pozostać (UserCache to single-row identity, baza nie daje tu wartości).
+
+Reszta architektury pozostaje **bez zmian**:
+- UserForms (`frm_Setup`, `frm_Main`, `frm_Log`) — bez modyfikacji.
+- Logika biznesowa (`mod_Validation`, `mod_MailSender`, `mod_Export`) — bez modyfikacji.
+- `mod_Utils` — bez modyfikacji.
+
+To jest siła wzorca **Repository Pattern** — granica między warstwami pozwala podmienić storage backend bez efektu domino.
