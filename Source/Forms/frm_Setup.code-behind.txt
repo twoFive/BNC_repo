@@ -33,8 +33,8 @@ Private Sub UserForm_Initialize()
         txt_EmailKierownika.Text = CStr(mod_UserCacheSync.GetUserField("EmailKierownika"))
 
         Dim dontShow As Variant
-        dontShow = mod_UserCacheSync.GetUserField("DontShowTutorial")
-        chk_DontShowTutorial.Value = (CStr(dontShow) = "True")
+        dontShow = mod_UserCacheSync.GetUserField("DontShowSetupAgain")
+        chk_DontShowSetupAgain.Value = (CStr(dontShow) = "True")
     End If
 End Sub
 
@@ -93,7 +93,7 @@ Private Sub btn_Save_Click()
     userData("CacheFolderPath") = HARDCODED_CACHE_FOLDER
     userData("DataRejestracji") = Now()
     userData("SetupCompleted") = True
-    userData("DontShowTutorial") = CBool(chk_DontShowTutorial.Value)
+    userData("DontShowSetupAgain") = CBool(chk_DontShowSetupAgain.Value)
 
     ' 2. Walidacja
     Dim errMsg As String

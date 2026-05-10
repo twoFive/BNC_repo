@@ -29,7 +29,7 @@ Private Function GetFieldKeys() As Variant
         "CacheFolderPath", _
         "DataRejestracji", _
         "SetupCompleted", _
-        "DontShowTutorial" _
+        "DontShowSetupAgain" _
     )
 End Function
 

@@ -75,9 +75,9 @@ End Sub
 
 ' ----- mod_UserCacheSync ---------------------------------------------------
 
-' UWAGA: ten test pisze i odczytuje z ws_UserCache. Robi backup wartosci
-' DontShowTutorial i przywraca na koncu. Inne pola - operuje na tymczasowych
-' kluczach z prefiksem "_TEST_" zeby nie zepsuc setupu uzytkownika.
+' UWAGA: ten test pisze i odczytuje z ws_UserCache. Operuje na tymczasowych
+' kluczach z prefiksem "_TEST_" zeby nie zepsuc setupu uzytkownika - na koncu
+' kasuje uzyte klucze.
 Public Sub Test_mod_UserCacheSync()
     Debug.Print "----- Test_mod_UserCacheSync -----"
 

@@ -12,11 +12,11 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
 | Property | Wartość |
 |---|---|
-| `(Name)` | `frm_Setup` |
-| `Caption` | `BNC_Sender — Konfiguracja wstępna` |
-| `Width` | `480` |
-| `Height` | `560` |
-| `StartUpPosition` | `1 - CenterOwner` |
+| `(Name)` | `frm_Setup` |x
+| `Caption` | `BNC_Sender — Konfiguracja wstępna` |x
+| `Width` | `480` |x
+| `Height` | `560` |x
+| `StartUpPosition` | `1 - CenterOwner` |x
 
 ---
 
@@ -51,7 +51,7 @@ Dodawaj z **Toolbox** (`Ctrl+T` jeśli niewidoczny). Dla każdej kontrolki ustaw
 | Label | `lbl_EmailBNC` | `Caption = "Email zespołu BNC:"` | X
 | TextBox | `txt_EmailBNC` | `MaxLength = 200`, `Text = "jessica.cant@swim.omg"`, `Locked = True`, `BackColor = &H8000000F&` (szare tło) |X
 
-> **Polityka**: `txt_EmailBNC` jest **hardcoded i tylko-do-odczytu**. Wartość ustawiana też w code-behind przy `UserForm_Initialize` jako bezpiecznik (gdyby user zmienił `Locked` w designerze). User nie ma możliwości edytować adresu BNC. Patrz ADR-003.
+> **Polityka**: `txt_EmailBNC` jest **hardcoded i tylko-do-odczytu**. Wartość ustawiana też w code-behind przy `UserForm_Initialize` jako bezpiecznik (gdyby user zmienił `Locked` w designerze). User nie ma możliwości edytować adresu BNC. Patrz ADR-003. 
 
 ### Sekcja: lokalizacja cache
 
@@ -62,18 +62,20 @@ Dodawaj z **Toolbox** (`Ctrl+T` jeśli niewidoczny). Dla każdej kontrolki ustaw
 | Label | `lbl_HeaderCache` | `Caption = "── Lokalizacja plików cache ──"` |X
 | ~~Label `lbl_CacheFolderPath`~~ | — | **USUŃ** label który dodałeś (zastąpiony buttonem niżej) |
 | CommandButton | `btn_CreateCacheFolder` | `Caption = "Utwórz folder cache na dysku C:"` | X
-| TextBox | `txt_CacheFolderPath` | `MaxLength = 260`, `Text = "C:\BNC_CacheFolder\"`, `Locked = True`, `Enabled = False`, `BackColor = &H8000000F&` |
+| TextBox | `txt_CacheFolderPath` | `MaxLength = 260`, `Text = "C:\BNC_CacheFolder\"`, `Locked = True`, `Enabled = False`, `BackColor = &H8000000F&` |X
 | ~~CommandButton `btn_Browse`~~ | — | **POMIŃ** — usunięty (niepotrzebny przy hardcoded path) |
 
-### Sekcja: samouczek
+### Sekcja: pomoc + preferencje
 
-> **Design**: samouczek **nie jest inline** w `frm_Setup`. Pod `lbl_HeaderTutorial` jest CommandButton który (docelowo) otworzy osobny formularz `frm_Tutorial` z pełną treścią. W M2 `frm_Tutorial` **jeszcze nie istnieje** — `btn_ShowTutorial_Click` pokazuje tymczasowo MsgBox-placeholder. Implementacja `frm_Tutorial` jest **odłożona do końca M6/M7** (pre-release polish).
+> **Design**: samouczek **nie jest inline** w `frm_Setup` — `btn_ShowTutorial` (docelowo) otworzy osobny formularz `frm_Tutorial`. W M2 `frm_Tutorial` jeszcze nie istnieje — przycisk pokazuje MsgBox-placeholder. Implementacja `frm_Tutorial` jest **odłożona do końca M6/M7** (pre-release polish).
+>
+> Checkbox `chk_DontShowSetupAgain` kontroluje czy `frm_Setup` ma być pokazywany ponownie przy następnym otwarciu pliku. Wartość zapisywana w UserCache jako `DontShowSetupAgain`. Routing rzeczywisty robi `ThisWorkbook.Workbook_Open` (M2.3) — pole `IsSetupCompleted` już dziś gwarantuje skip setupu po pierwszym ukończeniu; ten flag istnieje jako jawna preferencja usera (rezerwa na przyszłe scenariusze typu "force re-setup z menu").
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
 | Label | `lbl_HeaderTutorial` | `Caption = "── Samouczek ──"` |
-| CommandButton | `btn_ShowTutorial` | `Caption = "Pokaż samouczek"` |
-| CheckBox | `chk_DontShowTutorial` | `Caption = "Nie pokazuj samouczka ponownie"` |
+| CommandButton | `btn_ShowTutorial` | `Caption = "Pokaż samouczek"` |x
+| CheckBox | `chk_DontShowSetupAgain` | `Caption = "Nie pokazuj tego formularza ponownie"` |
 | ~~TextBox `txt_Tutorial`~~ | — | **POMIŃ** — wyniesione do osobnego `frm_Tutorial` (M6/M7) |
 
 ### Sekcja: przyciski (na dole)
