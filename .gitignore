@@ -1,4 +1,4 @@
-# Pliki Excel - binarne, nie do Git
+# Pliki Excel - binarne, nie do Git (z wyjątkami niżej)
 *.xlsm
 *.xlsx
 *.xls
@@ -8,11 +8,16 @@
 
 # Foldery z plikami binarnymi
 Releases/
-Working/
 CacheFolder/
 
 # Wyjątek: chcemy commitować .frx mimo że są binarne (są częścią eksportu UserForm)
 !Source/Forms/*.frx
+
+# Wyjątek: Working/ jest trackowane jako snapshot xlsm + ZIP archiwalny
+# (świadomy wyjątek dla milestone snapshots; pełna historia ma być w Source/)
+!Working/
+!Working/*.xlsm
+!Working/*.zip
 
 # OS / IDE
 Thumbs.db

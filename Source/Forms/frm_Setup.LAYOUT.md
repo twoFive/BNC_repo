@@ -73,23 +73,23 @@ Dodawaj z **Toolbox** (`Ctrl+T` jeśli niewidoczny). Dla każdej kontrolki ustaw
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| Label | `lbl_HeaderTutorial` | `Caption = "── Samouczek ──"` |
+| Label | `lbl_HeaderTutorial` | `Caption = "── Samouczek ──"` | X
 | CommandButton | `btn_ShowTutorial` | `Caption = "Pokaż samouczek"` |x
-| CheckBox | `chk_DontShowSetupAgain` | `Caption = "Nie pokazuj tego formularza ponownie"` |
+| CheckBox | `chk_DontShowSetupAgain` | `Caption = "Nie pokazuj tego formularza ponownie"` | x
 | ~~TextBox `txt_Tutorial`~~ | — | **POMIŃ** — wyniesione do osobnego `frm_Tutorial` (M6/M7) |
 
 ### Sekcja: przyciski (na dole)
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| CommandButton | `btn_Cancel` | `Caption = "Anuluj"`, `Cancel = True` |
-| CommandButton | `btn_Save` | `Caption = "Zapisz konfigurację"`, `Default = True` |
+| CommandButton | `btn_Cancel` | `Caption = "Anuluj"`, `Cancel = True` |X
+| CommandButton | `btn_Save` | `Caption = "Zapisz konfigurację"`, `Default = True` |x
 
 ---
 
 ## Krok 3 — wklej code-behind
 
-W VBE prawy klik na `frm_Setup` w Project Explorer → **View Code**. Wklej zawartość pliku `frm_Setup.code-behind.txt`.
+W VBE prawy klik na `frm_Setup` w Project Explorer → **View Code**. Wklej zawartość pliku `frm_Setup.code-behind.txt`.|x
 
 ---
 
