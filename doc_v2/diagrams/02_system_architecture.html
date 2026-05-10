@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>BNC_Sender — Architektura systemu (faza A)</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { width: 1600px; height: 1220px; }
+  svg { display: block; }
+  text { font-family: 'Segoe UI', Arial, sans-serif; }
+</style>
+</head>
+<body>
+<svg width="1600" height="1220" viewBox="0 0 1600 1220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2c3e50"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1e6091"/>
+    </marker>
+    <linearGradient id="lyr1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e3f2fd"/><stop offset="100%" stop-color="#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="lyr2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff8e1"/><stop offset="100%" stop-color="#ffecb3"/>
+    </linearGradient>
+    <linearGradient id="lyr3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f3e5f5"/><stop offset="100%" stop-color="#e1bee7"/>
+    </linearGradient>
+    <linearGradient id="lyr4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8f5e9"/><stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="800" y="50" text-anchor="middle" font-size="32" font-weight="700" fill="#1a237e">
+    BNC_Sender — Architektura systemu (faza A)
+  </text>
+  <text x="800" y="80" text-anchor="middle" font-size="16" fill="#546e7a">
+    Komponenty aplikacji i ich rozmieszczenie · stan po M5
+  </text>
+
+  <!-- ============== WARSTWA 1: DYSTRYBUCJI ============== -->
+  <rect x="50" y="120" width="1500" height="130" rx="12" fill="url(#lyr1)" stroke="#1976d2" stroke-width="2"/>
+  <text x="70" y="155" font-size="20" font-weight="700" fill="#0d47a1">▶ Warstwa dystrybucji</text>
+  <text x="70" y="178" font-size="13" fill="#1565c0">infrastruktura firmowa, jednorazowe pobranie</text>
+
+  <rect x="600" y="190" width="400" height="50" rx="8" fill="#ffffff" stroke="#1976d2" stroke-width="2"/>
+  <text x="800" y="210" text-anchor="middle" font-size="15" font-weight="600" fill="#0d47a1">OneDrive firmowy</text>
+  <text x="800" y="230" text-anchor="middle" font-size="13" fill="#37474f">BNC_Sender_v0.1.0.xlsm (release)</text>
+
+  <!-- arrow down to layer 2 -->
+  <line x1="800" y1="240" x2="800" y2="290" stroke="#1e6091" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="815" y="270" font-size="12" fill="#1e6091" font-style="italic">pobranie</text>
+
+  <!-- ============== WARSTWA 2: KOMPUTER HANDLOWCA ============== -->
+  <rect x="50" y="300" width="1500" height="320" rx="12" fill="url(#lyr2)" stroke="#f57f17" stroke-width="2"/>
+  <text x="70" y="335" font-size="20" font-weight="700" fill="#e65100">▶ Warstwa komputera handlowca</text>
+  <text x="70" y="358" font-size="13" fill="#bf360c">cała aplikacja działa lokalnie, bez własnego serwera</text>
+
+  <!-- xlsm box (left) -->
+  <rect x="100" y="380" width="420" height="220" rx="10" fill="#ffffff" stroke="#f57f17" stroke-width="2"/>
+  <text x="310" y="408" text-anchor="middle" font-size="16" font-weight="700" fill="#e65100">BNC_Sender_v*.xlsm</text>
+  <text x="310" y="426" text-anchor="middle" font-size="12" fill="#546e7a">primary storage + UI + logika</text>
+
+  <rect x="120" y="445" width="380" height="38" rx="5" fill="#fff3e0" stroke="#fb8c00"/>
+  <text x="310" y="468" text-anchor="middle" font-size="13" fill="#37474f">UserForms: frm_Setup · frm_Main · frm_Log</text>
+
+  <rect x="120" y="490" width="380" height="38" rx="5" fill="#fff3e0" stroke="#fb8c00"/>
+  <text x="310" y="513" text-anchor="middle" font-size="13" fill="#37474f">Moduły: Utils · Validation · *Sync · MailSender · Export</text>
+
+  <rect x="120" y="535" width="380" height="50" rx="5" fill="#ffe0b2" stroke="#fb8c00"/>
+  <text x="310" y="555" text-anchor="middle" font-size="13" font-weight="600" fill="#bf360c">Ukryte arkusze (very hidden)</text>
+  <text x="310" y="575" text-anchor="middle" font-size="12" fill="#37474f">ws_UserCache · ws_DataCache</text>
+
+  <!-- CacheFolder box (middle) -->
+  <rect x="570" y="380" width="380" height="220" rx="10" fill="#ffffff" stroke="#f57f17" stroke-width="2"/>
+  <text x="760" y="408" text-anchor="middle" font-size="16" font-weight="700" fill="#e65100">C:\BNC_CacheFolder\</text>
+  <text x="760" y="426" text-anchor="middle" font-size="12" fill="#546e7a">synchronized backup (write-through)</text>
+
+  <rect x="595" y="450" width="330" height="55" rx="5" fill="#fff3e0" stroke="#fb8c00"/>
+  <text x="760" y="472" text-anchor="middle" font-size="14" fill="#37474f">BNC_UserCache.xlsx</text>
+  <text x="760" y="492" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">tożsamość handlowca</text>
+
+  <rect x="595" y="520" width="330" height="55" rx="5" fill="#fff3e0" stroke="#fb8c00"/>
+  <text x="760" y="542" text-anchor="middle" font-size="14" fill="#37474f">BNC_DataCache.xlsx</text>
+  <text x="760" y="562" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">historia zgłoszeń + audit trail</text>
+
+  <!-- HARDCODED note -->
+  <rect x="595" y="395" width="330" height="20" rx="3" fill="#ffcdd2" stroke="#c62828"/>
+  <text x="760" y="409" text-anchor="middle" font-size="10" fill="#b71c1c" font-weight="600">🔒 ADR-003: ścieżka hardcoded (locked w UI)</text>
+
+  <!-- Outlook box (right) -->
+  <rect x="1000" y="380" width="450" height="220" rx="10" fill="#ffffff" stroke="#f57f17" stroke-width="2"/>
+  <text x="1225" y="408" text-anchor="middle" font-size="16" font-weight="700" fill="#e65100">Outlook (klient lokalny)</text>
+  <text x="1225" y="426" text-anchor="middle" font-size="12" fill="#546e7a">CreateObject("Outlook.Application")</text>
+
+  <rect x="1020" y="445" width="410" height="35" rx="5" fill="#fff3e0" stroke="#fb8c00"/>
+  <text x="1225" y="467" text-anchor="middle" font-size="13" fill="#37474f">MailItem.Send (COM)</text>
+
+  <rect x="1020" y="490" width="410" height="50" rx="5" fill="#ffe0b2" stroke="#fb8c00"/>
+  <text x="1225" y="510" text-anchor="middle" font-size="12" font-weight="600" fill="#bf360c">Plik tymczasowy w %TEMP% (ADR-004)</text>
+  <text x="1225" y="528" text-anchor="middle" font-size="11" fill="#37474f">BNC_Wniosek_yyyymmdd_hhmmss.xlsx → cleanup po Send</text>
+
+  <rect x="1020" y="550" width="410" height="35" rx="5" fill="#fff3e0" stroke="#fb8c00"/>
+  <text x="1225" y="572" text-anchor="middle" font-size="11" fill="#37474f">Decision diamond (ADR-005): kierownik vs handlowiec</text>
+
+  <!-- arrows in layer 2: xlsm <-> cache (write-through), xlsm -> outlook -->
+  <line x1="520" y1="490" x2="570" y2="490" stroke="#1e6091" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="535" y="482" font-size="11" fill="#1e6091" font-style="italic">sync</text>
+  <line x1="950" y1="490" x2="1000" y2="490" stroke="#1e6091" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="958" y="482" font-size="11" fill="#1e6091" font-style="italic">attach</text>
+
+  <!-- arrow down from outlook to layer 3 -->
+  <line x1="1225" y1="600" x2="1225" y2="660" stroke="#1e6091" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="1240" y="640" font-size="12" fill="#1e6091" font-style="italic">SMTP</text>
+
+  <!-- ============== WARSTWA 3: SIECIOWA ============== -->
+  <rect x="50" y="670" width="1500" height="100" rx="12" fill="url(#lyr3)" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="70" y="703" font-size="20" font-weight="700" fill="#4a148c">▶ Warstwa sieciowa</text>
+  <text x="70" y="724" font-size="13" fill="#6a1b9a">infrastruktura firmowa</text>
+
+  <rect x="1080" y="700" width="290" height="50" rx="8" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="1225" y="722" text-anchor="middle" font-size="14" font-weight="600" fill="#4a148c">Exchange (firmowy)</text>
+  <text x="1225" y="740" text-anchor="middle" font-size="12" fill="#37474f">SMTP, dystrybucja maili</text>
+
+  <!-- arrow down from exchange to layer 4 -->
+  <line x1="1225" y1="750" x2="1225" y2="810" stroke="#1e6091" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="1240" y="790" font-size="12" fill="#1e6091" font-style="italic">delivery</text>
+
+  <!-- ============== WARSTWA 4: ADRESACI ============== -->
+  <rect x="50" y="820" width="1500" height="160" rx="12" fill="url(#lyr4)" stroke="#388e3c" stroke-width="2"/>
+  <text x="70" y="855" font-size="20" font-weight="700" fill="#1b5e20">▶ Warstwa adresatów</text>
+  <text x="70" y="877" font-size="13" fill="#2e7d32">routing zależny od roli usera (decision diamond)</text>
+
+  <!-- recipient box: BNC -->
+  <rect x="380" y="890" width="380" height="80" rx="8" fill="#ffffff" stroke="#388e3c" stroke-width="2"/>
+  <text x="570" y="918" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">Zespół BNC</text>
+  <text x="570" y="939" text-anchor="middle" font-size="12" fill="#37474f">EmailBNC (hardcoded, ADR-003)</text>
+  <text x="570" y="958" text-anchor="middle" font-size="11" fill="#558b2f" font-style="italic">jeśli user = kierownik → wprost tu</text>
+
+  <!-- recipient box: kierownik -->
+  <rect x="850" y="890" width="380" height="80" rx="8" fill="#ffffff" stroke="#388e3c" stroke-width="2"/>
+  <text x="1040" y="918" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">Kierownik handlowca</text>
+  <text x="1040" y="939" text-anchor="middle" font-size="12" fill="#37474f">EmailKierownika (z setup)</text>
+  <text x="1040" y="958" text-anchor="middle" font-size="11" fill="#558b2f" font-style="italic">jeśli user = handlowiec → tu, do przekazania</text>
+
+  <!-- branching arrow from network to two recipients (z exchange y=750 do recipients y=890) -->
+  <line x1="1225" y1="750" x2="570" y2="890" stroke="#1e6091" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrow-blue)"/>
+  <line x1="1225" y1="750" x2="1040" y2="890" stroke="#1e6091" stroke-width="2.5" stroke-dasharray="5,3" marker-end="url(#arrow-blue)"/>
+
+  <!-- ============== LEGENDA / KEY PATTERNS (poniżej warstw, pełna szerokość) ============== -->
+  <rect x="50" y="1000" width="1500" height="170" rx="12" fill="#ffffff" stroke="#90a4ae" stroke-width="1.5"/>
+  <text x="70" y="1028" font-size="18" font-weight="700" fill="#37474f">Kluczowe wzorce architektoniczne</text>
+
+  <text x="70" y="1058" font-size="13" fill="#37474f"><tspan font-weight="700">▸ Hybrid cache (write-through, ADR-001/002):</tspan> primary storage = ws_*Cache, backup = .xlsx w CacheFolder — sync jednokierunkowy</text>
+  <text x="70" y="1081" font-size="13" fill="#37474f"><tspan font-weight="700">▸ Convention over configuration:</tspan> rolę usera (kierownik/handlowiec) czytamy z porównania EmailKierownika == EmailHandlowca</text>
+  <text x="70" y="1104" font-size="13" fill="#37474f"><tspan font-weight="700">▸ Niezawodność &gt; elastyczność (ADR-003):</tspan> EmailBNC i CacheFolderPath hardcoded i zablokowane w UI (zamiast browse pickera — przycisk tworzący folder)</text>
+  <text x="70" y="1127" font-size="13" fill="#37474f"><tspan font-weight="700">▸ Transient artifact (ADR-004):</tspan> plik tymczasowy w %TEMP% kasowany po Send (też w error handlerze, by nie zostawać przy retry)</text>
+  <text x="70" y="1150" font-size="13" fill="#37474f"><tspan font-weight="700">▸ Migracja do fazy B:</tspan> mod_DataCacheSync → mod_DataAccess (Repository z ADO), warstwy prezentacji i logiki bez zmian</text>
+
+  <!-- footer -->
+  <text x="800" y="1200" text-anchor="middle" font-size="11" fill="#90a4ae">
+    BNC_Sender_v0.1.0 · Faza A · Diagram odzwierciedla stan kodu po milestone M5
+  </text>
+</svg>
+</body>
+</html>
