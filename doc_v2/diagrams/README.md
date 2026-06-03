@@ -2,12 +2,13 @@
 
 Diagramy do prezentacji/dyskusji z biznesem. Stan po milestone M5.
 
-| Plik | Cel |
-|---|---|
-| `02_system_architecture.jpg` | Komponenty systemu i ich rozmieszczenie (4 warstwy: dystrybucja, komputer handlowca, sieciowa, adresaci) |
-| `05_module_architecture.jpg` | Component Diagram (C4 model · poziom 3) — 4 warstwy modułów VBA z zależnościami |
-| `*.html` | Źródła diagramów (SVG embedded), regenerowalne |
-| `post-release/` | **Wariant docelowy v1.0.0** — frm_Tutorial jako pełny moduł, footery zaktualizowane (do prezentacji "jak będzie wyglądać po skończeniu") |
+| Plik | Cel | Audience |
+|---|---|---|
+| `02_system_architecture.jpg` | Komponenty systemu i ich rozmieszczenie (4 warstwy: dystrybucja, komputer handlowca, sieciowa, adresaci) | tech / IT |
+| `05_module_architecture.jpg` | Component Diagram (C4 model · poziom 3) — 4 warstwy modułów VBA z zależnościami | tech / dev |
+| `06_business_process.jpg` | **Workflow biznesowy** — proces zgłoszenia klienta do BNC: 3 swim lanes (Handlowiec / Kierownik / Zespół BNC), 8 kroków, decision diamond „handlowiec = kierownik?". Bez technikaliów. | **biznes / decyzyjna** |
+| `*.html` | Źródła diagramów (SVG embedded), regenerowalne | — |
+| `post-release/` | **Wariant docelowy v1.0.0** — frm_Tutorial jako pełny moduł, footery zaktualizowane (do prezentacji "jak będzie wyglądać po skończeniu") | tech |
 
 ## Regeneracja JPG ze źródła HTML
 
@@ -52,5 +53,6 @@ rm *.png
 
 - **02 system architecture**: 1600 × 1220 px
 - **05 module architecture**: 1600 × 1100 px
+- **06 business process**: 1400 × 1080 px
 
 Drukuj na A3 albo prezentuj na monitorze 1080p+ — tekst pozostanie czytelny.
