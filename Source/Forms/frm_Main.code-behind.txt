@@ -111,6 +111,43 @@ Private Sub btn_ShowLog_Click()
     frm_Log.Show
 End Sub
 
+' Hard delete zaznaczonego pending recordu (ADR-006).
+' Przed wywolaniem mod_DataCacheSync.DeleteRecord pokazujemy potwierdzenie
+' z ID + nazwa klienta zeby user mial szanse zatrzymac sie przed pomylka.
+Private Sub btn_DeleteSelected_Click()
+    If lst_PendingBatch.ListIndex < 0 Then
+        MsgBox "Najpierw zaznacz zgloszenie do usuniecia z listy.", _
+               vbInformation, "Brak zaznaczenia"
+        Exit Sub
+    End If
+
+    Dim idx As Long
+    idx = lst_PendingBatch.ListIndex
+
+    Dim reportID As Long
+    Dim nazwa As String
+    reportID = CLng(lst_PendingBatch.List(idx, 0))
+    nazwa = CStr(lst_PendingBatch.List(idx, 2))
+
+    Dim msg As String
+    msg = "Potwierdzenie usuniecia zgloszenia BNC" & vbCrLf & vbCrLf & _
+          "ID: " & reportID & vbCrLf & _
+          "Klient: " & nazwa & vbCrLf & vbCrLf & _
+          "Operacja nieodwracalna. Kontynuowac?"
+
+    Dim answer As VbMsgBoxResult
+    answer = MsgBox(msg, vbYesNo + vbQuestion + vbDefaultButton2, "Potwierdzenie")
+    If answer <> vbYes Then Exit Sub
+
+    If mod_DataCacheSync.DeleteRecord(reportID) Then
+        mod_Utils.LogInfo "Usunieto zgloszenie ID=" & reportID
+        RefreshPendingList
+    Else
+        MsgBox "Nie udalo sie usunac zgloszenia. Sprawdz Immediate Window (Ctrl+G).", _
+               vbExclamation, "Blad usuwania"
+    End If
+End Sub
+
 ' ----- Helpers -------------------------------------------------------------
 
 Private Sub ClearFormFields()
@@ -138,11 +175,19 @@ End Sub
 
 ' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List
 ' jednym ruchem - to ~10x szybsze niz AddItem + List(i, j) w petli.
+'
+' Kolejnosc: newest first - rekordy z wyzszym ReportID (nowsze) na gorze listy.
+' Iterujemy "od konca do poczatku" (i = count-1 -> 0), bo GetPendingRecords
+' zwraca rekordy w naturalnej kolejnosci arkusza (najstarsze pierwsze).
+'
+' Auto-selekcja: NIE - user musi sam kliknac row zeby zaznaczyc.
+' btn_DeleteSelected.Enabled steruje sie liczba rekordow (Q9:B).
 Private Sub RefreshPendingList()
     Dim pending As Collection
     Set pending = mod_DataCacheSync.GetPendingRecords()
 
     lbl_BatchCount.Caption = "Lista zgloszen do wyslania (" & pending.Count & ")"
+    btn_DeleteSelected.Enabled = (pending.Count > 0)
 
     lst_PendingBatch.Clear
     If pending.Count = 0 Then Exit Sub
@@ -150,25 +195,29 @@ Private Sub RefreshPendingList()
     Dim arr() As Variant
     ReDim arr(0 To pending.Count - 1, 0 To 4)
 
+    ' Newest first: fill od konca array do poczatku.
     Dim i As Long
     Dim record As Object
-    i = 0
+    i = pending.Count - 1
     For Each record In pending
         arr(i, 0) = record("ReportID")
         arr(i, 1) = record("KlientFK")
         arr(i, 2) = record("NazwaKlienta")
         arr(i, 3) = record("MiesiacZgloszenia")
         arr(i, 4) = record("Fields")
-        i = i + 1
+        i = i - 1
     Next record
 
     lst_PendingBatch.List = arr
 End Sub
 
-' Disable Add/Send podczas wysylki, zeby user nie kliknal dwa razy.
+' Disable Add/Send/Delete podczas wysylki, zeby user nie kliknal dwa razy.
+' Po Disable=False (koniec wysylki) - btn_DeleteSelected dostaje stan z
+' RefreshPendingList (pending.Count > 0), nie z parametru tej funkcji.
 Private Sub DisableActionButtons(disabled As Boolean)
     btn_AddToList.Enabled = Not disabled
     btn_SendBatch.Enabled = Not disabled
     btn_Clear.Enabled = Not disabled
     btn_ShowLog.Enabled = Not disabled
+    btn_DeleteSelected.Enabled = Not disabled
 End Sub

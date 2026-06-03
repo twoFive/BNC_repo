@@ -50,7 +50,15 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 | Typ | Name | Caption / Properties |
 |---|---|---|
 | Label | `lbl_BatchCount` | wypełnia `RefreshPendingList` (np. "Lista zgłoszeń do wysłania (3)") |
-| ListBox | `lst_PendingBatch` | `ColumnCount = 5`, `ColumnHeads = True`, `ColumnWidths = "30;60;180;60;200"`, `Height = 200` |
+| ListBox | `lst_PendingBatch` | `ColumnCount = 5`, `ColumnHeads = True`, `ColumnWidths = "30;60;180;60;200"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) |
+| CommandButton | `btn_DeleteSelected` | `Caption = "Usuń zaznaczone"` — pozycja: pod ListBox po lewej |
+
+> **Zachowanie**:
+> - Najnowszy rekord pojawia się na **górze** listy (newest first); user musi sam kliknąć row żeby zaznaczyć.
+> - `btn_DeleteSelected.Enabled = False` gdy lista pusta (`pending.Count = 0`) — szary, nieklikalny.
+> - Klik bez zaznaczenia → MsgBox info "Najpierw zaznacz zgłoszenie".
+> - Klik z zaznaczeniem → MsgBox potwierdzenia z ID i nazwą klienta → po `Tak` hard delete + refresh listy.
+> - Sent records: niemożliwe do usunięcia (defensywny check w `mod_DataCacheSync.DeleteRecord` zwraca `False`, frm_Log nie ma buttona delete). Patrz ADR-006.
 
 ### Sekcja: przyciski (na dole)
 

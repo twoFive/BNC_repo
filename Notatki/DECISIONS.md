@@ -106,4 +106,32 @@ Wartości są nadal zapisywane w `ws_UserCache` (przez `SaveUserData`), więc re
 
 ---
 
+## ADR-006: Hard delete dla pending, sent immutable
+
+**Data**: 2026-05-10
+**Status**: zatwierdzona
+
+**Decyzja**: `mod_DataCacheSync.DeleteRecord(reportID)`:
+1. **Pending records** — usuwane przez **hard delete** (`ws.Rows(r).Delete`). `ReportID` przepada definitywnie, brak śladu w `ws_DataCache`, frm_Log nigdy ich nie pokazuje.
+2. **Sent records** — **niemożliwe do usunięcia**. Defensywny check w `DeleteRecord` odmawia (return `False` + `LogError`). frm_Log nie ma buttona delete dla tych rekordów.
+
+**Uzasadnienie**:
+
+**Hard delete (vs soft delete `Status=cancelled`)**:
+- Prostota: brak trzeciego statusu, brak statystyk pending/sent/cancelled w frm_Log, brak `MarkAsCancelled` API.
+- Pending = draft = pełna kontrola usera. "Skasowane" znaczy "nigdy nie istniało" z perspektywy aplikacji.
+- Soft delete miałby sens gdyby był audyt compliance ("ile rekordów user kasował?"). W tej fazie brak takiego wymagania.
+
+**Sent immutable**:
+- Zgodne z filozofią audit trail całej aplikacji (`EmailRecipient` snapshot w `ws_DataCache` istnieje **właśnie po to**, żeby user mógł odpowiedzieć BNC "wysłałem dnia X do Y, sprawdź u niego" — patrz ADR `EmailRecipient` w `04_data_model.md`).
+- Usunięcie sent = zniszczenie dowodu wysyłki. Niedopuszczalne w trust-based systemie.
+- Jeśli user się pomylił i wysłał błędne zgłoszenie — odpowiednia ścieżka to mail "anuluj poprzednie" do tego samego adresata, **nie** kasowanie historii.
+
+**Konsekwencje**:
+- `GetNextReportID` może **reuse** ID skasowanego pending recordu (gdy był to ostatni record). Pragmatycznie akceptowalne — hard-deleted pending nie ma śladu, więc nie ma konfliktu z reusowanym ID.
+- Nigdy nie wprowadzimy "undo" dla delete — gone is gone. User dostaje confirmation MsgBox przed kasowaniem jako jedyną przeszkodę.
+- `Test_mod_DataCacheSync` test cleanup nadal używa direct `ws.Rows(r).Delete` dla sent records (DeleteRecord odmówiłby) — to świadome, oznaczone komentarzem "bypassing API, test cleanup only".
+
+---
+
 <!-- Kolejne ADR-y dodawaj poniżej w trakcie implementacji modułów -->

@@ -118,6 +118,47 @@ Public Sub MarkAsSent(reportIDs As Collection, recipient As String)
     SyncToFile
 End Sub
 
+' Hard delete pojedynczego pending recordu (ADR-006).
+' Defensywnie: tylko Status=pending. Sent records sa immutable (audit trail).
+' Returns True jesli usunieto, False jesli ID nieznane LUB Status != pending.
+Public Function DeleteRecord(reportID As Long) As Boolean
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets(SHEET_NAME)
+
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, COL_REPORT_ID).End(xlUp).row
+    If lastRow < 2 Then
+        DeleteRecord = False
+        Exit Function
+    End If
+
+    Dim r As Long
+    For r = 2 To lastRow
+        If IsNumeric(ws.Cells(r, COL_REPORT_ID).Value) Then
+            If CLng(ws.Cells(r, COL_REPORT_ID).Value) = reportID Then
+                ' Defensywny check: tylko pending mozna usuwac (ADR-006).
+                Dim status As String
+                status = CStr(ws.Cells(r, COL_STATUS).Value)
+                If status <> STATUS_PENDING Then
+                    mod_Utils.LogError "mod_DataCacheSync.DeleteRecord", 0, _
+                        "Odmowa - status='" & status & "', tylko pending mozna usunac. ID=" & reportID
+                    DeleteRecord = False
+                    Exit Function
+                End If
+
+                ws.Rows(r).Delete
+                ThisWorkbook.Save
+                SyncToFile
+                DeleteRecord = True
+                Exit Function
+            End If
+        End If
+    Next r
+
+    ' Nie znaleziono
+    DeleteRecord = False
+End Function
+
 ' Auto-recreate: tworzy BNC_DataCache.xlsx jesli nie istnieje (Workbook_Open).
 Public Sub EnsureCacheFileExists()
     Dim folderPath As String

@@ -193,7 +193,43 @@ Public Sub Test_mod_DataCacheSync()
     Next rec
     AssertEqual "MarkAsSent verified", True, verifiedSent
 
-    ' --- cleanup tymczasowego rekordu ---
+    ' --- DeleteRecord: odmowa dla sent (ADR-006) ---
+    AssertEqual "DeleteRecord rejects sent", False, mod_DataCacheSync.DeleteRecord(newID)
+
+    ' Zweryfikuj ze record nadal istnieje
+    Set allRecs = mod_DataCacheSync.GetAllRecords()
+    Dim stillThere As Boolean
+    For Each rec In allRecs
+        If CLng(rec("ReportID")) = newID Then stillThere = True : Exit For
+    Next rec
+    AssertEqual "Sent record still exists after refused delete", True, stillThere
+
+    ' --- DeleteRecord: zgoda dla pending (round-trip) ---
+    Dim pendingRecord As Object
+    Set pendingRecord = CreateObject("Scripting.Dictionary")
+    pendingRecord("KlientFK") = 88888
+    pendingRecord("NazwaKlienta") = "_TEST_Klient_DoDelete_"
+    pendingRecord("MiesiacZgloszenia") = mod_Utils.GetCurrentMonthYear()
+    pendingRecord("Fields") = "smoke test delete"
+
+    Dim deleteID As Long
+    deleteID = mod_DataCacheSync.AppendRecord(pendingRecord)
+    AssertEqual "DeleteRecord accepts pending", True, mod_DataCacheSync.DeleteRecord(deleteID)
+
+    ' Zweryfikuj ze record znikl
+    Set allRecs = mod_DataCacheSync.GetAllRecords()
+    Dim foundDeleted As Boolean
+    For Each rec In allRecs
+        If CLng(rec("ReportID")) = deleteID Then foundDeleted = True : Exit For
+    Next rec
+    AssertEqual "Pending record gone after delete", False, foundDeleted
+
+    ' --- DeleteRecord: odmowa dla nieistniejacego ID ---
+    AssertEqual "DeleteRecord rejects unknown ID", False, mod_DataCacheSync.DeleteRecord(999999)
+
+    ' --- cleanup pierwszego (sent) rekordu - bezposredni dostep, bo DeleteRecord
+    '     z definicji odmawia sent records (ADR-006 enforcement). Bypassing API
+    '     jest celowe tylko w test cleanup, nigdy w produkcji.
     Dim r As Long
     Dim lastRow As Long
     lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row

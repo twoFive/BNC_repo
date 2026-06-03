@@ -27,6 +27,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **M5.2**: `frm_Log.LAYOUT.md` + `frm_Log.code-behind.txt` — historia z statystykami pending/sent + Save As dialog dla eksportu.
 - **M2.3 + M2.2 (final)**: `ThisWorkbook.code.txt` i `frm_Setup.code-behind.txt` zaktualizowane na direct `frm_Main.Show` (placeholder MsgBox usunięty).
 - **M4 + M5**: ADR-004 (plik tymczasowy w %TEMP% jako transient artifact), ADR-005 (centralizacja routingu w mod_MailSender).
+- **M3 (extension)**: `mod_DataCacheSync.DeleteRecord(reportID)` — hard delete dla pending, defensywna odmowa dla sent (ADR-006).
+- **M3 (UX)**: `btn_DeleteSelected` w `frm_Main` pod ListBox — single-select, confirmation MsgBox z ID + nazwą klienta, `Enabled = False` gdy lista pusta. Newest-first ordering w `RefreshPendingList` (reverse iteration). Brak auto-selekcji po refresh — user musi sam kliknąć row.
+- **M3 (tests)**: `Test_mod_DataCacheSync` rozszerzony o asercje delete: odmowa dla sent, zgoda dla pending (round-trip), odmowa dla nieznanego ID.
 
 ## [0.1.0] — TBD
 
