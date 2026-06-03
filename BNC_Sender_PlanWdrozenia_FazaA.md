@@ -821,6 +821,7 @@ ThisWorkbook.Workbook_Open. Frm_Setup i frm_Main nie wiedzą o sobie nawzajem.
 ```vba
 ' ==================== frm_Main ====================
 
+' Initialize - static setup (raz na instancję formularza). Patrz ADR-007.
 Private Sub UserForm_Initialize()
     ' Pokaż info o userze
     lbl_UserInfo.Caption = "Zalogowany: " _
@@ -838,8 +839,11 @@ Private Sub UserForm_Initialize()
     
     ' Domyślny miesiąc zgłoszenia = bieżący
     txt_MiesiacZgloszenia.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
-    
-    ' Załaduj listę pending
+End Sub
+
+' Activate - dynamic refresh (przy każdym Show, takze po powrocie z frm_Log).
+' Patrz ADR-007 - bez tego stale data po zmianie ws_DataCache.
+Private Sub UserForm_Activate()
     RefreshPendingList
 End Sub
 
@@ -1390,7 +1394,9 @@ End Function
 ```vba
 ' ==================== frm_Log ====================
 
-Private Sub UserForm_Initialize()
+' Activate (nie Initialize) - patrz ADR-007. LoadRecords musi sie wykonac
+' przy KAZDYM Show, w tym po powrocie z frm_Main (np. po delete pending).
+Private Sub UserForm_Activate()
     LoadRecords
 End Sub
 

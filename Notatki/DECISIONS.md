@@ -134,4 +134,31 @@ Wartości są nadal zapisywane w `ws_UserCache` (przez `SaveUserData`), więc re
 
 ---
 
+## ADR-007: Activate pattern dla widoków `ws_DataCache`
+
+**Data**: 2026-05-10
+**Status**: zatwierdzona
+
+**Decyzja**: UserForms które wyświetlają dane z `ws_DataCache` (`frm_Main`, `frm_Log`) ładują dane w handlerze `UserForm_Activate()`, **nie** `UserForm_Initialize()`.
+
+`Initialize` zostaje dla **statycznego setupu** (identity captions, role detection, default values, ListBox headers) — rzeczy które nie zmieniają się w trakcie sesji.
+
+**Uzasadnienie**: VBA UserForms lifecycle:
+- `Initialize` fires **raz**, przy pierwszym instantiate'owaniu formularza (pierwszy `Show` lub `Load`)
+- `Activate` fires **przy każdym** `Show`, w tym po powrocie z `Hide`
+
+Workflow użytkownika: `frm_Main` → "Pokaż historię" → `frm_Log` → "Powrót" → `frm_Main` → delete record → "Pokaż historię" → `frm_Log` (drugi raz).
+
+Gdyby `LoadRecords` siedział w `Initialize`, drugi `Show` `frm_Log` nie wywołałby przeładowania — ListBox pokazałby **stale data** (sprzed delete'a). Bug wystąpił już przed M3.2 (np. po `SendBatch` zmienia `Status=pending → sent`), ale delete go uwypukla — user **częściej** wraca do log po sprawdzenie "no i co, usunął się?".
+
+**Konsekwencje**:
+- `frm_Log.UserForm_Initialize` znika (był pusty poza `LoadRecords`).
+- `frm_Main` ma teraz **dwa** lifecycle handlery: `Initialize` (static) + `Activate` (dynamic refresh).
+- Kolejne UserForms które będą czytać z `ws_DataCache` muszą stosować ten sam pattern (np. `frm_Tutorial` w M6/M7 — nie dotyczy, samouczek nie ma danych dynamicznych).
+- `frm_Setup` zostaje z `Initialize` only — operuje na `ws_UserCache` które user może zmienić tylko sam przez ten formularz; brak scenariusza stale data.
+
+**Reguła ogólna**: jeśli formularz pokazuje dane z arkusza który **może** być zmieniony spoza tego formularza w trakcie życia instancji — refresh w `Activate`. Inaczej `Initialize` wystarczy.
+
+---
+
 <!-- Kolejne ADR-y dodawaj poniżej w trakcie implementacji modułów -->

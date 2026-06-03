@@ -12,8 +12,12 @@ Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
+' Initialize - static setup (raz na instance formularza):
+' - identity caption (Imie/Nazwisko/CNA/Oddzial sa stale w sesji),
+' - role detection (kierownik/handlowiec - stale w sesji),
+' - default miesiac zgloszenia,
+' - headers ListBox.
 Private Sub UserForm_Initialize()
-    ' Header - info o userze.
     lbl_UserInfo.Caption = "Zalogowany: " & _
         CStr(mod_UserCacheSync.GetUserField("Imie")) & " " & _
         CStr(mod_UserCacheSync.GetUserField("Nazwisko")) & _
@@ -26,12 +30,13 @@ Private Sub UserForm_Initialize()
         lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysylane do kierownika)"
     End If
 
-    ' Default miesiac zgloszenia = biezacy.
     txt_MiesiacZgloszenia.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
-
-    ' Headers ListBox (gdy ColumnHeads = True).
     SetListBoxHeaders
+End Sub
 
+' Activate - dynamic refresh (przy kazdym Show, takze po powrocie z frm_Log).
+' RefreshPendingList tu zamiast w Initialize - patrz ADR-007.
+Private Sub UserForm_Activate()
     RefreshPendingList
 End Sub
 

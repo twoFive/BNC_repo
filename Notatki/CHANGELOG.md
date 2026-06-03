@@ -31,6 +31,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **M3 (UX)**: `btn_DeleteSelected` w `frm_Main` pod ListBox — single-select, confirmation MsgBox z ID + nazwą klienta, `Enabled = False` gdy lista pusta. Newest-first ordering w `RefreshPendingList` (reverse iteration). Brak auto-selekcji po refresh — user musi sam kliknąć row.
 - **M3 (tests)**: `Test_mod_DataCacheSync` rozszerzony o asercje delete: odmowa dla sent, zgoda dla pending (round-trip), odmowa dla nieznanego ID.
 
+### Fixed
+- **frm_Log (stale data)**: `LoadRecords` przeniesione z `UserForm_Initialize` do `UserForm_Activate`. Bug pre-existing (sprzed M3.2), uwypuklony przez delete feature — drugi `Show` frm_Log po zmianie `ws_DataCache` nie przeładowywał ListBoxa. Patrz ADR-007.
+- **frm_Main (symetria)**: `RefreshPendingList` przeniesione z `Initialize` do `Activate`. Aktualnie bug niewidoczny (wszystkie modyfikacje pending dzieją się w frm_Main, więc lokalne handlery odświeżają), ale forward-compatible dla przyszłych ścieżek modyfikacji ws_DataCache spoza frm_Main.
+
 ## [0.1.0] — TBD
 
 - Faza A: implementacja MVP z hybrid cache i workflow kierownika
