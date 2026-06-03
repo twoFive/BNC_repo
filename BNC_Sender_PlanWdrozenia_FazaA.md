@@ -794,20 +794,27 @@ ThisWorkbook.Workbook_Open. Frm_Setup i frm_Main nie wiedzą o sobie nawzajem.
 │ ┌────────────────────────────────────────────────────────────────┐   │
 │ │ ID │ KlientFK │ Nazwa klienta      │ Miesiąc  │ Pole          │   │
 │ ├────┼──────────┼────────────────────┼──────────┼───────────────┤   │
-│ │ 47 │ 12345    │ Acme Sp z o o     │ 2026-05  │ ...           │   │
+│ │ 49 │ 11111    │ Charlie SA         │ 2026-05  │ ...           │   │ ← newest first
 │ │ 48 │ 67890    │ Bravo Ltd          │ 2026-05  │ ...           │   │
-│ │ 49 │ 11111    │ Charlie SA         │ 2026-05  │ ...           │   │
+│ │ 47 │ 12345    │ Acme Sp z o o     │ 2026-05  │ ...           │   │
 │ └────────────────────────────────────────────────────────────────┘   │
+│ [Usuń zaznaczone]                                                    │
 │                                                                      │
-│                              [Pokaż historię]  [Wyślij Wniosek BNC]  │
+│                              [Pokaż historię]  [Wyślij wnioski BNC]  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Nota**: layout zaktualizowany w M3.2 — newest first w ListBox, `btn_DeleteSelected` pod listą, caption SendBatch zmieniony na "Wyślij wnioski BNC" (patrz M3.2).
 
 **Kontrolki**:
 - Label: `lbl_UserInfo`, `lbl_RoleInfo`, `lbl_BatchCount`
 - TextBox: `txt_KlientFK`, `txt_NazwaKlienta`, `txt_MiesiacZgloszenia`, `txt_Fields`
-- ListBox lub ListView: `lst_PendingBatch`
-- Button: `btn_Clear`, `btn_AddToList`, `btn_ShowLog`, `btn_SendBatch`
+- ListBox: `lst_PendingBatch` (5 kolumn, ColumnHeads=True, MultiSelect=Single)
+- Button: `btn_Clear`, `btn_AddToList`, `btn_DeleteSelected` (M3.2), `btn_ShowLog`, `btn_SendBatch`
+
+> **Aktualne źródło prawdy** dla kontrolek: `Source/Forms/frm_Main.LAYOUT.md` (tabele z wszystkimi properties).
+> **Aktualne źródło prawdy** dla kodu: `Source/Forms/frm_Main.code-behind.txt`.
+> Plan zawiera **pseudokod referencyjny** poniżej + zmiany M3.2 — pełna implementacja w Source/.
 
 **Kod**:
 
@@ -951,7 +958,7 @@ End Sub
 - [ ] **3.1.6** Eksport `Source/Forms/frm_Main.frm` + `.frx`
 - [ ] **3.1.7** Git commit
 
-### Kryterium akceptacji M3
+### Kryterium akceptacji M3.1
 
 - [ ] Możesz dodać minimum 5 zgłoszeń do batcha
 - [ ] Lista pending odświeża się po każdym dodaniu
@@ -959,6 +966,94 @@ End Sub
 - [ ] `BNC_DataCache.xlsx` jest zsynchronizowany
 - [ ] Walidacja działa dla każdego pola
 - [ ] Info o roli (kierownik/handlowiec) wyświetla się poprawnie
+
+---
+
+### M3.2 - Hard delete pending records (ADR-006)
+
+**Po co istnieje**: User może usunąć błędnie dodane pending zgłoszenie przed wysyłką batcha. Sent records pozostają immutable (audit trail dla reklamacji BNC).
+
+**Architektoniczna decyzja**: patrz [ADR-006 w `Notatki/DECISIONS.md`](Notatki/DECISIONS.md).
+- **Hard delete** (nie soft `Status=cancelled`) — wiersz znika z `ws_DataCache`, brak śladu.
+- **Tylko pending** — `DeleteRecord` na sent recordzie zwraca `False` + LogError. Defensywny check w warstwie danych.
+- **Confirmation MsgBox** — pojedyncza przeszkoda przed accidental delete.
+
+**Public API w `mod_DataCacheSync`** (dodać po `GetAllRecords`):
+
+```vba
+' Hard delete pojedynczego pending recordu (ADR-006).
+' Defensywnie: tylko Status=pending. Sent records sa immutable.
+' Returns True jesli usunieto, False jesli ID nieznane LUB Status != pending.
+Public Function DeleteRecord(reportID As Long) As Boolean
+    ' 1. Znajdź wiersz po ReportID (iteracja od r=2 do lastRow)
+    ' 2. Jeśli ws.Cells(r, COL_STATUS) <> STATUS_PENDING:
+    '       mod_Utils.LogError "..."
+    '       DeleteRecord = False : Exit Function
+    ' 3. ws.Rows(r).Delete
+    ' 4. ThisWorkbook.Save + SyncToFile
+    ' 5. DeleteRecord = True
+End Function
+```
+
+Pełna implementacja: `Source/Modules/mod_DataCacheSync.bas`.
+
+**Zmiana w `frm_Main` — code-behind**:
+
+1. **Nowy handler `btn_DeleteSelected_Click`**:
+   ```vba
+   Private Sub btn_DeleteSelected_Click()
+       ' 1. Jeśli ListIndex < 0 → MsgBox "Najpierw zaznacz"
+       ' 2. Wyciągnij reportID + nazwa z lst_PendingBatch.List(idx, 0/2)
+       ' 3. MsgBox confirmation:
+       '    "Potwierdzenie usunięcia zgłoszenia BNC
+       '     ID: X | Klient: Y
+       '     Operacja nieodwracalna. Kontynuować?"
+       '    z vbDefaultButton2 (Nie domyślnie)
+       ' 4. Jeśli vbYes → mod_DataCacheSync.DeleteRecord(reportID)
+       '    True  → LogInfo + RefreshPendingList
+       '    False → MsgBox błąd, sprawdź Immediate
+   End Sub
+   ```
+
+2. **Zmiana w `RefreshPendingList`**:
+   - **Newest first** — reverse iteration (`i = pending.Count - 1` ↓ `0`). Najnowszy ReportID na górze listy.
+   - **Brak auto-selekcji** — user musi sam kliknąć row.
+   - `btn_DeleteSelected.Enabled = (pending.Count > 0)` — disabled gdy lista pusta.
+
+3. **`DisableActionButtons`** rozszerzony — dodać `btn_DeleteSelected` (disable podczas wysyłki batcha).
+
+Pełna implementacja: `Source/Forms/frm_Main.code-behind.txt`.
+
+### Zadania M3.2
+
+- [ ] **3.2.1** Dodaj `DeleteRecord(reportID)` w `mod_DataCacheSync` (defensywny check Status=pending)
+- [ ] **3.2.2** Dodaj CommandButton `btn_DeleteSelected` w `frm_Main` pod ListBox, Caption "Usuń zaznaczone"
+- [ ] **3.2.3** Wklej handler `btn_DeleteSelected_Click` z confirmation MsgBox
+- [ ] **3.2.4** Zaktualizuj `RefreshPendingList`: reverse iteration + button enable/disable
+- [ ] **3.2.5** Dodaj `btn_DeleteSelected` do `DisableActionButtons`
+- [ ] **3.2.6** Test funkcjonalny:
+  - Dodaj 3 zgłoszenia → najnowszy na górze ListBox
+  - Zaznacz drugi → klik "Usuń zaznaczone" → confirmation MsgBox z ID + nazwą
+  - Klik "Nie" → record zostaje, brak zmian
+  - Klik "Tak" → record znika z ListBox, `ws_DataCache` ma o 1 wiersz mniej
+  - Usuń wszystkie → `btn_DeleteSelected.Enabled = False` (szary)
+  - Sprawdź `BNC_DataCache.xlsx` (zsynchronizowane)
+- [ ] **3.2.7** Test defensywny (sent immutable):
+  - Dodaj 1 zgłoszenie, wyślij batch (MarkAsSent)
+  - W Immediate: `?mod_DataCacheSync.DeleteRecord(<sentID>)` → `False`
+  - W Immediate: sprawdź log błędu (`[ERROR] mod_DataCacheSync.DeleteRecord: #0 - Odmowa - status='sent'...`)
+  - Sent record nadal w `ws_DataCache`
+- [ ] **3.2.8** Test automatyczny: `mod_Tests.Test_mod_DataCacheSync` (5 nowych asercji z M3.2)
+- [ ] **3.2.9** Git commit (już wykonane: `fd4b3bc feat(M3): hard delete pending records w frm_Main (ADR-006)`)
+
+### Kryterium akceptacji M3.2
+
+- [ ] Pending records można usuwać pojedynczo z confirmation MsgBox
+- [ ] Sent records **nie** można usunąć przez UI ani przez API (`DeleteRecord` zwraca `False`)
+- [ ] Najnowszy record na górze ListBox (newest first)
+- [ ] `btn_DeleteSelected` szary gdy lista pusta
+- [ ] Po delete `BNC_DataCache.xlsx` jest zsynchronizowany (brak wiersza)
+- [ ] `Test_mod_DataCacheSync` zwraca 12 PASS (7 starych + 5 nowych)
 
 ---
 
