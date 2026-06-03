@@ -6,7 +6,8 @@ Diagramy do prezentacji/dyskusji z biznesem. Stan po milestone M5.
 |---|---|---|
 | `02_system_architecture.jpg` | Komponenty systemu i ich rozmieszczenie (4 warstwy: dystrybucja, komputer handlowca, sieciowa, adresaci) | tech / IT |
 | `05_module_architecture.jpg` | Component Diagram (C4 model · poziom 3) — 4 warstwy modułów VBA z zależnościami | tech / dev |
-| `06_business_process.jpg` | **Workflow biznesowy** — proces zgłoszenia klienta do BNC: 3 swim lanes (Handlowiec / Kierownik / Zespół BNC), 8 kroków, decision diamond „handlowiec = kierownik?". Bez technikaliów. | **biznes / decyzyjna** |
+| `06_business_process.jpg` | **Workflow biznesowy v1** — single-page composite: panele Faza A intro + workflow + panele Faza B na jednym obrazie (1400×1560). Dla drukowania A2/A3. | **biznes / decyzyjna** |
+| `06_business_process_v2.jpg` + `.md` | **Workflow biznesowy v2** — split: JPG to czysty workflow (1400×1080), tekstowy opis Fazy A + wartości + Fazy B w markdown. Dla slajdów + executive summary. | **biznes / decyzyjna** |
 | `*.html` | Źródła diagramów (SVG embedded), regenerowalne | — |
 | `post-release/` | **Wariant docelowy v1.0.0** — frm_Tutorial jako pełny moduł, footery zaktualizowane (do prezentacji "jak będzie wyglądać po skończeniu") | tech |
 
