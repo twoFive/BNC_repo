@@ -40,7 +40,7 @@
     Proces BNC — zgłoszenie nowego klienta do programu Bonus New Client
   </text>
   <text x="700" y="74" text-anchor="middle" font-size="15" fill="#546e7a">
-    Workflow biznesowy · trzy strony procesu (handlowiec → kierownik → BNC) · Faza A
+    Workflow biznesowy · pasy = role w procesie (nie tytuły stanowisk) · Faza A
   </text>
 
   <!-- SWIM LANES -->
@@ -48,17 +48,23 @@
   <rect x="490" y="100" width="430" height="900" rx="10" fill="url(#laneOrange)" stroke="#ef6c00" stroke-width="2"/>
   <rect x="930" y="100" width="450" height="900" rx="10" fill="url(#laneBlue)" stroke="#1565c0" stroke-width="2"/>
 
-  <rect x="20" y="100" width="460" height="46" rx="10" fill="#388e3c"/>
-  <rect x="20" y="130" width="460" height="16" fill="#388e3c"/>
-  <text x="250" y="132" text-anchor="middle" font-size="20" font-weight="700" fill="white">HANDLOWIEC</text>
+  <!-- Lane head: UŻYTKOWNIK APLIKACJI (handlowiec lub kierownik) -->
+  <rect x="20" y="100" width="460" height="64" rx="10" fill="#388e3c"/>
+  <rect x="20" y="140" width="460" height="24" fill="#388e3c"/>
+  <text x="250" y="128" text-anchor="middle" font-size="19" font-weight="700" fill="white">UŻYTKOWNIK APLIKACJI</text>
+  <text x="250" y="153" text-anchor="middle" font-size="12" fill="#c8e6c9" font-style="italic">Handlowiec lub Kierownik (gdy zgłasza klienta osobiście)</text>
 
-  <rect x="490" y="100" width="430" height="46" rx="10" fill="#ef6c00"/>
-  <rect x="490" y="130" width="430" height="16" fill="#ef6c00"/>
-  <text x="705" y="132" text-anchor="middle" font-size="20" font-weight="700" fill="white">KIEROWNIK</text>
+  <!-- Lane head: KIEROWNIK (jako odbiorca) -->
+  <rect x="490" y="100" width="430" height="64" rx="10" fill="#ef6c00"/>
+  <rect x="490" y="140" width="430" height="24" fill="#ef6c00"/>
+  <text x="705" y="128" text-anchor="middle" font-size="19" font-weight="700" fill="white">KIEROWNIK (jako odbiorca)</text>
+  <text x="705" y="153" text-anchor="middle" font-size="12" fill="#ffe0b2" font-style="italic">Tylko gdy user aplikacji ≠ kierownik</text>
 
-  <rect x="930" y="100" width="450" height="46" rx="10" fill="#1565c0"/>
-  <rect x="930" y="130" width="450" height="16" fill="#1565c0"/>
-  <text x="1155" y="132" text-anchor="middle" font-size="20" font-weight="700" fill="white">ZESPÓŁ BNC</text>
+  <!-- Lane head: ZESPÓŁ BNC -->
+  <rect x="930" y="100" width="450" height="64" rx="10" fill="#1565c0"/>
+  <rect x="930" y="140" width="450" height="24" fill="#1565c0"/>
+  <text x="1155" y="128" text-anchor="middle" font-size="19" font-weight="700" fill="white">ZESPÓŁ BNC</text>
+  <text x="1155" y="153" text-anchor="middle" font-size="12" fill="#bbdefb" font-style="italic">Jednostka centralna firmy — rejestracja klientów</text>
 
   <!-- ============== HANDLOWIEC FLOW ============== -->
   <circle cx="250" cy="180" r="18" fill="#2e7d32" stroke="#1b5e20" stroke-width="2"/>
@@ -90,18 +96,21 @@
 
   <!-- DIAMOND -->
   <polygon points="250,525 380,605 250,685 120,605" fill="#fff3e0" stroke="#ef6c00" stroke-width="2.5"/>
-  <text x="250" y="595" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">Czy handlowiec</text>
-  <text x="250" y="615" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">jest jednocześnie</text>
-  <text x="250" y="635" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">kierownikiem?</text>
+  <text x="250" y="590" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">Czy user aplikacji</text>
+  <text x="250" y="610" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">jest kierownikiem?</text>
+  <text x="250" y="632" text-anchor="middle" font-size="11" fill="#bf360c" font-style="italic">(EmailKierownika =</text>
+  <text x="250" y="647" text-anchor="middle" font-size="11" fill="#bf360c" font-style="italic">EmailHandlowca?)</text>
 
   <line x1="380" y1="605" x2="490" y2="605" stroke="#e65100" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
-  <text x="410" y="595" font-size="13" font-weight="700" fill="#bf360c">NIE</text>
-  <text x="410" y="623" font-size="11" fill="#bf360c" font-style="italic">(typowo)</text>
+  <text x="408" y="595" font-size="13" font-weight="700" fill="#bf360c">NIE</text>
+  <text x="408" y="623" font-size="11" fill="#bf360c" font-style="italic">(typowo — user</text>
+  <text x="408" y="638" font-size="11" fill="#bf360c" font-style="italic">jest handlowcem)</text>
 
   <path d="M 250 685 L 250 794 L 970 794" fill="none" stroke="#0d47a1" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrowBlue)"/>
   <text x="195" y="710" font-size="13" font-weight="700" fill="#0d47a1">TAK</text>
-  <text x="120" y="730" font-size="11" fill="#0d47a1" font-style="italic">(rzadziej — gdy</text>
-  <text x="120" y="745" font-size="11" fill="#0d47a1" font-style="italic">handlowiec=kierownik)</text>
+  <text x="100" y="728" font-size="11" fill="#0d47a1" font-style="italic">user JEST kierownikiem</text>
+  <text x="100" y="743" font-size="11" fill="#0d47a1" font-style="italic">→ wysyła sam, wprost do BNC</text>
+  <text x="100" y="758" font-size="11" fill="#0d47a1" font-style="italic">(pomija lane „odbiorca")</text>
 
   <!-- ============== KIEROWNIK FLOW ============== -->
   <rect x="530" y="572" width="350" height="68" rx="8" fill="white" stroke="#ef6c00" stroke-width="2"/>

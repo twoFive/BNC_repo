@@ -44,24 +44,42 @@ Aplikacja **BNC_Sender** (plik Excel z makrami VBA, instalowany lokalnie u każd
 
 ## 2. Workflow biznesowy (Faza A)
 
-Diagram pokazuje **trzy strony procesu** (handlowiec → kierownik → BNC) i **decision diamond** różnicujący wysyłkę zależnie od roli usera.
+Diagram pokazuje **trzy role w procesie** (nie tytuły stanowisk) i **decision diamond** różnicujący wysyłkę zależnie od roli usera aplikacji.
 
 📊 **Graf**: [`06_business_process_v2.jpg`](06_business_process_v2.jpg)
 
+### Trzy role w workflow
+
+| Lane | Co reprezentuje | Kto wchodzi w tę rolę |
+|---|---|---|
+| **UŻYTKOWNIK APLIKACJI** | Osoba która wprowadza zgłoszenia i klika "Wyślij" | **Handlowiec** (typowo) lub **Kierownik** (gdy zgłasza klienta osobiście) |
+| **KIEROWNIK (jako odbiorca)** | Osoba która weryfikuje i forwarduje wnioski od handlowca do BNC | Kierownik handlowca — **tylko gdy user aplikacji ≠ kierownik** |
+| **ZESPÓŁ BNC** | Jednostka centralna firmy rejestrująca klientów w programie | Zespół BNC |
+
+> **Kluczowe**: Lane 1 to **rola**, nie konkretne stanowisko. Kierownik może być w tej samej osobie userem aplikacji (gdy sam zgłasza klienta) — wtedy mail leci wprost do BNC, omijając rolę "odbiorca".
+
 ### Krótki opis przepływu
 
-1. **Handlowiec pozyskuje nowego klienta** (spotkanie biznesowe).
-2. **Handlowiec wprowadza zgłoszenie** do aplikacji (dane klienta + miesiąc).
+1. **User pozyskuje nowego klienta** (spotkanie biznesowe).
+2. **User wprowadza zgłoszenie** do aplikacji (dane klienta + miesiąc).
    - Krok 2 może powtórzyć — typowo 10–30 zgłoszeń w trakcie miesiąca.
-3. **Handlowiec wysyła wnioski BNC** (pojedynczo lub batchem z miesiąca).
-4. **Decision diamond**: czy handlowiec jest jednocześnie kierownikiem?
-   - **NIE** (typowo) — mail leci do kierownika.
-   - **TAK** (rzadziej) — mail leci wprost do BNC, omijając kierownik (path TAK na diagramie).
-5. **Kierownik otrzymuje wnioski mailem** od swojego handlowca.
+3. **User wysyła wnioski BNC** (pojedynczo lub batchem z miesiąca).
+4. **Decision diamond**: czy user aplikacji jest kierownikiem?
+   - **NIE** (typowo — user jest handlowcem) → mail leci do kierownika jako "odbiorca akceptujący".
+   - **TAK** (user JEST kierownikiem) → mail leci wprost do BNC, **pomija lane "odbiorca"**.
+5. **Kierownik (jako odbiorca) otrzymuje wnioski mailem** od swojego handlowca.
 6. **Kierownik weryfikuje i akceptuje** — **control gate**, kierownik ponosi odpowiedzialność za poprawność.
-7. **Zespół BNC otrzymuje wnioski** (od kierownika lub wprost od handlowca, gdy ten jest jednocześnie kierownikiem).
+7. **Zespół BNC otrzymuje wnioski** (od kierownika-odbiorcy LUB wprost od usera-kierownika).
 8. **Zespół BNC weryfikuje dane klienta** (kontrola jakości).
 9. **Zespół BNC rejestruje klienta w programie BNC** — klient kwalifikuje się do bonusu.
+
+### Mechanika decyzji w aplikacji
+
+Aplikacja rozpoznaje rolę userka przez porównanie pól w setupie:
+- `EmailKierownika` ≠ `EmailHandlowca` → user jest handlowcem → mail leci do `EmailKierownika`
+- `EmailKierownika` = `EmailHandlowca` → user jest jednocześnie kierownikiem → mail leci wprost do `EmailBNC`
+
+Brak osobnego pola "IsKierownik" — to jest **convention over configuration** (patrz `ADR` w `04_data_model.md`).
 
 ### Audit trail dla reklamacji
 
