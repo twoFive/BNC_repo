@@ -4,7 +4,8 @@ Diagramy do prezentacji/dyskusji z biznesem. Stan po milestone M5.
 
 | Plik | Cel | Audience |
 |---|---|---|
-| `02_system_architecture.jpg` | Komponenty systemu i ich rozmieszczenie (4 warstwy: dystrybucja, komputer handlowca, sieciowa, adresaci) | tech / IT |
+| `01_system_context.jpg` | **C4 Level 1 — System Context**: aktorzy (Handlowiec, Kierownik, Zespół BNC, Dział IT) + systemy zewnętrzne (Outlook, Exchange, OneDrive) wokół BNC_Sender. Statyczna mapa "kto styka się z systemem". Audience: biznes + tech |
+| `02_system_architecture.jpg` | **C4 Level 2 — Container**: komponenty systemu i ich rozmieszczenie (4 warstwy: dystrybucja, komputer handlowca, sieciowa, adresaci) | tech / IT |
 | `05_module_architecture.jpg` | Component Diagram (C4 model · poziom 3) — 4 warstwy modułów VBA z zależnościami | tech / dev |
 | `06_business_process.jpg` | **Workflow biznesowy v1** — single-page composite: panele Faza A intro + workflow + panele Faza B na jednym obrazie (1400×1560). Dla drukowania A2/A3. | **biznes / decyzyjna** |
 | `06_business_process_v2.jpg` + `.md` | **Workflow biznesowy v2** — split: JPG to czysty workflow (1400×1080), tekstowy opis Fazy A + wartości + Fazy B w markdown. Dla slajdów + executive summary. | **biznes / decyzyjna** |
