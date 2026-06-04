@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Proces BNC — workflow biznesowy</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { width: 1400px; height: 1080px; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1400" height="1080" viewBox="0 0 1400 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2e7d32"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#e65100"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#0d47a1"/>
+    </marker>
+    <linearGradient id="laneGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8f5e9"/><stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="laneOrange" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff3e0"/><stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+    <linearGradient id="laneBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e3f2fd"/><stop offset="100%" stop-color="#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="endBox" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff59d"/><stop offset="100%" stop-color="#ffd54f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="700" y="42" text-anchor="middle" font-size="30" font-weight="700" fill="#1a237e">
+    Proces BNC — zgłoszenie nowego klienta do programu Bonus New Client
+  </text>
+  <text x="700" y="74" text-anchor="middle" font-size="15" fill="#546e7a">
+    Workflow biznesowy · pasy = role w procesie (nie tytuły stanowisk) · Faza A
+  </text>
+
+  <!-- SWIM LANES -->
+  <rect x="20" y="100" width="460" height="900" rx="10" fill="url(#laneGreen)" stroke="#388e3c" stroke-width="2"/>
+  <rect x="490" y="100" width="430" height="900" rx="10" fill="url(#laneOrange)" stroke="#ef6c00" stroke-width="2"/>
+  <rect x="930" y="100" width="450" height="900" rx="10" fill="url(#laneBlue)" stroke="#1565c0" stroke-width="2"/>
+
+  <!-- Lane head: UŻYTKOWNIK APLIKACJI (handlowiec lub kierownik) -->
+  <rect x="20" y="100" width="460" height="64" rx="10" fill="#388e3c"/>
+  <rect x="20" y="140" width="460" height="24" fill="#388e3c"/>
+  <text x="250" y="128" text-anchor="middle" font-size="19" font-weight="700" fill="white">UŻYTKOWNIK APLIKACJI</text>
+  <text x="250" y="153" text-anchor="middle" font-size="12" fill="#c8e6c9" font-style="italic">Handlowiec lub Kierownik (gdy zgłasza klienta osobiście)</text>
+
+  <!-- Lane head: KIEROWNIK (jako odbiorca) -->
+  <rect x="490" y="100" width="430" height="64" rx="10" fill="#ef6c00"/>
+  <rect x="490" y="140" width="430" height="24" fill="#ef6c00"/>
+  <text x="705" y="128" text-anchor="middle" font-size="19" font-weight="700" fill="white">KIEROWNIK (jako odbiorca)</text>
+  <text x="705" y="153" text-anchor="middle" font-size="12" fill="#ffe0b2" font-style="italic">Tylko gdy user aplikacji ≠ kierownik</text>
+
+  <!-- Lane head: ZESPÓŁ BNC -->
+  <rect x="930" y="100" width="450" height="64" rx="10" fill="#1565c0"/>
+  <rect x="930" y="140" width="450" height="24" fill="#1565c0"/>
+  <text x="1155" y="128" text-anchor="middle" font-size="19" font-weight="700" fill="white">ZESPÓŁ BNC</text>
+  <text x="1155" y="153" text-anchor="middle" font-size="12" fill="#bbdefb" font-style="italic">Jednostka centralna firmy — rejestracja klientów</text>
+
+  <!-- ============== HANDLOWIEC FLOW ============== -->
+  <circle cx="250" cy="180" r="18" fill="#2e7d32" stroke="#1b5e20" stroke-width="2"/>
+  <text x="250" y="186" text-anchor="middle" font-size="14" font-weight="700" fill="white">START</text>
+
+  <line x1="250" y1="198" x2="250" y2="230" stroke="#2e7d32" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+  <rect x="80" y="232" width="340" height="68" rx="8" fill="white" stroke="#388e3c" stroke-width="2"/>
+  <text x="250" y="258" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">1. Pozyskuje nowego klienta</text>
+  <text x="250" y="280" text-anchor="middle" font-size="12" fill="#37474f">spotkanie biznesowe, prezentacja oferty</text>
+
+  <line x1="250" y1="300" x2="250" y2="320" stroke="#2e7d32" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+  <rect x="80" y="322" width="340" height="86" rx="8" fill="white" stroke="#388e3c" stroke-width="2"/>
+  <text x="250" y="348" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">2. Wprowadza zgłoszenie</text>
+  <text x="250" y="370" text-anchor="middle" font-size="12" fill="#37474f">dane klienta + miesiąc zgłoszenia</text>
+  <text x="250" y="392" text-anchor="middle" font-size="11" fill="#558b2f" font-style="italic">może powtórzyć — typowo 10-30 zgłoszeń w miesiącu</text>
+
+  <path d="M 420 365 Q 460 365 460 345 Q 460 325 420 325" fill="none" stroke="#558b2f" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowGreen)"/>
+  <text x="468" y="350" font-size="10" fill="#558b2f" font-style="italic">↻ kolejne</text>
+
+  <line x1="250" y1="408" x2="250" y2="428" stroke="#2e7d32" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+  <rect x="80" y="430" width="340" height="68" rx="8" fill="white" stroke="#388e3c" stroke-width="2"/>
+  <text x="250" y="456" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">3. Wysyła wnioski BNC</text>
+  <text x="250" y="478" text-anchor="middle" font-size="12" fill="#37474f">pojedynczo lub batchem z miesiąca</text>
+
+  <line x1="250" y1="498" x2="250" y2="520" stroke="#2e7d32" stroke-width="2.5" marker-end="url(#arrowGreen)"/>
+
+  <!-- DIAMOND -->
+  <polygon points="250,525 380,605 250,685 120,605" fill="#fff3e0" stroke="#ef6c00" stroke-width="2.5"/>
+  <text x="250" y="590" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">Czy user aplikacji</text>
+  <text x="250" y="610" text-anchor="middle" font-size="14" font-weight="700" fill="#bf360c">jest kierownikiem?</text>
+  <text x="250" y="632" text-anchor="middle" font-size="11" fill="#bf360c" font-style="italic">(EmailKierownika =</text>
+  <text x="250" y="647" text-anchor="middle" font-size="11" fill="#bf360c" font-style="italic">EmailHandlowca?)</text>
+
+  <line x1="380" y1="605" x2="490" y2="605" stroke="#e65100" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+  <text x="408" y="595" font-size="13" font-weight="700" fill="#bf360c">NIE</text>
+  <text x="408" y="623" font-size="11" fill="#bf360c" font-style="italic">(typowo — user</text>
+  <text x="408" y="638" font-size="11" fill="#bf360c" font-style="italic">jest handlowcem)</text>
+
+  <path d="M 250 685 L 250 794 L 970 794" fill="none" stroke="#0d47a1" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrowBlue)"/>
+  <text x="195" y="710" font-size="13" font-weight="700" fill="#0d47a1">TAK</text>
+  <text x="100" y="728" font-size="11" fill="#0d47a1" font-style="italic">user JEST kierownikiem</text>
+  <text x="100" y="743" font-size="11" fill="#0d47a1" font-style="italic">→ wysyła sam, wprost do BNC</text>
+  <text x="100" y="758" font-size="11" fill="#0d47a1" font-style="italic">(pomija lane „odbiorca")</text>
+
+  <!-- ============== KIEROWNIK FLOW ============== -->
+  <rect x="530" y="572" width="350" height="68" rx="8" fill="white" stroke="#ef6c00" stroke-width="2"/>
+  <text x="705" y="598" text-anchor="middle" font-size="15" font-weight="700" fill="#bf360c">4. Otrzymuje wnioski mailem</text>
+  <text x="705" y="620" text-anchor="middle" font-size="12" fill="#37474f">od swojego handlowca</text>
+
+  <line x1="705" y1="640" x2="705" y2="660" stroke="#e65100" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+
+  <rect x="530" y="662" width="350" height="86" rx="8" fill="white" stroke="#ef6c00" stroke-width="2"/>
+  <text x="705" y="688" text-anchor="middle" font-size="15" font-weight="700" fill="#bf360c">5. Weryfikuje i akceptuje</text>
+  <text x="705" y="710" text-anchor="middle" font-size="12" fill="#37474f">sprawdza poprawność zgłoszenia</text>
+  <text x="705" y="732" text-anchor="middle" font-size="11" fill="#ef6c00" font-style="italic">control gate — kierownik ponosi odpowiedzialność</text>
+
+  <line x1="880" y1="705" x2="970" y2="785" stroke="#e65100" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+  <text x="900" y="755" font-size="11" font-weight="600" fill="#e65100" font-style="italic">forward do BNC</text>
+
+  <!-- ============== BNC FLOW ============== -->
+  <rect x="970" y="760" width="370" height="68" rx="8" fill="white" stroke="#1565c0" stroke-width="2"/>
+  <text x="1155" y="786" text-anchor="middle" font-size="15" font-weight="700" fill="#0d47a1">6. Otrzymuje wnioski</text>
+  <text x="1155" y="808" text-anchor="middle" font-size="12" fill="#37474f">od kierownika lub wprost od handlowca</text>
+
+  <line x1="1155" y1="828" x2="1155" y2="848" stroke="#0d47a1" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+
+  <rect x="970" y="850" width="370" height="68" rx="8" fill="white" stroke="#1565c0" stroke-width="2"/>
+  <text x="1155" y="876" text-anchor="middle" font-size="15" font-weight="700" fill="#0d47a1">7. Weryfikuje dane klienta</text>
+  <text x="1155" y="898" text-anchor="middle" font-size="12" fill="#37474f">kontrola jakości po stronie BNC</text>
+
+  <line x1="1155" y1="918" x2="1155" y2="938" stroke="#0d47a1" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+
+  <rect x="970" y="940" width="370" height="68" rx="8" fill="url(#endBox)" stroke="#f57c00" stroke-width="3"/>
+  <text x="1155" y="966" text-anchor="middle" font-size="15" font-weight="700" fill="#bf360c">8. Rejestruje w programie BNC</text>
+  <text x="1155" y="988" text-anchor="middle" font-size="12" fill="#37474f">klient kwalifikuje się do bonusu</text>
+
+  <!-- END marker -->
+  <circle cx="1155" cy="1035" r="22" fill="#f57c00" stroke="#bf360c" stroke-width="2"/>
+  <text x="1155" y="1042" text-anchor="middle" font-size="13" font-weight="700" fill="white">END</text>
+
+  <line x1="1155" y1="1008" x2="1155" y2="1014" stroke="#bf360c" stroke-width="2.5" marker-end="url(#arrowOrange)"/>
+
+  <!-- Audit trail note -->
+  <rect x="60" y="1015" width="850" height="50" rx="6" fill="#fafafa" stroke="#90a4ae" stroke-width="1"/>
+  <text x="80" y="1035" font-size="12" font-weight="700" fill="#37474f">Audit trail dla reklamacji:</text>
+  <text x="80" y="1054" font-size="11" fill="#546e7a">każdy wniosek zapisywany z adresatem i datą wysyłki — w razie sporu „BNC nie dostało zgłoszenia" handlowiec ma dowód kontaktu.</text>
+</svg>
+</body>
+</html>
