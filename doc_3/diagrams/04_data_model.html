@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Model danych — Faza A</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { width: 1400px; height: 1100px; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1400" height="1100" viewBox="0 0 1400 1100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#0d47a1"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4527a0"/>
+    </marker>
+    <linearGradient id="userCache" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8f5e9"/><stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+    <linearGradient id="dataCache" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e3f2fd"/><stop offset="100%" stop-color="#bbdefb"/>
+    </linearGradient>
+    <linearGradient id="auditFields" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff59d"/><stop offset="100%" stop-color="#ffd54f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="700" y="40" text-anchor="middle" font-size="28" font-weight="700" fill="#1a237e">
+    Model danych — Faza A
+  </text>
+  <text x="700" y="68" text-anchor="middle" font-size="14" fill="#546e7a">
+    ws_UserCache (key-value) · ws_DataCache (table) · audit trail · synchronized backup
+  </text>
+
+  <!-- ====================================================== -->
+  <!-- WS_USERCACHE                                          -->
+  <!-- ====================================================== -->
+  <rect x="20" y="100" width="640" height="640" rx="12" fill="url(#userCache)" stroke="#388e3c" stroke-width="2.5"/>
+  <rect x="20" y="100" width="640" height="50" rx="12" fill="#388e3c"/>
+  <text x="340" y="132" text-anchor="middle" font-size="20" font-weight="700" fill="white">ws_UserCache  (very hidden)</text>
+
+  <text x="340" y="170" text-anchor="middle" font-size="13" fill="#1b5e20" font-style="italic">Format: key-value · kolumna A = klucz, kolumna B = wartość</text>
+  <text x="340" y="188" text-anchor="middle" font-size="12" fill="#37474f">1 wiersz danych usera, ~11 pól</text>
+
+  <!-- Schema rows -->
+  <line x1="50" y1="210" x2="630" y2="210" stroke="#388e3c" stroke-width="2"/>
+  <text x="60" y="226" font-size="12" font-weight="700" fill="#1b5e20">Klucz (col A)</text>
+  <text x="300" y="226" font-size="12" font-weight="700" fill="#1b5e20">Typ</text>
+  <text x="420" y="226" font-size="12" font-weight="700" fill="#1b5e20">Rola</text>
+  <line x1="50" y1="232" x2="630" y2="232" stroke="#388e3c" stroke-width="2"/>
+
+  <!-- Pola tożsamości -->
+  <text x="60" y="254" font-size="12" fill="#37474f"><tspan font-family="monospace">Imie</tspan></text>
+  <text x="300" y="254" font-size="11" fill="#546e7a">String</text>
+  <text x="420" y="254" font-size="11" fill="#37474f">Tożsamość handlowca</text>
+
+  <text x="60" y="274" font-size="12" fill="#37474f"><tspan font-family="monospace">Nazwisko</tspan></text>
+  <text x="300" y="274" font-size="11" fill="#546e7a">String</text>
+  <text x="420" y="274" font-size="11" fill="#37474f">Tożsamość handlowca</text>
+
+  <text x="60" y="294" font-size="12" fill="#37474f"><tspan font-family="monospace">EmailHandlowca</tspan></text>
+  <text x="300" y="294" font-size="11" fill="#546e7a">String (email)</text>
+  <text x="420" y="294" font-size="11" font-weight="600" fill="#0d47a1">Detekcja roli ↓</text>
+
+  <text x="60" y="314" font-size="12" fill="#37474f"><tspan font-family="monospace">CNA_HandlowcaID</tspan></text>
+  <text x="300" y="314" font-size="11" fill="#546e7a">Long</text>
+  <text x="420" y="314" font-size="11" fill="#37474f">Numer handlowca w firmie</text>
+
+  <text x="60" y="334" font-size="12" fill="#37474f"><tspan font-family="monospace">NrOddzialu</tspan></text>
+  <text x="300" y="334" font-size="11" fill="#546e7a">String</text>
+  <text x="420" y="334" font-size="11" fill="#37474f">Identyfikator oddziału</text>
+
+  <line x1="50" y1="348" x2="630" y2="348" stroke="#90a4ae" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Pola konfiguracji adresów -->
+  <text x="60" y="370" font-size="12" fill="#37474f"><tspan font-family="monospace">EmailKierownika</tspan></text>
+  <text x="300" y="370" font-size="11" fill="#546e7a">String (email)</text>
+  <text x="420" y="370" font-size="11" font-weight="600" fill="#0d47a1">Detekcja roli ↑</text>
+
+  <text x="60" y="390" font-size="12" fill="#37474f"><tspan font-family="monospace">EmailBNC</tspan></text>
+  <text x="300" y="390" font-size="11" fill="#546e7a">String (email)</text>
+  <text x="420" y="390" font-size="11" fill="#bf360c">Hardcoded (ADR-003)</text>
+
+  <text x="60" y="410" font-size="12" fill="#37474f"><tspan font-family="monospace">CacheFolderPath</tspan></text>
+  <text x="300" y="410" font-size="11" fill="#546e7a">String (path)</text>
+  <text x="420" y="410" font-size="11" fill="#bf360c">Hardcoded (ADR-003)</text>
+
+  <line x1="50" y1="424" x2="630" y2="424" stroke="#90a4ae" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Pola stanu aplikacji -->
+  <text x="60" y="446" font-size="12" fill="#37474f"><tspan font-family="monospace">DataRejestracji</tspan></text>
+  <text x="300" y="446" font-size="11" fill="#546e7a">Date</text>
+  <text x="420" y="446" font-size="11" fill="#37474f">Timestamp setupu</text>
+
+  <text x="60" y="466" font-size="12" fill="#37474f"><tspan font-family="monospace">SetupCompleted</tspan></text>
+  <text x="300" y="466" font-size="11" fill="#546e7a">Boolean</text>
+  <text x="420" y="466" font-size="11" font-weight="600" fill="#1b5e20">True = pomiń frm_Setup</text>
+
+  <text x="60" y="486" font-size="12" fill="#37474f"><tspan font-family="monospace">DontShowSetupAgain</tspan></text>
+  <text x="300" y="486" font-size="11" fill="#546e7a">Boolean</text>
+  <text x="420" y="486" font-size="11" fill="#37474f">Preferencja usera (M2.2)</text>
+
+  <!-- Detekcja roli highlight box -->
+  <rect x="40" y="510" width="600" height="60" rx="8" fill="#fff3e0" stroke="#bf360c" stroke-width="2"/>
+  <text x="60" y="530" font-size="12" font-weight="700" fill="#bf360c">Convention over configuration:</text>
+  <text x="60" y="550" font-size="11" fill="#37474f">Brak osobnego pola <tspan font-family="monospace">IsKierownik</tspan>. Rola detektowana przez porównanie:</text>
+  <text x="60" y="566" font-size="11" font-family="monospace" fill="#0d47a1">EmailKierownika = EmailHandlowca → user = kierownik (mail wprost do BNC)</text>
+
+  <!-- Sync indicator -->
+  <rect x="40" y="585" width="600" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="60" y="605" font-size="12" font-weight="700" fill="#0d47a1">Synchronized backup:</text>
+  <text x="60" y="623" font-size="11" fill="#37474f">→ <tspan font-family="monospace">BNC_UserCache.xlsx</tspan> (write-through, 1:1, jednostronny sync — ADR-001/002)</text>
+
+  <!-- Skala -->
+  <rect x="40" y="650" width="600" height="76" rx="8" fill="#f5f5f5" stroke="#90a4ae" stroke-width="1"/>
+  <text x="60" y="670" font-size="11" font-weight="700" fill="#37474f">Skala:</text>
+  <text x="60" y="688" font-size="11" fill="#546e7a">• 1 record per user (jeden komputer = jeden plik xlsm = jeden UserCache)</text>
+  <text x="60" y="706" font-size="11" fill="#546e7a">• Zmiany rzadkie — głównie podczas setup, sporadycznie przy update profilu</text>
+  <text x="60" y="722" font-size="11" fill="#546e7a">• Read-heavy: każdy Workbook_Open + każdy wniosek BNC czyta z UserCache</text>
+
+  <!-- ====================================================== -->
+  <!-- WS_DATACACHE                                          -->
+  <!-- ====================================================== -->
+  <rect x="700" y="100" width="680" height="640" rx="12" fill="url(#dataCache)" stroke="#1565c0" stroke-width="2.5"/>
+  <rect x="700" y="100" width="680" height="50" rx="12" fill="#1565c0"/>
+  <text x="1040" y="132" text-anchor="middle" font-size="20" font-weight="700" fill="white">ws_DataCache  (very hidden)</text>
+
+  <text x="1040" y="170" text-anchor="middle" font-size="13" fill="#0d47a1" font-style="italic">Format: tabela · 11 kolumn · 1 wiersz = 1 zgłoszenie BNC</text>
+  <text x="1040" y="188" text-anchor="middle" font-size="12" fill="#37474f">N wierszy (typowo 10-30/miesiąc · ~120-360/rok)</text>
+
+  <!-- Schema table header -->
+  <line x1="720" y1="210" x2="1360" y2="210" stroke="#1565c0" stroke-width="2"/>
+  <text x="730" y="226" font-size="11" font-weight="700" fill="#0d47a1">#</text>
+  <text x="760" y="226" font-size="11" font-weight="700" fill="#0d47a1">Kolumna</text>
+  <text x="980" y="226" font-size="11" font-weight="700" fill="#0d47a1">Typ</text>
+  <text x="1080" y="226" font-size="11" font-weight="700" fill="#0d47a1">Rola</text>
+  <line x1="720" y1="232" x2="1360" y2="232" stroke="#1565c0" stroke-width="2"/>
+
+  <!-- Pola PK + business -->
+  <text x="730" y="250" font-size="11" font-weight="700" fill="#0d47a1">1</text>
+  <text x="760" y="250" font-size="11" font-family="monospace" fill="#37474f">ReportID</text>
+  <text x="980" y="250" font-size="11" fill="#546e7a">Long</text>
+  <text x="1080" y="250" font-size="10" font-weight="600" fill="#bf360c">PK · autoincrement (VBA, nie Excel)</text>
+
+  <text x="730" y="268" font-size="11" font-weight="700" fill="#0d47a1">2</text>
+  <text x="760" y="268" font-size="11" font-family="monospace" fill="#37474f">KlientFK</text>
+  <text x="980" y="268" font-size="11" fill="#546e7a">Long</text>
+  <text x="1080" y="268" font-size="10" fill="#37474f">FK klienta (free-text w Fazie A)</text>
+
+  <text x="730" y="286" font-size="11" font-weight="700" fill="#0d47a1">3</text>
+  <text x="760" y="286" font-size="11" font-family="monospace" fill="#37474f">NazwaKlienta</text>
+  <text x="980" y="286" font-size="11" fill="#546e7a">String(3..200)</text>
+  <text x="1080" y="286" font-size="10" fill="#37474f">Wpisana przez handlowca</text>
+
+  <text x="730" y="304" font-size="11" font-weight="700" fill="#0d47a1">4</text>
+  <text x="760" y="304" font-size="11" font-family="monospace" fill="#37474f">MiesiacZgloszenia</text>
+  <text x="980" y="304" font-size="11" fill="#546e7a">String "yyyy-MM"</text>
+  <text x="1080" y="304" font-size="10" fill="#37474f">Default = bieżący miesiąc</text>
+
+  <text x="730" y="322" font-size="11" font-weight="700" fill="#0d47a1">5</text>
+  <text x="760" y="322" font-size="11" font-family="monospace" fill="#37474f">Fields</text>
+  <text x="980" y="322" font-size="11" fill="#546e7a">String(0..1000)</text>
+  <text x="1080" y="322" font-size="10" fill="#37474f">Pole dodatkowe opcjonalne</text>
+
+  <line x1="720" y1="336" x2="1360" y2="336" stroke="#90a4ae" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Snapshot fields -->
+  <text x="730" y="354" font-size="11" font-weight="700" fill="#0d47a1">6</text>
+  <text x="760" y="354" font-size="11" font-family="monospace" fill="#37474f">CNA_HandlowcaID</text>
+  <text x="980" y="354" font-size="11" fill="#546e7a">Long</text>
+  <text x="1080" y="354" font-size="10" font-weight="600" fill="#7b1fa2">SNAPSHOT z UserCache ⤵</text>
+
+  <text x="730" y="372" font-size="11" font-weight="700" fill="#0d47a1">7</text>
+  <text x="760" y="372" font-size="11" font-family="monospace" fill="#37474f">NrOddzialu</text>
+  <text x="980" y="372" font-size="11" fill="#546e7a">String</text>
+  <text x="1080" y="372" font-size="10" font-weight="600" fill="#7b1fa2">SNAPSHOT z UserCache ⤵</text>
+
+  <text x="730" y="390" font-size="11" font-weight="700" fill="#0d47a1">8</text>
+  <text x="760" y="390" font-size="11" font-family="monospace" fill="#37474f">CreatedTimestamp</text>
+  <text x="980" y="390" font-size="11" fill="#546e7a">Date</text>
+  <text x="1080" y="390" font-size="10" fill="#37474f">Now() w momencie INSERT</text>
+
+  <line x1="720" y1="404" x2="1360" y2="404" stroke="#90a4ae" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Audit trail fields (highlighted) -->
+  <rect x="720" y="410" width="640" height="80" rx="6" fill="url(#auditFields)" opacity="0.4" stroke="#f57c00" stroke-width="1.5"/>
+
+  <text x="730" y="430" font-size="11" font-weight="700" fill="#0d47a1">9</text>
+  <text x="760" y="430" font-size="11" font-family="monospace" fill="#37474f">Status</text>
+  <text x="980" y="430" font-size="11" fill="#546e7a">Enum: pending|sent</text>
+  <text x="1080" y="430" font-size="10" font-weight="600" fill="#bf360c">Stan wniosku · UPDATE przez MarkAsSent</text>
+
+  <text x="730" y="450" font-size="11" font-weight="700" fill="#0d47a1">10</text>
+  <text x="760" y="450" font-size="11" font-family="monospace" fill="#37474f">EmailRecipient</text>
+  <text x="980" y="450" font-size="11" fill="#546e7a">String (email)</text>
+  <text x="1080" y="450" font-size="10" font-weight="600" fill="#bf360c">AUDIT — rzeczywisty adresat wysyłki</text>
+
+  <text x="730" y="470" font-size="11" font-weight="700" fill="#0d47a1">11</text>
+  <text x="760" y="470" font-size="11" font-family="monospace" fill="#37474f">BatchSentTimestamp</text>
+  <text x="980" y="470" font-size="11" fill="#546e7a">Date</text>
+  <text x="1080" y="470" font-size="10" font-weight="600" fill="#bf360c">Timestamp momentu MarkAsSent</text>
+
+  <!-- Status legend -->
+  <rect x="720" y="505" width="640" height="60" rx="8" fill="#fff3e0" stroke="#bf360c" stroke-width="2"/>
+  <text x="730" y="525" font-size="12" font-weight="700" fill="#bf360c">Status — cykl życia rekordu (ADR-006):</text>
+  <text x="730" y="545" font-size="11" fill="#37474f"><tspan font-weight="600" fill="#558b2f">pending</tspan> (po AppendRecord) → <tspan font-weight="600" fill="#1565c0">sent</tspan> (po MarkAsSent — immutable) · ALBO → <tspan font-weight="600" fill="#c62828">HARD DELETE</tspan> (tylko z pending, NIE z sent)</text>
+  <text x="730" y="561" font-size="10" fill="#37474f" font-style="italic">Sent records immutable: DeleteRecord zwraca False dla Status=sent (audit trail chroniony)</text>
+
+  <!-- Snapshot pattern -->
+  <rect x="720" y="580" width="640" height="60" rx="8" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="730" y="600" font-size="12" font-weight="700" fill="#4a148c">Snapshot przy zapisie:</text>
+  <text x="730" y="620" font-size="11" fill="#37474f"><tspan font-family="monospace">CNA_HandlowcaID</tspan>, <tspan font-family="monospace">NrOddzialu</tspan>, <tspan font-family="monospace">EmailRecipient</tspan> są kopiami z UserCache w momencie zapisu.</text>
+  <text x="730" y="635" font-size="10" fill="#37474f" font-style="italic">Jeśli handlowiec zmieni oddział, jego stare zgłoszenia pamiętają stary oddział — wzorzec ochrony historii.</text>
+
+  <!-- Sync indicator -->
+  <rect x="720" y="652" width="640" height="38" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="730" y="671" font-size="12" font-weight="700" fill="#0d47a1">Synchronized backup:</text>
+  <text x="730" y="685" font-size="11" fill="#37474f">→ <tspan font-family="monospace">BNC_DataCache.xlsx</tspan> (write-through · sync po każdej zmianie · best-effort)</text>
+
+  <!-- Skala -->
+  <rect x="720" y="700" width="640" height="40" rx="8" fill="#f5f5f5" stroke="#90a4ae" stroke-width="1"/>
+  <text x="730" y="718" font-size="11" font-weight="700" fill="#37474f">Skala:</text>
+  <text x="780" y="718" font-size="11" fill="#546e7a">~10-30 records/miesiąc/user · 120-360/rok/user · write-heavy (Append+UPDATE+Delete)</text>
+  <text x="730" y="734" font-size="11" fill="#37474f">ReportID po hard delete:</text>
+  <text x="900" y="734" font-size="11" fill="#546e7a">może być reusowany jeśli usunięto ostatni record (GetNextReportID = max+1)</text>
+
+  <!-- Snapshot relationship arrow UserCache -> DataCache -->
+  <path d="M 660 280 C 690 280 690 380 720 380" fill="none" stroke="#4527a0" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowPurple)"/>
+  <rect x="630" y="350" width="100" height="22" rx="4" fill="#ede7f6" stroke="#4527a0" stroke-width="1"/>
+  <text x="680" y="365" text-anchor="middle" font-size="10" font-weight="600" fill="#4527a0">snapshot</text>
+
+  <!-- ====================================================== -->
+  <!-- BOTTOM: KLUCZOWE WZORCE                                -->
+  <!-- ====================================================== -->
+  <rect x="20" y="760" width="1360" height="320" rx="12" fill="#fafafa" stroke="#90a4ae" stroke-width="2"/>
+  <text x="40" y="788" font-size="16" font-weight="700" fill="#37474f">Kluczowe wzorce modelu danych</text>
+
+  <!-- 4 panele wzorców -->
+  <!-- Panel 1: Hybrid cache -->
+  <rect x="40" y="800" width="320" height="120" rx="8" fill="white" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="60" y="822" font-size="13" font-weight="700" fill="#0d47a1">🗄 Hybrid cache</text>
+  <text x="60" y="843" font-size="11" fill="#37474f">Primary: ws_*Cache w xlsm (very hidden)</text>
+  <text x="60" y="861" font-size="11" fill="#37474f">Backup: BNC_*Cache.xlsx (write-through)</text>
+  <text x="60" y="879" font-size="11" fill="#37474f">Sync jednostronny (worksheet → xlsx)</text>
+  <text x="60" y="900" font-size="10" fill="#546e7a" font-style="italic">ADR-001 (Repository), ADR-002 (sync bez clipboard)</text>
+
+  <!-- Panel 2: Audit trail -->
+  <rect x="375" y="800" width="320" height="120" rx="8" fill="white" stroke="#f57c00" stroke-width="1.5"/>
+  <text x="395" y="822" font-size="13" font-weight="700" fill="#bf360c">🔒 Audit trail</text>
+  <text x="395" y="843" font-size="11" fill="#37474f">EmailRecipient + BatchSentTimestamp</text>
+  <text x="395" y="861" font-size="11" fill="#37474f">= dowód kontaktu w razie sporu</text>
+  <text x="395" y="879" font-size="11" fill="#37474f">Sent records IMMUTABLE</text>
+  <text x="395" y="900" font-size="10" fill="#546e7a" font-style="italic">ADR-006 (hard delete tylko dla pending)</text>
+
+  <!-- Panel 3: Convention over config -->
+  <rect x="710" y="800" width="320" height="120" rx="8" fill="white" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="730" y="822" font-size="13" font-weight="700" fill="#1b5e20">🎭 Convention over config</text>
+  <text x="730" y="843" font-size="11" fill="#37474f">Rola = EmailKierownika ?= EmailHandlowca</text>
+  <text x="730" y="861" font-size="11" fill="#37474f">Brak pola IsKierownik</text>
+  <text x="730" y="879" font-size="11" fill="#37474f">Jedna prawda o roli</text>
+  <text x="730" y="900" font-size="10" fill="#546e7a" font-style="italic">W Fazie B: formalne pole Role w SQL</text>
+
+  <!-- Panel 4: Snapshot pattern -->
+  <rect x="1045" y="800" width="320" height="120" rx="8" fill="white" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="1065" y="822" font-size="13" font-weight="700" fill="#4a148c">📸 Snapshot przy zapisie</text>
+  <text x="1065" y="843" font-size="11" fill="#37474f">CNA, NrOddzialu, EmailRecipient</text>
+  <text x="1065" y="861" font-size="11" fill="#37474f">= kopie z UserCache przy INSERT</text>
+  <text x="1065" y="879" font-size="11" fill="#37474f">Zmiany w UserCache nie wpływają na historię</text>
+  <text x="1065" y="900" font-size="10" fill="#546e7a" font-style="italic">Klasyczny wzorzec ochrony historii</text>
+
+  <!-- Migracja do Fazy B -->
+  <rect x="40" y="935" width="1325" height="120" rx="8" fill="#ede7f6" stroke="#4527a0" stroke-width="2"/>
+  <text x="60" y="958" font-size="14" font-weight="700" fill="#311b92">🚀 Ścieżka migracji do Fazy B</text>
+  <text x="60" y="983" font-size="12" fill="#37474f"><tspan font-weight="700">ws_UserCache</tspan> → zostaje jako single-source-of-truth dla user identity (mała tabela, mała wartość bazy)</text>
+  <text x="60" y="1003" font-size="12" fill="#37474f"><tspan font-weight="700">ws_DataCache</tspan> → migruje do <tspan font-family="monospace">tbl_Reports</tspan> w MS SQL Server · agregacja cross-team · integracja z CRM</text>
+  <text x="60" y="1023" font-size="12" fill="#37474f"><tspan font-weight="700">Status</tspan> dochodzi nowy stan: <tspan font-family="monospace" fill="#bf360c">awaiting_acceptance</tspan> (po Power Automate flow) → <tspan font-family="monospace" fill="#1565c0">sent</tspan> (po kliknięciu [Akceptuj] przez kierownika)</text>
+  <text x="60" y="1043" font-size="11" fill="#5e35b2" font-style="italic">Architektura ws_*Cache → mod_DataAccess (Repository Pattern z ADO) bez zmian w warstwach wyższych</text>
+</svg>
+</body>
+</html>

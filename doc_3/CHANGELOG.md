@@ -35,6 +35,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **frm_Log (stale data)**: `LoadRecords` przeniesione z `UserForm_Initialize` do `UserForm_Activate`. Bug pre-existing (sprzed M3.2), uwypuklony przez delete feature — drugi `Show` frm_Log po zmianie `ws_DataCache` nie przeładowywał ListBoxa. Patrz ADR-007.
 - **frm_Main (symetria)**: `RefreshPendingList` przeniesione z `Initialize` do `Activate`. Aktualnie bug niewidoczny (wszystkie modyfikacje pending dzieją się w frm_Main, więc lokalne handlery odświeżają), ale forward-compatible dla przyszłych ścieżek modyfikacji ws_DataCache spoza frm_Main.
 
+### Documentation
+- **`doc_v2/diagrams/03_data_flow_extended.{html,jpg,md}`** — rozszerzenie oryginalnego `03_data_flow.pdf` o **Flow C (hard delete pending z M3.2)**. Wszystkie 3 flows (A: dodanie, B: wysyłka, C: delete) w jednym diagramie + companion MD z opisem każdego kroku, edge cases, cross-refs do ADR-001/002/004/005/006/007.
+- **`doc_v2/diagrams/04_data_model.{html,jpg,md}`** — wizualizacja modelu danych (poprzednio tylko PDF + raw extracted MD). Dwie tabele side-by-side (ws_UserCache + ws_DataCache) z field types i ról, cykl życia rekordu (pending → sent ALBO → hard delete), 4 wzorce (hybrid cache, audit trail, convention over config, snapshot), ścieżka migracji do Fazy B (nowy stan `awaiting_acceptance` przez Power Automate).
+- **doc_3/diagrams/** — sync nowych plików (03_data_flow_extended + 04_data_model) do konsolidowanej dokumentacji.
+
 ## [0.1.0] — TBD
 
 - Faza A: implementacja MVP z hybrid cache i workflow kierownika
