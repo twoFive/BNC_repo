@@ -161,4 +161,39 @@ Gdyby `LoadRecords` siedział w `Initialize`, drugi `Show` `frm_Log` nie wywoła
 
 ---
 
+## ADR-008: Multi-user support przez Registry pattern (UserCache jako current-user cache)
+
+**Data**: 2026-07-04
+**Status**: zatwierdzona (M3.3)
+
+**Decyzja**: Aplikacja wspiera **wielu użytkowników** w tym samym pliku xlsm. Model danych:
+
+1. **`ws_UsersRegistry`** (nowy, very hidden) — **tabelaryczny** arkusz. 1 wiersz = 1 user. 13 kolumn: `UserID` (PK) + wszystkie 11 pól z UserCache + `LastLogin`.
+
+2. **`ws_UserCache`** (istniejący) — **bez zmian**. Nadal key-value, ale semantycznie reprezentuje **aktualnie zalogowanego** usera. Dodatkowy klucz `_CurrentUserID` (prefix `_` = pole systemowe) przechowuje `UserID` z Registry.
+
+3. **`mod_UserCacheSync`** rozszerzony o multi-user API (`GetAllUsers`, `GetUsersCount`, `CurrentUserID`, `SwitchUser`, `AddNewUser`, `PrepareForNewUser`) bez łamania istniejącego API (`GetUserField`, `IsSetupCompleted`, `IsUserManager` nadal czytają z UserCache).
+
+4. **Format `UserID`**: `UZYTKOWNIK_<N>_CNA<cna>` — autoincrement N + CNA (Q2 decyzja). Human-readable, debug-friendly w Immediate Window (np. `UZYTKOWNIK_1_CNA12345`).
+
+**Uzasadnienie**: 
+
+**Registry vs table-in-UserCache** — rozważaliśmy zamianę `ws_UserCache` na tabelę (N wierszy, kolumny per field). Odrzucone bo: (a) łamie wszystkie istniejące ADR-y (UserCache jako key-value jest fundamentem `mod_UserCacheSync` API), (b) 20+ miejsc w kodzie odwołuje się do `GetUserField` — refactor byłby ogromny. Registry + current-cache pattern minimalizuje delta w istniejącym kodzie.
+
+**Dwa arkusze zamiast jednego** — Registry i UserCache pełnią **różne role**: Registry to *storage of record* (persistent, wszyscy userzy), UserCache to *working memory* (aktywny user, szybki dostęp). Analogicznie do wzorca L1 cache + main memory w architekturze CPU.
+
+**`UZYTKOWNIK_<N>_CNA<cna>` format**:
+- **Auto-incrementowany N** — zapewnia unikalność bez zależności od stanu (email może się zmienić, CNA nie zmienia się często).
+- **CNA w ID** — human-readable, ułatwia debug ("kto to `UZYTKOWNIK_5`? → CNA 67890 → sprawdź w HR").
+- **Underscore separator** — ASCII-safe dla operacji stringowych w VBA.
+
+**Konsekwencje**:
+
+- `frm_Setup` **zawsze** tworzy nowego usera (`AddNewUser`), nigdy nie edytuje istniejącego. **Edycja profilu** to future feature (poza zakresem M3.3) — będzie wymagać osobnego formularza `frm_UserEdit` albo trybu dla `frm_Setup`.
+- `ThisWorkbook.Workbook_Open` routing: `GetUsersCount() = 0` → `frm_Setup` (pierwszy user), `≥ 1` → `frm_UserPicker` (nawet gdy 1 user — świadome działanie, user musi kliknąć "Wybierz").
+- **Nie propagujemy zmian UserCache do Registry automatycznie**. Zmiany propagowane tylko przez explicit `SwitchUser` (przed zmianą aktywnego usera zapisujemy stan z UserCache do Registry). Jeśli user zamknie xlsm w trakcie edycji **bez** kliknięcia "Zapisz", zmiany zostają tylko w UserCache — przy następnym uruchomieniu wygaśnie i Registry zwycięży. To akceptowalne w Fazie A.
+- **BNC_UserCache.xlsx** synchronizuje tylko aktualnie aktywnego usera. Registry NIE jest synchronizowany do xlsx w Fazie A — jeśli laptop padnie, tracimy listę userów. W Fazie B (SQL Server) Registry ma migrować do `tbl_Users` z pełnym backupem.
+
+---
+
 <!-- Kolejne ADR-y dodawaj poniżej w trakcie implementacji modułów -->

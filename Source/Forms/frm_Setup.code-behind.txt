@@ -109,13 +109,19 @@ Private Sub btn_Save_Click()
     mod_Utils.EnsureFolderExists CStr(userData("CacheFolderPath"))
     On Error GoTo 0
 
-    ' 4. Zapis do ws_UserCache + auto-sync do xlsx
-    mod_UserCacheSync.SaveUserData userData
+    ' 4. Dodaj nowego usera do Registry (M3.3) + zapis do UserCache jako
+    '    aktywnego + auto-sync do xlsx. AddNewUser wywolywane zawsze -
+    '    frm_Setup jest tylko flow "dodania nowego usera" (pierwszy raz
+    '    LUB z frm_UserPicker.btn_AddNew). Edycja istniejacego usera
+    '    to inny scenariusz, poza zakresem M3.3.
+    Dim newUserId As String
+    newUserId = mod_UserCacheSync.AddNewUser(userData)
 
     ' 5. Auto-recreate plikow cache (DataCache jeszcze nie istnieje przy pierwszym setupie)
     mod_DataCacheSync.EnsureCacheFileExists
 
-    mod_Utils.LogInfo "Setup zakonczony pomyslnie - user=" & CStr(userData("EmailHandlowca"))
+    mod_Utils.LogInfo "Setup zakonczony - user=" & CStr(userData("EmailHandlowca")) & _
+                     " · UserID=" & newUserId
 
     ' 6. Zamknij setup, otworz frm_Main.
     Me.Hide

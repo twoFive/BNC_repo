@@ -5,7 +5,12 @@
 '  Microsoft Excel Objects -> ThisWorkbook (dwuklik), wklej PONIZSZY kod
 '  zastepujac ewentualnie istniejacy.
 '
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.3)
+'  Routing (M3.3 multi-user):
+'  - GetUsersCount = 0 -> pierwszy raz -> frm_Setup (bez pickera)
+'  - GetUsersCount >= 1 -> frm_UserPicker (wybor / dodanie nowego)
+'
+'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.3, M3.3)
+'         Notatki/DECISIONS.md (ADR-008 - multi-user Registry)
 ' ============================================================================
 
 Option Explicit
@@ -18,11 +23,17 @@ Private Sub Workbook_Open()
     mod_UserCacheSync.EnsureCacheFileExists
     mod_DataCacheSync.EnsureCacheFileExists
 
-    ' 2. Decyzja: setup czy main?
-    If mod_UserCacheSync.IsSetupCompleted() Then
-        frm_Main.Show
-    Else
+    ' 2. Routing multi-user (M3.3):
+    '    - 0 userow -> pierwszy raz -> setup nowego usera
+    '    - 1+ userow -> picker (nawet dla 1 usera - Q4 decyzja: swiadome
+    '      dzialanie, user musi kliknac zeby "wejsc")
+    If mod_UserCacheSync.GetUsersCount() = 0 Then
+        mod_Utils.LogInfo "Workbook_Open: pierwszy raz (Registry pusty), pokazuje frm_Setup"
         frm_Setup.Show
+    Else
+        mod_Utils.LogInfo "Workbook_Open: " & mod_UserCacheSync.GetUsersCount() & _
+                         " uzytkownikow w Registry, pokazuje frm_UserPicker"
+        frm_UserPicker.Show
     End If
     Exit Sub
 

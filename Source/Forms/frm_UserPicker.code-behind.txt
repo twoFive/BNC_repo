@@ -1,0 +1,152 @@
+' ============================================================================
+'  frm_UserPicker - code-behind (wklej do okna kodu UserForm w VBE)
+'  Wybor aktywnego usera z listy zarejestrowanych + opcja dodania nowego.
+'  Pokazywany przez ThisWorkbook.Workbook_Open gdy GetUsersCount() > 0.
+'  Patrz: Notatki/DECISIONS.md (ADR-008 - multi-user Registry pattern)
+' ============================================================================
+
+Option Explicit
+
+' UserID kazdego wiersza w lst_Users - potrzebne do SwitchUser po kliknieciu
+' btn_SelectUser (ListBox pokazuje Imie/Nazwisko/Email, nie UserID).
+' Storage: rownolegly array indexed jak lst_Users.List(idx, 0).
+Private m_UserIDs() As String
+Private m_UserCount As Long
+
+' ----- Lifecycle -----------------------------------------------------------
+
+Private Sub UserForm_Activate()
+    PopulateUserList
+End Sub
+
+' ----- Buttons -------------------------------------------------------------
+
+' Wybor zaznaczonego usera z listy. Wywoluje SwitchUser -> laduje UserCache
+' z Registry, ustawia jako aktywnego, aktualizuje LastLogin.
+Private Sub btn_SelectUser_Click()
+    If lst_Users.ListIndex < 0 Then
+        MsgBox "Najpierw zaznacz uzytkownika z listy.", vbInformation, "Brak wyboru"
+        Exit Sub
+    End If
+
+    Dim selectedUserId As String
+    selectedUserId = m_UserIDs(lst_Users.ListIndex)
+
+    On Error GoTo SwitchError
+    mod_UserCacheSync.SwitchUser selectedUserId
+    On Error GoTo 0
+
+    Me.Hide
+    frm_Main.Show
+    Exit Sub
+
+SwitchError:
+    mod_Utils.LogError "frm_UserPicker.btn_SelectUser_Click", Err.Number, Err.Description
+    MsgBox "Nie udalo sie zaladowac uzytkownika. Sprawdz Immediate Window.", _
+           vbExclamation, "Blad"
+End Sub
+
+' Przygotowanie do dodania nowego usera: czysci UserCache, otwiera frm_Setup.
+' frm_Setup.btn_Save wywola AddNewUser (a nie SaveUserData) - nowy wiersz
+' w Registry z autogen UserID.
+Private Sub btn_AddNew_Click()
+    On Error GoTo PrepError
+    mod_UserCacheSync.PrepareForNewUser
+    On Error GoTo 0
+
+    Me.Hide
+    frm_Setup.Show
+    Exit Sub
+
+PrepError:
+    mod_Utils.LogError "frm_UserPicker.btn_AddNew_Click", Err.Number, Err.Description
+    MsgBox "Nie udalo sie przygotowac formularza dla nowego uzytkownika.", _
+           vbExclamation, "Blad"
+End Sub
+
+' Anuluj: zamyka plik xlsm (nie caly Excel). Bez wybranego usera aplikacja
+' nie ma sensu, ale user moze miec inne pliki otwarte - zamykamy tylko nasz.
+Private Sub btn_Cancel_Click()
+    Dim answer As VbMsgBoxResult
+    answer = MsgBox( _
+        "Aplikacja BNC_Sender wymaga wyboru uzytkownika." & vbCrLf & vbCrLf & _
+        "Czy na pewno zamknac aplikacje?", _
+        vbYesNo + vbQuestion, "Potwierdzenie zamkniecia")
+
+    If answer = vbYes Then
+        Me.Hide
+        ThisWorkbook.Close SaveChanges:=False
+    End If
+End Sub
+
+' ----- Helpers -------------------------------------------------------------
+
+' Ladowanie listy userow z Registry do ListBox.
+' Rownolegly array m_UserIDs pamieta UserID kazdego wiersza (potrzebne
+' do SwitchUser bo ListBox pokazuje tylko display fields).
+Private Sub PopulateUserList()
+    Dim users As Collection
+    Set users = mod_UserCacheSync.GetAllUsers()
+
+    lst_Users.Clear
+
+    If users.Count = 0 Then
+        ReDim m_UserIDs(0 To 0)
+        m_UserCount = 0
+        btn_SelectUser.Enabled = False
+        Exit Sub
+    End If
+
+    btn_SelectUser.Enabled = True
+    ReDim m_UserIDs(0 To users.Count - 1)
+    m_UserCount = users.Count
+
+    ' Budowa 2D array dla ListBox.List (szybsze niz AddItem petli)
+    Dim arr() As Variant
+    ReDim arr(0 To users.Count - 1, 0 To 2)
+
+    Dim i As Long
+    Dim u As Object
+    i = 0
+    For Each u In users
+        arr(i, 0) = CStr(u("Imie"))
+        arr(i, 1) = CStr(u("Nazwisko"))
+        arr(i, 2) = CStr(u("EmailHandlowca"))
+        m_UserIDs(i) = CStr(u("UserID"))
+        i = i + 1
+    Next u
+
+    lst_Users.List = arr
+
+    ' Domyslnie zaznaczony ostatnio zalogowany (LastLogin max) - konwencja UX
+    Dim defaultIdx As Long
+    defaultIdx = FindLastLoggedInIndex(users)
+    If defaultIdx >= 0 Then lst_Users.ListIndex = defaultIdx
+End Sub
+
+' Znajduje index usera z najnowszym LastLogin (dla domyslnej selekcji).
+' Returns -1 gdy wszyscy maja empty LastLogin.
+Private Function FindLastLoggedInIndex(users As Collection) As Long
+    Dim maxDate As Date
+    Dim maxIdx As Long
+    Dim i As Long
+    Dim u As Object
+    Dim ll As Variant
+
+    maxIdx = -1
+    maxDate = DateSerial(1900, 1, 1)
+
+    i = 0
+    For Each u In users
+        ll = u("LastLogin")
+        If IsDate(ll) Then
+            If CDate(ll) > maxDate Then
+                maxDate = CDate(ll)
+                maxIdx = i
+            End If
+        End If
+        i = i + 1
+    Next u
+
+    FindLastLoggedInIndex = maxIdx
+End Function

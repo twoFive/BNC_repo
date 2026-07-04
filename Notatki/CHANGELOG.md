@@ -40,6 +40,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/), wersjonowanie [SemVer](
 - **`doc_v2/diagrams/04_data_model.{html,jpg,md}`** — wizualizacja modelu danych (poprzednio tylko PDF + raw extracted MD). Dwie tabele side-by-side (ws_UserCache + ws_DataCache) z field types i ról, cykl życia rekordu (pending → sent ALBO → hard delete), 4 wzorce (hybrid cache, audit trail, convention over config, snapshot), ścieżka migracji do Fazy B (nowy stan `awaiting_acceptance` przez Power Automate).
 - **doc_3/diagrams/** — sync nowych plików (03_data_flow_extended + 04_data_model) do konsolidowanej dokumentacji.
 
+### Added — M3.3 Multi-user support
+- **`mod_UserCacheSync.bas`** rozszerzony o Registry API: `GetUsersCount`, `GetAllUsers`, `CurrentUserID`, `SwitchUser`, `AddNewUser`, `PrepareForNewUser`. Nowy arkusz **`ws_UsersRegistry`** (very hidden, tabelaryczny, 13 kolumn: `UserID` PK + 11 pól user + `LastLogin`). `EnsureRegistrySheet()` auto-tworzy arkusz przy pierwszym dostępie. Existing API (`GetUserField`, `IsSetupCompleted`, `IsUserManager`) **bez zmian** — nadal czyta z UserCache (semantycznie: aktywny user).
+- **`frm_UserPicker.LAYOUT.md`** + **`.code-behind.txt`** — nowy formularz. ListBox 3-kolumnowy (Imię, Nazwisko, Email), przyciski „Wybierz i uruchom" / „Dodaj nowego użytkownika" / „Anuluj" (zamyka xlsm z MsgBox). Domyślna selekcja = user z najnowszym `LastLogin`.
+- **`ThisWorkbook.code.txt`** — routing multi-user: `GetUsersCount() = 0` → `frm_Setup` (pierwszy raz), `≥ 1` → `frm_UserPicker`.
+- **`frm_Setup.code-behind.txt`** — `btn_Save_Click` używa `AddNewUser(userData)` zamiast `SaveUserData` — każde uruchomienie Setup = nowy user w Registry.
+- **`mod_Diagnostic.bas`** — jednorazowy tool developerski (`DumpVBComponents`, `ListPublicProcedures`, `DumpModuleContent`, `CountLinesTotal`) do inspekcji stanu VBProject w VBE. Wymaga `Trust access to the VBA project object model`.
+- **ADR-008** (Multi-user Registry pattern) — uzasadnienie architektury z porównaniem alternatyw + `UserID` format `UZYTKOWNIK_<N>_CNA<cna>`.
+
 ## [0.1.0] — TBD
 
 - Faza A: implementacja MVP z hybrid cache i workflow kierownika
