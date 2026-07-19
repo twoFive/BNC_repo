@@ -111,7 +111,7 @@ Private Sub PopulateUserList()
     For Each u In users
         arr(i, 0) = CStr(u("Imie"))
         arr(i, 1) = CStr(u("Nazwisko"))
-        arr(i, 2) = CStr(u("EmailHandlowca"))
+        arr(i, 2) = CStr(u("CNA_HandlowcaID"))
         m_UserIDs(i) = CStr(u("UserID"))
         i = i + 1
     Next u

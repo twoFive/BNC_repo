@@ -32,14 +32,14 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| ListBox | `lst_Users` | `ColumnCount = 3`, `ColumnHeads = True`, `ColumnWidths = "120;120;180"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) |
+| ListBox | `lst_Users` | `ColumnCount = 3`, `ColumnHeads = True`, `ColumnWidths = "120;120;100"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) |
 
-Kolumny (nagłówki ustawiane w code-behind przez Sheet1 helper — patrz code-behind, `SetColumnHeaders`):
+Kolumny (nagłówki ustawiane w code-behind — patrz `PopulateUserList`):
 1. **Imię**
 2. **Nazwisko**
-3. **Email**
+3. **CNA**
 
-> **Design (M3.3 Q3)**: 3 kolumny — Imię, Nazwisko, Email. Wystarcza żeby rozróżnić userów tego samego nazwiska. CNA i Oddział są w Registry, ale nie w picker'ze (mniej hałasu wizualnego).
+> **Design (M3.3 Q3 — updated)**: 3 kolumny — Imię, Nazwisko, CNA. CNA jest unikalne per handlowca w firmie, więc rozróżnia userów pewniej niż email (który może być roboczy vs personalny). Email i Oddział są w Registry, ale nie w picker'ze.
 
 ### Sekcja: przyciski (na dole)
 
