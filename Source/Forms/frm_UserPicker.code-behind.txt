@@ -7,9 +7,9 @@
 
 Option Explicit
 
-' UserID kazdego wiersza w lst_Users - potrzebne do SwitchUser po kliknieciu
-' btn_SelectUser (ListBox pokazuje Imie/Nazwisko/Email, nie UserID).
-' Storage: rownolegly array indexed jak lst_Users.List(idx, 0).
+' UserID kazdego item'u w cmb_Users - potrzebne do SwitchUser po kliknieciu
+' btn_SelectUser (ComboBox pokazuje concat "Imie Nazwisko · CNA:num", nie UserID).
+' Storage: rownolegly array indexed jak cmb_Users.ListIndex.
 Private m_UserIDs() As String
 Private m_UserCount As Long
 
@@ -24,13 +24,13 @@ End Sub
 ' Wybor zaznaczonego usera z listy. Wywoluje SwitchUser -> laduje UserCache
 ' z Registry, ustawia jako aktywnego, aktualizuje LastLogin.
 Private Sub btn_SelectUser_Click()
-    If lst_Users.ListIndex < 0 Then
-        MsgBox "Najpierw zaznacz uzytkownika z listy.", vbInformation, "Brak wyboru"
+    If cmb_Users.ListIndex < 0 Then
+        MsgBox "Najpierw wybierz uzytkownika z listy rozwijanej.", vbInformation, "Brak wyboru"
         Exit Sub
     End If
 
     Dim selectedUserId As String
-    selectedUserId = m_UserIDs(lst_Users.ListIndex)
+    selectedUserId = m_UserIDs(cmb_Users.ListIndex)
 
     On Error GoTo SwitchError
     mod_UserCacheSync.SwitchUser selectedUserId
@@ -81,14 +81,14 @@ End Sub
 
 ' ----- Helpers -------------------------------------------------------------
 
-' Ladowanie listy userow z Registry do ListBox.
-' Rownolegly array m_UserIDs pamieta UserID kazdego wiersza (potrzebne
-' do SwitchUser bo ListBox pokazuje tylko display fields).
+' Ladowanie listy userow z Registry do ComboBox jako concat "Imie Nazwisko · CNA:num".
+' Rownolegly array m_UserIDs pamieta UserID kazdej pozycji (potrzebne
+' do SwitchUser bo ComboBox pokazuje tylko display string, nie UserID).
 Private Sub PopulateUserList()
     Dim users As Collection
     Set users = mod_UserCacheSync.GetAllUsers()
 
-    lst_Users.Clear
+    cmb_Users.Clear
 
     If users.Count = 0 Then
         ReDim m_UserIDs(0 To 0)
@@ -101,27 +101,28 @@ Private Sub PopulateUserList()
     ReDim m_UserIDs(0 To users.Count - 1)
     m_UserCount = users.Count
 
-    ' Budowa 2D array dla ListBox.List (szybsze niz AddItem petli)
-    Dim arr() As Variant
-    ReDim arr(0 To users.Count - 1, 0 To 2)
-
     Dim i As Long
     Dim u As Object
+    Dim displayText As String
     i = 0
     For Each u In users
-        arr(i, 0) = CStr(u("Imie"))
-        arr(i, 1) = CStr(u("Nazwisko"))
-        arr(i, 2) = CStr(u("CNA_HandlowcaID"))
+        ' Format: "Imie Nazwisko · CNA:num"  (M3.3 update)
+        displayText = CStr(u("Imie")) & " " & _
+                      CStr(u("Nazwisko")) & " · CNA:" & _
+                      CStr(u("CNA_HandlowcaID"))
+        cmb_Users.AddItem displayText
         m_UserIDs(i) = CStr(u("UserID"))
         i = i + 1
     Next u
 
-    lst_Users.List = arr
-
     ' Domyslnie zaznaczony ostatnio zalogowany (LastLogin max) - konwencja UX
     Dim defaultIdx As Long
     defaultIdx = FindLastLoggedInIndex(users)
-    If defaultIdx >= 0 Then lst_Users.ListIndex = defaultIdx
+    If defaultIdx >= 0 Then
+        cmb_Users.ListIndex = defaultIdx
+    Else
+        cmb_Users.ListIndex = 0  ' fallback: pierwszy user na liscie
+    End If
 End Sub
 
 ' Znajduje index usera z najnowszym LastLogin (dla domyslnej selekcji).

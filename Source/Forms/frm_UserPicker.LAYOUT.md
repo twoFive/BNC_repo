@@ -15,7 +15,7 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 | `(Name)` | `frm_UserPicker` |
 | `Caption` | `BNC_Sender — Wybór użytkownika` |
 | `Width` | `440` |
-| `Height` | `380` |
+| `Height` | `220` |
 | `StartUpPosition` | `1 - CenterOwner` |
 
 ---
@@ -32,14 +32,17 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| ListBox | `lst_Users` | `ColumnCount = 3`, `ColumnHeads = True`, `ColumnWidths = "120;120;100"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) |
+| ComboBox | `cmb_Users` | `Style = 2 - fmStyleDropDownList` (forced selection z listy, brak wpisywania tekstu), `Width = 400` |
 
-Kolumny (nagłówki ustawiane w code-behind — patrz `PopulateUserList`):
-1. **Imię**
-2. **Nazwisko**
-3. **CNA**
+Format wyświetlania per pozycja (obliczany w code-behind, `PopulateUserList`):
 
-> **Design (M3.3 Q3 — updated)**: 3 kolumny — Imię, Nazwisko, CNA. CNA jest unikalne per handlowca w firmie, więc rozróżnia userów pewniej niż email (który może być roboczy vs personalny). Email i Oddział są w Registry, ale nie w picker'ze.
+```
+Imię Nazwisko · CNA:<CNA_HandlowcaID>
+```
+
+Przykład: `Jan Kowalski · CNA:12345`, `Anna Nowak · CNA:67890`
+
+> **Design (M3.3 Q3 — updated ×2)**: rozwijana lista (ComboBox) zamiast ListBox. Jedno pole obliczeniowe z konkatenacji Imię, Nazwisko, CNA (label) i numeru CNA. Kompaktowa forma — zwiń jeśli 10+ userów, wygodne dla codziennego użycia (jeden klik do rozwinięcia, jeden do wyboru).
 
 ### Sekcja: przyciski (na dole)
 
