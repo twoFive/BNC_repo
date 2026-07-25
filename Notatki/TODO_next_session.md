@@ -7,7 +7,7 @@
 
 ## 🎯 Pięć kroków (kolejność ma znaczenie)
 
-### ☐ 1. Uzupełnij nagłówki `ws_UsersRegistry`
+### ☐ 1. Uzupełnij nagłówki `ws_UsersRegistry` |x
 
 Arkusz istnieje ale ma pusty wiersz 1. Wywołanie `GetUsersCount` triggeruje `EnsureRegistryHeader`, który uzupełni 13 nagłówków.
 
@@ -21,7 +21,7 @@ Oczekiwane: zwraca `0`, a `ws_UsersRegistry` dostaje w wierszu 1: `UserID | Imie
 
 ---
 
-### ☐ 2. Utwórz **shell** `frm_Log` (bez kontrolek na razie)
+### ☐ 2. Utwórz **shell** `frm_Log` (bez kontrolek na razie) |x
 
 **⚠ Musi być PRZED wklejaniem code-behind do frm_Main** — inaczej compile error na linii `frm_Main.btn_ShowLog_Click` → `frm_Log.Show`.
 
@@ -34,7 +34,7 @@ Verify: `frm_Log` pojawia się w drzewie Project Explorer z 0 lin. kodu.
 
 ---
 
-### ☐ 3. Wklej code-behind do `frm_Main`
+### ☐ 3. Wklej code-behind do `frm_Main` |x
 
 Shell `frm_Main` już istnieje z 0 linii kodu — dodaj kod-behind.
 
@@ -48,15 +48,15 @@ Oczekiwane po tym: `frm_Main` ma ~200 lin. + handlery `UserForm_Initialize`, `Us
 
 ---
 
-### ☐ 4. Import 3 modułów
+### ☐ 4. Import 3 modułów |x
 
 VBE → **File → Import File**, kolejno:
 
 | # | Plik | Efekt |
 |---|---|---|
-| 4a | `Source/Modules/mod_MailSender.bas` | Nowy moduł M4 — `SendBatch`, `DetermineRecipient` |
-| 4b | `Source/Modules/mod_Export.bas` | Nowy moduł M5.1 — `ExportDataCache`, `GetSuggestedExportFileName` |
-| 4c | `Source/Modules/mod_Tests.bas` | **Najpierw Remove** stary (288 lin., 5/7 testów) → **Import** nowy (powinien mieć 7/7 testów) |
+| 4a | `Source/Modules/mod_MailSender.bas` | Nowy moduł M4 — `SendBatch`, `DetermineRecipient` |x
+| 4b | `Source/Modules/mod_Export.bas` | Nowy moduł M5.1 — `ExportDataCache`, `GetSuggestedExportFileName` |x
+| 4c | `Source/Modules/mod_Tests.bas` | **Najpierw Remove** stary (288 lin., 5/7 testów) → **Import** nowy (powinien mieć 7/7 testów) |x
 
 `Ctrl+S` po każdym imporcie.
 
@@ -210,3 +210,81 @@ Compile error po którymś kroku — pierwsze pytanie: **na której linii które
 | `Test_mod_UserCacheSync` FAIL na `SetupCompleted` | Registry lub UserCache w niespójnym stanie — usuń zawartość obu arkuszy ręcznie, rerun test |
 
 Wklej mi output nowego `AuditFullProject` po każdym kroku jeśli chcesz weryfikacji na bieżąco.
+
+---
+
+## 🔧 UPDATE (2026-07-25) — po fixie ComboBox picker
+
+Podczas smoke testu wyszło że `frm_UserPicker` miał ComboBox nazwany `ComboBox1` (VBE default) zamiast `cmb_Users` — compile error na `PopulateUserList`. **Fix**: Properties → `(Name)` = `cmb_Users`. Bug typu "zapomniałem zmienić Name po drag&drop kontrolki z Toolbox".
+
+### ☐ 4d. Ponowny re-import `mod_Tests.bas`
+
+Dodałem **`Test_MultiUser`** (regresja dla M3.3 Registry: `AddNewUser` → `SwitchUser` → `GetAllUsers`). `mod_Tests` który zaimportowałeś w kroku 4c ma 7 procedur — nowy ma **8**.
+
+- Right-click `mod_Tests` w VBE → **Remove mod_Tests** (kliknij **No** przy "Do you want to export?")
+- **File → Import File** → `Source/Modules/mod_Tests.bas`
+- `Ctrl+S`
+
+Po tym:
+- `mod_Diagnostic.ExpectedPublicProcs("mod_Tests")` oczekuje 8/8
+- Nowy audit powinien pokazać `[OK] mod_Tests · API: 8/8`
+
+### ☐ Update oczekiwanego all-green output (linia 105)
+
+Zaktualizuj mentalnie:
+```
+[OK]      mod_Tests              ~430 lin.  API: 8/8   ← było 7/7, dodane Test_MultiUser
+```
+
+### ☐ Test E — Smoke test ComboBox picker (specyficzny po fixie)
+
+**Po dokończeniu kroku 5** (frm_Log kontrolki + code-behind):
+
+1. Zamknij i otwórz plik xlsm
+2. Oczekiwane: **`frm_UserPicker` otwiera się** (bo `GetUsersCount() ≥ 1`)
+3. **Verify ComboBox behavior**:
+   - Widzisz swój profil w rozwijanej liście: **`Imietest · CNA:111`** (lub jak nazwałeś testowego usera)
+   - Domyślnie **zaznaczony** ten user (wskazówka: `LastLogin` = najnowsze)
+   - Kliknij strzałkę w dół — pojawia się lista, użytkownik widoczny
+   - **Nie da się wpisać** własnego tekstu do pola ComboBox (dzięki `Style = 2 - fmStyleDropDownList`)
+4. Kliknij **"Wybierz i uruchom"** → oczekiwane: przejście do `frm_Main` (już ma code-behind z kroku 3)
+5. Verify: `?mod_UserCacheSync.CurrentUserID` — pokazuje wybranego usera
+
+Jeśli któryś krok padnie — wklej dokładnie który.
+
+### ☐ Test F — Smoke test Test_MultiUser (nowy test regresyjny)
+
+W Immediate:
+```
+mod_Tests.Test_MultiUser
+```
+
+Oczekiwane: **~10 asercji PASS**:
+- `AddNewUser returns non-empty` = True
+- `UserID format UZYTKOWNIK_*_CNA999999` = True
+- `GetUsersCount incremented` = origCount+1
+- `CurrentUserID = newUserId (auto-switch)` = newUserId
+- `UserCache.Imie = _TEST_` = "_TEST_"
+- `UserCache.CNA = 999999` = 999999
+- `IsUserManager = True (email kierownika=handlowca)` = True
+- `GetAllUsers contains new UserID` = True
+- `GetAllUsers new user Imie/CNA`
+- `SwitchUser back: CurrentUserID` = origUserId (jeśli byl)
+
+⚠ **Test dodaje wiersz do `ws_UsersRegistry` z Imie=`_TEST_` i CNA=`999999`** — NIE kasuje automatycznie. Aby posprzątać:
+1. Tymczasowo pokaż arkusz: w VBE → `ws_UsersRegistry` → Properties → `Visible` = `-1 - xlSheetVisible`
+2. Znajdź wiersz z Imie `_TEST_` + CNA 999999, usuń go
+3. Wróć `Visible` = `2 - xlSheetVeryHidden`
+
+Alternatywnie zostaw jako drugiego testowego usera — nie przeszkadza.
+
+### ☐ Test G — Smoke test drugiego usera flow (rozszerzone)
+
+**Po Test F** (Registry ma teraz 2 userów: Imietest + _TEST_):
+
+1. Zamknij i otwórz plik
+2. `frm_UserPicker` pokazuje **2 pozycje** w ComboBox
+3. Kliknij `btn_AddNew` → `frm_Setup` (pusty formularz — `PrepareForNewUser` wyczyścił UserCache)
+4. Anuluj (lub wypełnij trzeciego usera)
+5. Verify multi-user routing działa end-to-end
+

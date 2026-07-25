@@ -17,6 +17,7 @@ Public Sub RunAllTests()
     Test_mod_Validation
     Test_mod_MailSender
     Test_mod_Export
+    Test_MultiUser
     Debug.Print "==================== RunAllTests END   ===================="
 End Sub
 
@@ -407,6 +408,95 @@ Public Sub Test_mod_Export()
     On Error GoTo 0
 
     Debug.Print "----- Test_mod_Export DONE -----"
+End Sub
+
+' ----- Multi-user Registry (M3.3, ADR-008) --------------------------------
+
+' Test regresyjny dla multi-user flow. Sprawdza:
+' - AddNewUser -> nowy wiersz w Registry + switch na nowego usera
+' - GenerateUserID format: UZYTKOWNIK_<N>_CNA<cna>
+' - GetAllUsers zwraca nowego usera
+' - SwitchUser back do poprzedniego -> UserCache poprawnie przywrocony
+'
+' UWAGA: test dodaje wiersz do ws_UsersRegistry i NIE kasuje go automatycznie.
+' Test rekordy oznaczone Imie="_TEST_" + CNA=999999 - latwe do rozpoznania
+' i manualnej usuwki. Manualnie usun po testach jesli nie potrzeba historii.
+Public Sub Test_MultiUser()
+    Debug.Print "----- Test_MultiUser (M3.3) -----"
+
+    ' Registry musi istniec - jesli nie, AddNewUser go stworzy
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets("ws_UsersRegistry")
+    On Error GoTo 0
+
+    ' --- Backup aktualnego stanu ---
+    Dim origUserId As String
+    Dim origUserCount As Long
+    origUserId = mod_UserCacheSync.CurrentUserID()
+    origUserCount = mod_UserCacheSync.GetUsersCount()
+    Debug.Print "  [info] Stan wejsciowy: " & origUserCount & " userow, current=" & origUserId
+
+    ' --- AddNewUser: dodaje testowego usera ---
+    Dim testData As Object
+    Set testData = CreateObject("Scripting.Dictionary")
+    testData("Imie") = "_TEST_"
+    testData("Nazwisko") = "MultiUser"
+    testData("EmailHandlowca") = "test.multiuser@example.com"
+    testData("CNA_HandlowcaID") = 999999
+    testData("NrOddzialu") = "TEST"
+    testData("EmailKierownika") = "test.multiuser@example.com"  ' = handlowca → tryb kierownik
+    testData("EmailBNC") = "test-bnc@example.com"
+    testData("CacheFolderPath") = "C:\BNC_CacheFolder\"
+    testData("DataRejestracji") = Now()
+    testData("SetupCompleted") = True
+    testData("DontShowSetupAgain") = False
+
+    Dim newUserId As String
+    newUserId = mod_UserCacheSync.AddNewUser(testData)
+    Debug.Print "  AddNewUser -> " & newUserId
+
+    ' --- Assertions ---
+    AssertEqual "AddNewUser returns non-empty", True, (Len(newUserId) > 0)
+    AssertEqual "UserID format UZYTKOWNIK_*_CNA999999", True, _
+                (InStr(newUserId, "UZYTKOWNIK_") = 1 And InStr(newUserId, "_CNA999999") > 0)
+    AssertEqual "GetUsersCount incremented", origUserCount + 1, mod_UserCacheSync.GetUsersCount()
+    AssertEqual "CurrentUserID = newUserId (auto-switch)", newUserId, mod_UserCacheSync.CurrentUserID()
+
+    ' --- UserCache ma nowego usera ---
+    AssertEqual "UserCache.Imie = _TEST_", "_TEST_", CStr(mod_UserCacheSync.GetUserField("Imie"))
+    AssertEqual "UserCache.CNA = 999999", 999999, mod_UserCacheSync.GetUserField("CNA_HandlowcaID")
+    AssertEqual "IsUserManager = True (email kierownika=handlowca)", True, mod_UserCacheSync.IsUserManager()
+
+    ' --- GetAllUsers zawiera nowego ---
+    Dim users As Collection
+    Set users = mod_UserCacheSync.GetAllUsers()
+    Dim found As Boolean
+    Dim u As Object
+    For Each u In users
+        If CStr(u("UserID")) = newUserId Then
+            found = True
+            AssertEqual "GetAllUsers new user Imie", "_TEST_", CStr(u("Imie"))
+            AssertEqual "GetAllUsers new user CNA", 999999, u("CNA_HandlowcaID")
+            Exit For
+        End If
+    Next u
+    AssertEqual "GetAllUsers contains new UserID", True, found
+
+    ' --- SwitchUser back do poprzedniego (jesli byl) ---
+    If Len(origUserId) > 0 Then
+        mod_UserCacheSync.SwitchUser origUserId
+        AssertEqual "SwitchUser back: CurrentUserID", origUserId, mod_UserCacheSync.CurrentUserID()
+    Else
+        Debug.Print "  [info] SKIP SwitchUser back - brak previousUserId (Test w pustym Registry)"
+    End If
+
+    ' --- Note: testowy user PONIESIE w Registry, oznaczony _TEST_ + CNA=999999 ---
+    Debug.Print "  [info] Testowy user " & newUserId & " ZOSTAJE w Registry."
+    Debug.Print "         Aby usunac: otworz ws_UsersRegistry (Visible=Visible tymczasowo)"
+    Debug.Print "         i usun wiersz gdzie Imie='_TEST_' + CNA=999999"
+
+    Debug.Print "----- Test_MultiUser DONE -----"
 End Sub
 
 ' ----- Helpery testow ------------------------------------------------------
