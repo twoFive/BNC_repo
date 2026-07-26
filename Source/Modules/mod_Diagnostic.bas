@@ -17,7 +17,9 @@ Option Explicit
 '
 '  === POJEDYNCZE SEKCJE ===
 '    mod_Diagnostic.AuditModules           - moduly + Public API
-'    mod_Diagnostic.AuditForms             - formularze (present + puste)
+'    mod_Diagnostic.AuditForms             - formularze (handlery + kontrolki)
+'    mod_Diagnostic.AuditFormControls "frm_Main" - szczegol kontrolek jednego formularza
+'                                            (uzyj gdy compile error "variable not defined")
 '    mod_Diagnostic.AuditSheets            - arkusze + naglowki
 '    mod_Diagnostic.AuditThisWorkbook      - klasa ThisWorkbook
 '
@@ -97,9 +99,9 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
                 "Test_mod_MailSender", "Test_mod_Export", "Test_MultiUser")
         Case "mod_Diagnostic"
             ExpectedPublicProcs = Array( _
-                "AuditFullProject", "AuditModules", "AuditForms", "AuditSheets", _
-                "AuditThisWorkbook", "DumpVBComponents", "ListPublicProcedures", _
-                "DumpModuleContent", "CountLinesTotal")
+                "AuditFullProject", "AuditModules", "AuditForms", "AuditFormControls", _
+                "AuditSheets", "AuditThisWorkbook", "DumpVBComponents", _
+                "ListPublicProcedures", "DumpModuleContent", "CountLinesTotal")
         Case Else
             ExpectedPublicProcs = Array()
     End Select
@@ -147,6 +149,35 @@ Private Function ExpectedFormHandlers(formName As String) As Variant
                 "btn_Cancel_Click")
         Case Else
             ExpectedFormHandlers = Array()
+    End Select
+End Function
+
+' Kontrolki (Name w Designerze) oczekiwane per formularz.
+' Wypelnione TYLKO tymi, do ktorych odwoluje sie code-behind. Brak takiej
+' kontrolki = compile error "variable not defined" przy pierwszym Show/Load.
+' Historyczny bug: ComboBox1 (default) zamiast cmb_Users w frm_UserPicker.
+Private Function ExpectedFormControls(formName As String) As Variant
+    Select Case formName
+        Case "frm_Setup"
+            ExpectedFormControls = Array( _
+                "txt_Imie", "txt_Nazwisko", "txt_EmailHandlowca", "txt_CNA", _
+                "txt_NrOddzialu", "txt_EmailKierownika", "txt_EmailBNC", _
+                "txt_CacheFolderPath", "chk_DontShowSetupAgain", _
+                "btn_Save", "btn_Cancel", "btn_CreateCacheFolder", "btn_ShowTutorial")
+        Case "frm_Main"
+            ExpectedFormControls = Array( _
+                "lbl_UserInfo", "lbl_RoleInfo", "lbl_BatchCount", _
+                "txt_KlientFK", "txt_NazwaKlienta", "txt_MiesiacZgloszenia", "txt_Fields", _
+                "btn_AddToList", "btn_Clear", "btn_SendBatch", "btn_ShowLog", _
+                "btn_DeleteSelected", "lst_PendingBatch")
+        Case "frm_Log"
+            ExpectedFormControls = Array( _
+                "lbl_Stats", "lst_AllRecords", "btn_Export", "btn_Back")
+        Case "frm_UserPicker"
+            ExpectedFormControls = Array( _
+                "cmb_Users", "btn_SelectUser", "btn_AddNew", "btn_Cancel")
+        Case Else
+            ExpectedFormControls = Array()
     End Select
 End Function
 
@@ -255,6 +286,11 @@ Public Sub AuditForms()
             Else
                 Debug.Print "  [OK]      " & PadRight(formName, 22) & lines & " lin.   " & _
                             CheckFormHandlers(vbc, formName)
+                Dim ctlStatus As String
+                ctlStatus = CheckFormControls(vbc, formName)
+                If Len(ctlStatus) > 0 Then
+                    Debug.Print "                                       " & ctlStatus
+                End If
                 presentCount = presentCount + 1
             End If
         End If
@@ -427,6 +463,143 @@ Private Function CheckFormHandlers(vbc As Object, formName As String) As String
                             "  (brak: " & missing & ")"
     End If
 End Function
+
+' Sprawdza czy formularz zawiera wszystkie oczekiwane kontrolki (Name w Designerze).
+' Uzywa VBComponent.Designer.Controls - NIE instansjuje formularza, nie odpala Initialize.
+' Zwraca "Controls: N/M" lub "Controls: N/M  (brak: X, Y)" - lub "" gdy expected pusta.
+Private Function CheckFormControls(vbc As Object, formName As String) As String
+    Dim expected As Variant
+    expected = ExpectedFormControls(formName)
+
+    Dim expectedCount As Long
+    If IsArray(expected) Then
+        On Error Resume Next
+        expectedCount = UBound(expected) - LBound(expected) + 1
+        On Error GoTo 0
+    End If
+
+    If expectedCount = 0 Then
+        CheckFormControls = ""
+        Exit Function
+    End If
+
+    ' Zbuduj set faktycznych kontrolek (Name z Designera).
+    Dim actual As Object
+    Set actual = CreateObject("Scripting.Dictionary")
+    actual.CompareMode = 1 ' TextCompare (case-insensitive)
+
+    Dim designer As Object
+    On Error Resume Next
+    Set designer = vbc.Designer
+    On Error GoTo 0
+
+    If designer Is Nothing Then
+        ' Formularz niedostepny (moze byc otwarty w edytorze designera?).
+        CheckFormControls = "Controls: [BLAD - Designer niedostepny]"
+        Exit Function
+    End If
+
+    Dim ctl As Object
+    On Error Resume Next
+    For Each ctl In designer.Controls
+        actual(ctl.Name) = True
+    Next
+    On Error GoTo 0
+
+    ' Porownaj.
+    Dim foundCount As Long
+    Dim missing As String
+    Dim i As Long
+    For i = LBound(expected) To UBound(expected)
+        If actual.Exists(CStr(expected(i))) Then
+            foundCount = foundCount + 1
+        Else
+            missing = missing & CStr(expected(i)) & ", "
+        End If
+    Next i
+
+    If foundCount = expectedCount Then
+        CheckFormControls = "Kontrolki: " & foundCount & "/" & expectedCount
+    Else
+        If Len(missing) > 0 Then missing = Left$(missing, Len(missing) - 2)
+        CheckFormControls = "Kontrolki: " & foundCount & "/" & expectedCount & _
+                            "  (brak: " & missing & ")"
+    End If
+End Function
+
+' Public: standalone audit kontrolek jednego formularza (do ad-hoc uzycia w Immediate).
+' Wypisuje pelna liste actual + expected + diff.
+' Uzycie: mod_Diagnostic.AuditFormControls "frm_Main"
+Public Sub AuditFormControls(formName As String)
+    On Error GoTo TrustError
+
+    Dim vbc As Object
+    Set vbc = FindVBComponent(formName)
+    If vbc Is Nothing Then
+        Debug.Print "[BLAD] Formularz '" & formName & "' nie znaleziony w projekcie."
+        Exit Sub
+    End If
+
+    Dim designer As Object
+    Set designer = vbc.Designer
+    If designer Is Nothing Then
+        Debug.Print "[BLAD] Designer '" & formName & "' niedostepny."
+        Exit Sub
+    End If
+
+    Debug.Print String(90, "=")
+    Debug.Print "  AUDIT KONTROLEK - " & formName
+    Debug.Print String(90, "=")
+
+    ' Faktyczne kontrolki z Designera.
+    Debug.Print vbNewLine & "-- FAKTYCZNE (Designer.Controls) --"
+    Dim ctl As Object
+    Dim actualCount As Long
+    Dim actual As Object
+    Set actual = CreateObject("Scripting.Dictionary")
+    actual.CompareMode = 1
+    For Each ctl In designer.Controls
+        Debug.Print "  " & PadRight(ctl.Name, 30) & TypeName(ctl)
+        actual(ctl.Name) = True
+        actualCount = actualCount + 1
+    Next
+    Debug.Print "  --> " & actualCount & " kontrolek w Designerze"
+
+    ' Oczekiwane (referowane w code-behind).
+    Dim expected As Variant
+    expected = ExpectedFormControls(formName)
+    Dim expectedCount As Long
+    If IsArray(expected) Then
+        On Error Resume Next
+        expectedCount = UBound(expected) - LBound(expected) + 1
+        On Error GoTo 0
+    End If
+
+    Debug.Print vbNewLine & "-- OCZEKIWANE (referowane w code-behind, per mod_Diagnostic) --"
+    If expectedCount = 0 Then
+        Debug.Print "  (brak listy expected dla '" & formName & "' - dodaj do ExpectedFormControls)"
+    Else
+        Dim i As Long
+        Dim missing As String
+        For i = LBound(expected) To UBound(expected)
+            If actual.Exists(CStr(expected(i))) Then
+                Debug.Print "  [OK]      " & CStr(expected(i))
+            Else
+                Debug.Print "  [MISSING] " & CStr(expected(i)) & "   <-- code-behind wybuchnie na tej kontrolce!"
+                missing = missing & CStr(expected(i)) & ", "
+            End If
+        Next i
+        Debug.Print "  --> " & (expectedCount - IIf(Len(missing) > 0, _
+                    (Len(missing) - Len(Replace(missing, ",", ""))), 0)) & _
+                    "/" & expectedCount & " oczekiwanych obecnych"
+    End If
+
+    Debug.Print String(90, "=")
+    Exit Sub
+
+TrustError:
+    PrintTrustErrorHelp
+End Sub
 
 ' Czy procedura o danej nazwie istnieje w VBComponent.
 Private Function ProcedureExists(vbc As Object, procName As String) As Boolean

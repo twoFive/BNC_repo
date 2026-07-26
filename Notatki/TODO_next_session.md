@@ -62,7 +62,7 @@ VBE → **File → Import File**, kolejno:
 
 ---
 
-### ☐ 5. Rozbuduj `frm_Log` (kontrolki + code-behind)
+### ☐ 5. Rozbuduj `frm_Log` (kontrolki + code-behind) |x
 
 Otwórz `Source/Forms/frm_Log.LAYOUT.md` — pełny spec kontrolek.
 
@@ -70,10 +70,10 @@ Otwórz `Source/Forms/frm_Log.LAYOUT.md` — pełny spec kontrolek.
 
 | Typ | Name | Właściwości kluczowe |
 |---|---|---|
-| Label | `lbl_Stats` | Caption pusty (wypełnia `LoadRecords`) |
-| ListBox | `lst_AllRecords` | `ColumnCount = 6`, `ColumnHeads = False`, `ColumnWidths = "30;60;180;50;180;80"`, `Height = 360`, `MultiSelect = 0 - fmMultiSelectSingle` |
-| CommandButton | `btn_Export` | Caption `"Eksportuj do pliku"` |
-| CommandButton | `btn_Back` | Caption `"Powrót do formularza"`, `Cancel = True` |
+| Label | `lbl_Stats` | Caption pusty (wypełnia `LoadRecords`) |x
+| ListBox | `lst_AllRecords` | `ColumnCount = 6`, `ColumnHeads = False`, `ColumnWidths = "30;60;180;50;180;80"`, `Height = 360`, `MultiSelect = 0 - fmMultiSelectSingle` |x
+| CommandButton | `btn_Export` | Caption `"Eksportuj do pliku"` |x
+| CommandButton | `btn_Back` | Caption `"Powrót do formularza"`, `Cancel = True` |x
 
 **Code-behind**:
 - Prawy klik `frm_Log` → View Code
@@ -277,6 +277,37 @@ Oczekiwane: **~10 asercji PASS**:
 3. Wróć `Visible` = `2 - xlSheetVeryHidden`
 
 Alternatywnie zostaw jako drugiego testowego usera — nie przeszkadza.
+
+### ☐ (NEW 2026-07-26) Test H — AuditFormControls per formularz
+
+**Motywacja**: Compile error "variable not defined" na `lbl_UserInfo` w `frm_Main.UserForm_Initialize` — identyczny bug jak z `ComboBox1`/`cmb_Users` w `frm_UserPicker`. `AuditFullProject` pokazywał `Handlery: 7/7` ale kontrolka nie istniała w Designerze. **Luka systemowa**: audit nie sprawdzał kontrolek. **Fix**: nowa funkcja `mod_Diagnostic.AuditFormControls`.
+
+**Wymaga re-importu `mod_Diagnostic.bas`** — API wzrosło z 9 do 10 procedur (dodane `AuditFormControls` + prywatne helpery `ExpectedFormControls`, `CheckFormControls`).
+
+**Uruchomienie #1 — full audit z nową sekcją Kontrolki**:
+```
+mod_Diagnostic.AuditFullProject
+```
+Teraz per formularz drukuje **dwie linie** — Handlery + Kontrolki:
+```
+[OK]  frm_Main   230 lin.  Handlery: 7/7
+                           Kontrolki: 13/13
+```
+Jeśli któraś kontrolka jest MISSING w Designerze:
+```
+[OK]  frm_Main   230 lin.  Handlery: 7/7
+                           Kontrolki: 12/13  (brak: lbl_UserInfo)
+```
+
+**Uruchomienie #2 — szczegół jednego formularza** (najbardziej użyteczne przy diagnozie compile error):
+```
+mod_Diagnostic.AuditFormControls "frm_Main"
+```
+Wypisuje FAKTYCZNE kontrolki z Designera (`Name` + `TypeName`) + OCZEKIWANE + diff. Znajdziesz np. `Label1` zamiast `lbl_UserInfo` — zmień Name w Properties (F4).
+
+**Wymaganie**: "Trust access to the VBA project object model" musi być włączone (ten sam wymóg co inne `Audit*`).
+
+**Lesson learned**: klasa bugów "kontrolka nie została dodana lub ma default name (Label1/ComboBox1)" — bardzo częsta w VBA UserForm dev. Audit code-behind nie wystarczy, bo compile error łapie dopiero w runtime. `AuditFormControls` łapie to statycznie z Designera.
 
 ### ☐ Test G — Smoke test drugiego usera flow (rozszerzone)
 
