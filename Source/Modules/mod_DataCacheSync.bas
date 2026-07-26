@@ -17,18 +17,18 @@ Private Const SHEET_NAME As String = "ws_DataCache"
 Private Const CACHE_FILE_NAME As String = "BNC_DataCache.xlsx"
 
 ' Schemat kolumn (1-indexed). Naglowki w wierszu 1, dane od wiersza 2.
+' Schema v2 (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
 Private Const COL_REPORT_ID As Long = 1
 Private Const COL_KLIENT_FK As Long = 2
 Private Const COL_NAZWA_KLIENTA As Long = 3
-Private Const COL_MIESIAC As Long = 4
-Private Const COL_FIELDS As Long = 5
-Private Const COL_CNA As Long = 6
-Private Const COL_NR_ODDZIALU As Long = 7
-Private Const COL_CREATED As Long = 8
-Private Const COL_STATUS As Long = 9
-Private Const COL_RECIPIENT As Long = 10
-Private Const COL_BATCH_SENT As Long = 11
-Private Const TOTAL_COLS As Long = 11
+Private Const COL_MIESIAC_OBROTU As Long = 4
+Private Const COL_CNA As Long = 5
+Private Const COL_NR_ODDZIALU As Long = 6
+Private Const COL_CREATED As Long = 7
+Private Const COL_STATUS As Long = 8
+Private Const COL_RECIPIENT As Long = 9
+Private Const COL_BATCH_SENT As Long = 10
+Private Const TOTAL_COLS As Long = 10
 
 Public Const STATUS_PENDING As String = "pending"
 Public Const STATUS_SENT As String = "sent"
@@ -57,8 +57,7 @@ Public Function AppendRecord(reportData As Object) As Long
     ws.Cells(r, COL_REPORT_ID).Value = newID
     ws.Cells(r, COL_KLIENT_FK).Value = SafeGet(reportData, "KlientFK")
     ws.Cells(r, COL_NAZWA_KLIENTA).Value = SafeGet(reportData, "NazwaKlienta")
-    ws.Cells(r, COL_MIESIAC).Value = SafeGet(reportData, "MiesiacZgloszenia")
-    ws.Cells(r, COL_FIELDS).Value = SafeGet(reportData, "Fields")
+    ws.Cells(r, COL_MIESIAC_OBROTU).Value = SafeGet(reportData, "MiesiacObrotu")
 
     ' Snapshot z UserCache - chroni historie przed zmianami w setupie.
     ws.Cells(r, COL_CNA).Value = mod_UserCacheSync.GetUserField("CNA_HandlowcaID")
@@ -205,8 +204,7 @@ Private Sub EnsureHeader(ws As Worksheet)
     ws.Cells(1, COL_REPORT_ID).Value = "ReportID"
     ws.Cells(1, COL_KLIENT_FK).Value = "KlientFK"
     ws.Cells(1, COL_NAZWA_KLIENTA).Value = "NazwaKlienta"
-    ws.Cells(1, COL_MIESIAC).Value = "MiesiacZgloszenia"
-    ws.Cells(1, COL_FIELDS).Value = "Fields"
+    ws.Cells(1, COL_MIESIAC_OBROTU).Value = "MiesiacObrotu"
     ws.Cells(1, COL_CNA).Value = "CNA_HandlowcaID"
     ws.Cells(1, COL_NR_ODDZIALU).Value = "NrOddzialu"
     ws.Cells(1, COL_CREATED).Value = "CreatedTimestamp"
@@ -239,8 +237,7 @@ Private Function GetRecordsWhereStatus(statusFilter As String) As Collection
             rec("ReportID") = ws.Cells(r, COL_REPORT_ID).Value
             rec("KlientFK") = ws.Cells(r, COL_KLIENT_FK).Value
             rec("NazwaKlienta") = ws.Cells(r, COL_NAZWA_KLIENTA).Value
-            rec("MiesiacZgloszenia") = ws.Cells(r, COL_MIESIAC).Value
-            rec("Fields") = ws.Cells(r, COL_FIELDS).Value
+            rec("MiesiacObrotu") = ws.Cells(r, COL_MIESIAC_OBROTU).Value
             rec("CNA_HandlowcaID") = ws.Cells(r, COL_CNA).Value
             rec("NrOddzialu") = ws.Cells(r, COL_NR_ODDZIALU).Value
             rec("CreatedTimestamp") = ws.Cells(r, COL_CREATED).Value

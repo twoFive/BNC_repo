@@ -1,6 +1,6 @@
-# Przepływy danych — Faza A (extended z M3.2)
+# Przepływy danych — Faza A (extended z M3.2 + Schema v2)
 
-> **Aktualizacja oryginału**: `pdfs/BNC_fazaA_03_data_flow.pdf` opisuje Flow A i Flow B. Ten dokument **rozszerza** o **Flow C — hard delete pending records** dodany w M3.2 (commit `fd4b3bc`, ADR-006).
+> **Aktualizacja oryginału**: `pdfs/BNC_fazaA_03_data_flow.pdf` opisuje Flow A i Flow B. Ten dokument **rozszerza** o **Flow C — hard delete pending records** dodany w M3.2 (commit `fd4b3bc`, ADR-006), oraz uwzględnia **Schema v2** (2026-07-26 — usunięto `Fields`, rename `MiesiacZgloszenia` → `MiesiacObrotu`, patrz [`04_data_model.md`](04_data_model.md)).
 >
 > 📊 **Graf**: [`03_data_flow_extended.jpg`](03_data_flow_extended.jpg)
 
@@ -12,8 +12,8 @@
 
 ### Kroki
 
-1. **User wpisuje dane** w `frm_Main`: `KlientFK`, `NazwaKlienta`, `MiesiacZgloszenia`, `Fields` (opcjonalne).
-2. **Walidacja** — `mod_Validation.ValidateReportData(reportData)` — sprawdza FK jako Long > 0, długość nazwy klienta 3–200, format miesiąca `yyyy-MM`, długość fields ≤ 1000.
+1. **User wpisuje dane** w `frm_Main`: `KlientFK`, `NazwaKlienta`, `MiesiacObrotu` (schema v2 — bez `Fields`, rename z `MiesiacZgloszenia`).
+2. **Walidacja** — `mod_Validation.ValidateReportData(reportData)` — sprawdza FK jako Long > 0, długość nazwy klienta 3–200, format miesiąca obrotu `yyyy-MM`.
 3. **INSERT pending** — `mod_DataCacheSync.AppendRecord(reportData)`:
    - Auto-generuje `ReportID` (max+1).
    - **Snapshot** `CNA_HandlowcaID`, `NrOddzialu` z `ws_UserCache`.
@@ -37,7 +37,7 @@ Record w `ws_DataCache` ze `Status=pending`, widoczny na liście batcha, kopia w
 
 1. **Confirmation MsgBox** — pokazuje liczbę pending + adresat (zależnie od roli).
 2. **GetPendingRecords** — `mod_DataCacheSync.GetPendingRecords()` zwraca wszystkie wiersze ze `Status=pending`.
-3. **GenerateTempFile** — `mod_MailSender` tworzy `%TEMP%\BNC_Wniosek_yyyymmdd_hhmmss.xlsx` z 8 polami biznesowymi (bez `Status`/`EmailRecipient` — to pola wewnętrzne aplikacji). ADR-004.
+3. **GenerateTempFile** — `mod_MailSender` tworzy `%TEMP%\BNC_Wniosek_yyyymmdd_hhmmss.xlsx` z **7 polami biznesowymi** (schema v2 — bez `Fields`, `Status`, `EmailRecipient` — to pola wewnętrzne aplikacji). ADR-004. Kolumny: `ReportID`, `KlientFK`, `NazwaKlienta`, `CNA_HandlowcaID`, `NrOddzialu`, `MiesiacObrotu`, `CreatedTimestamp`.
 4. **DECISION DIAMOND** — `mod_MailSender.DetermineRecipient()`:
    - `EmailKierownika = EmailHandlowca` → **user = kierownik** → `To = EmailBNC` + body "do weryfikacji".
    - `EmailKierownika ≠ EmailHandlowca` → **user = handlowiec** → `To = EmailKierownika` + body "do weryfikacji i przekazania do BNC".

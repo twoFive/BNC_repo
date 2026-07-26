@@ -156,14 +156,14 @@ Private Function GenerateTempFile(records As Collection) As String
 
     ' Naglowki wlasciwe dla wniosku (subset z DataCache, bez Status/Recipient
     ' bo to sa pola wewnetrzne aplikacji - BNC dostaje tylko dane biznesowe).
+    ' Schema v2: 7 kolumn (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
     ws.Cells(1, 1).Value = "ReportID"
     ws.Cells(1, 2).Value = "KlientFK"
     ws.Cells(1, 3).Value = "NazwaKlienta"
     ws.Cells(1, 4).Value = "CNA_HandlowcaID"
     ws.Cells(1, 5).Value = "NrOddzialu"
-    ws.Cells(1, 6).Value = "MiesiacZgloszenia"
-    ws.Cells(1, 7).Value = "Fields"
-    ws.Cells(1, 8).Value = "CreatedTimestamp"
+    ws.Cells(1, 6).Value = "MiesiacObrotu"
+    ws.Cells(1, 7).Value = "CreatedTimestamp"
 
     Dim r As Long
     Dim record As Object
@@ -174,9 +174,8 @@ Private Function GenerateTempFile(records As Collection) As String
         ws.Cells(r, 3).Value = record("NazwaKlienta")
         ws.Cells(r, 4).Value = record("CNA_HandlowcaID")
         ws.Cells(r, 5).Value = record("NrOddzialu")
-        ws.Cells(r, 6).Value = record("MiesiacZgloszenia")
-        ws.Cells(r, 7).Value = record("Fields")
-        ws.Cells(r, 8).Value = record("CreatedTimestamp")
+        ws.Cells(r, 6).Value = record("MiesiacObrotu")
+        ws.Cells(r, 7).Value = record("CreatedTimestamp")
         r = r + 1
     Next record
 

@@ -319,3 +319,98 @@ Wypisuje FAKTYCZNE kontrolki z Designera (`Name` + `TypeName`) + OCZEKIWANE + di
 4. Anuluj (lub wypełnij trzeciego usera)
 5. Verify multi-user routing działa end-to-end
 
+---
+
+## 🆕 Schema v2 migration (2026-07-26)
+
+**Kontekst**: usunięto kolumnę `Fields` z `ws_DataCache`, rename `MiesiacZgloszenia` → `MiesiacObrotu` (biznesowo jaśniej — "kiedy klient wykonał obrót"). `DataZgloszenia` rozważane i **odrzucone** (redundancja z `CreatedTimestamp` — YAGNI). Schema: 11 → 10 kolumn.
+
+**Wpływ**: breaking change dla `BNC_DataCache.xlsx`. Brak migration code w aplikacji (Faza A, 0 productionowych userów).
+
+### ☐ S1. Manual delete starego cache
+
+1. **Zamknij Excel całkowicie** (proces `EXCEL.EXE`, nie tylko xlsm)
+2. Explorer: usuń `C:\BNC_CacheFolder\BNC_DataCache.xlsx`
+
+### ☐ S2. Re-import wszystkich zmienionych modułów
+
+VBE → prawy klik → Remove → No → Import File. Zaimportuj **ponownie**:
+- `Source/Modules/mod_DataCacheSync.bas` — schema constants, AppendRecord, EnsureHeader, GetRecordsWhereStatus
+- `Source/Modules/mod_Validation.bas` — usunięte `MAX_FIELDS` + Fields validation, rename klucza `MiesiacObrotu`
+- `Source/Modules/mod_MailSender.bas` — `GenerateTempFile` 8→7 kolumn
+- `Source/Modules/mod_Tests.bas` — testowe rekordy shape v2
+- `Source/Modules/mod_Diagnostic.bas` — `ExpectedSheetHeaders("ws_DataCache")` 10 nazw + `ExpectedFormControls("frm_Main")` bez `txt_Fields`
+
+### ☐ S3. `frm_Main` — Designer changes
+
+W VBE otwórz `frm_Main` w Designerze:
+- **Usuń** kontrolki:
+  - `lbl_Fields`
+  - `txt_Fields`
+- **Rename** kontrolek (Properties → `(Name)`):
+  - `lbl_MiesiacZgloszenia` → `lbl_MiesiacObrotu`
+  - `txt_MiesiacZgloszenia` → `txt_MiesiacObrotu`
+- **Update Caption** `lbl_MiesiacObrotu`: `"Miesiąc wykonania obrotu przez klienta:"`
+- **Update `lst_PendingBatch` properties** (Properties → F4):
+  - `ColumnCount = 4` (było 5)
+  - `ColumnWidths = "30;60;220;80"` (było `"30;60;180;60;200"`)
+
+### ☐ S4. `frm_Main` — Re-paste code-behind
+
+VBE → View Code na `frm_Main` → `Ctrl+A` → Delete → wklej całą zawartość z `Source/Forms/frm_Main.code-behind.txt`. Zmiany:
+- `UserForm_Initialize` — `txt_MiesiacObrotu.Text = ...`
+- `btn_AddToList_Click` — usunięto `reportData("Fields")`, rename klucza `MiesiacObrotu`
+- `ClearFormFields` — usunięto `txt_Fields.Text = ""`, komentarz `MiesiacObrotu`
+- `RefreshPendingList` — ListBox `ReDim arr(0 To ..., 0 To 3)` (4 kolumny), usunięto Fields column
+
+### ☐ S5. `Ctrl+S` (save xlsm)
+
+### ☐ S6. Zamknij i otwórz xlsm
+
+- `Workbook_Open` → `EnsureCacheFileExists` widzi że plik nie istnieje → tworzy **fresh** `BNC_DataCache.xlsx` z 10 kolumnami schema v2.
+
+### ☐ S7. Weryfikacja — Immediate Window
+
+```
+mod_Diagnostic.AuditFullProject
+```
+
+Oczekiwane:
+```
+[OK]      ws_DataCache          (very hidden)     Naglowki: 10/10  Rows: 0
+[OK]      frm_Main              XXX lin.  Handlery: 7/7
+                                          Kontrolki: 12/12   ← było 13/13 (bez txt_Fields)
+```
+
+```
+mod_Diagnostic.AuditFormControls "frm_Main"
+```
+
+Oczekiwane 12/12 obecnych, żadnego MISSING. FAKTYCZNE listuje `txt_MiesiacObrotu` (nie `txt_MiesiacZgloszenia`), brak `txt_Fields`/`lbl_Fields`.
+
+```
+mod_Tests.RunAllTests
+```
+
+Oczekiwane: ~76 asercji PASS (bez zmiany liczby, bo Fields test usunięty ale nowe testy nie dodane — schema v2 to uproszczenie, nie rozszerzenie).
+
+### ☐ S8. Manual smoke test w `frm_Main`
+
+1. Wpisz KlientFK, NazwaKlienta, MiesiacObrotu (default = bieżący miesiąc) — kliknij "Dodaj do listy"
+2. Verify: ListBox pokazuje 4 kolumny (ID, KlientFK, Nazwa, Miesiąc obrotu) — brak Fields
+3. Dodaj 2-3 zgłoszenia
+4. `btn_DeleteSelected` — usuń jedno pending
+5. `btn_ShowLog` → verify frm_Log otwiera się (jego ListBox 6 kolumn: ID, KlientFK, Nazwa, Status, Wysłany, Data — nie dotknięty przez schema v2, patrz LAYOUT)
+6. `btn_Back` → wraca do frm_Main
+7. Klik "Wyślij Wniosek BNC" (jeśli masz skonfigurowany Outlook) — mail leci z załącznikiem xlsx **7 kolumn** biznesowych
+8. `mod_Tests.Test_MultiUser` — nadal PASS (bez zmian, dotyczy Registry nie DataCache)
+
+### 🚫 Co się NIE zmienia
+
+- `frm_Log` code-behind — jego ListBox używa `ReportID`, `KlientFK`, `NazwaKlienta`, `Status`, `EmailRecipient`, `BatchSentTimestamp` — żadne z tych nie zniknęło ani nie zostało rename'owane. **Brak zmian w `frm_Log.code-behind.txt`**.
+- `ws_UserCache` schema — bez zmian.
+- `ws_UsersRegistry` schema — bez zmian.
+- `mod_UserCacheSync` — bez zmian.
+- `mod_Utils`, `mod_Export` — bez zmian.
+- ADR-y — bez nowego ADR (rename kolumny to zmiana kosmetyczna, usunięcie Fields to YAGNI cleanup — nie decyzja architektoniczna zmieniająca kierunek projektu).
+

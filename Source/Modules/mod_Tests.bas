@@ -148,13 +148,12 @@ Public Sub Test_mod_DataCacheSync()
         Exit Sub
     End If
 
-    ' --- AppendRecord ---
+    ' --- AppendRecord (schema v2: bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia) ---
     Dim newRecord As Object
     Set newRecord = CreateObject("Scripting.Dictionary")
     newRecord("KlientFK") = 99999
     newRecord("NazwaKlienta") = "_TEST_Klient_DoUsuniecia_"
-    newRecord("MiesiacZgloszenia") = mod_Utils.GetCurrentMonthYear()
-    newRecord("Fields") = "smoke test fields"
+    newRecord("MiesiacObrotu") = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
 
     Dim newID As Long
     newID = mod_DataCacheSync.AppendRecord(newRecord)
@@ -210,8 +209,7 @@ Public Sub Test_mod_DataCacheSync()
     Set pendingRecord = CreateObject("Scripting.Dictionary")
     pendingRecord("KlientFK") = 88888
     pendingRecord("NazwaKlienta") = "_TEST_Klient_DoDelete_"
-    pendingRecord("MiesiacZgloszenia") = mod_Utils.GetCurrentMonthYear()
-    pendingRecord("Fields") = "smoke test delete"
+    pendingRecord("MiesiacObrotu") = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
 
     Dim deleteID As Long
     deleteID = mod_DataCacheSync.AppendRecord(pendingRecord)
@@ -298,13 +296,12 @@ Public Sub Test_mod_Validation()
     AssertEqual "ValidateSetupData bad CNA", _
         True, (Len(mod_Validation.ValidateSetupData(setup)) > 0)
 
-    ' --- ValidateReportData ---
+    ' --- ValidateReportData (schema v2: bez Fields, MiesiacObrotu) ---
     Dim rep As Object
     Set rep = CreateObject("Scripting.Dictionary")
     rep("KlientFK") = "999"
     rep("NazwaKlienta") = "Acme Sp. z o.o."
-    rep("MiesiacZgloszenia") = "2026-05"
-    rep("Fields") = "extra info"
+    rep("MiesiacObrotu") = "2026-05"
     AssertEqual "ValidateReportData OK", "", mod_Validation.ValidateReportData(rep)
 
     rep("NazwaKlienta") = "ab"  ' za krotkie

@@ -1,6 +1,6 @@
 # Model danych — Faza A
 
-> **Aktualizacja oryginału**: `pdfs/BNC_fazaA_04_data_model.pdf` opisuje strukturę baseline. Ten dokument **uzupełnia** o zmiany z M2.2 (rename `DontShowTutorial` → `DontShowSetupAgain`) i M3.2 (hard delete pending — ADR-006).
+> **Aktualizacja oryginału**: `pdfs/BNC_fazaA_04_data_model.pdf` opisuje strukturę baseline. Ten dokument **uzupełnia** o zmiany z M2.2 (rename `DontShowTutorial` → `DontShowSetupAgain`), M3.2 (hard delete pending — ADR-006) i **Schema v2** (2026-07-26 — rename `MiesiacZgloszenia` → `MiesiacObrotu`, usunięto kolumnę `Fields`; breaking change wymagający hard reset `BNC_DataCache.xlsx`, brak production data w Fazie A).
 >
 > 📊 **Graf**: [`04_data_model.jpg`](04_data_model.jpg)
 
@@ -51,24 +51,33 @@ Korzyść: jedna prawda o roli (nie da się mieć sprzecznych pól), brak nowego
 ## 2. `ws_DataCache` — historia zgłoszeń BNC
 
 > **Lokalizacja**: ukryty arkusz (`Visible = xlSheetVeryHidden`).
-> **Format**: tabela (11 kolumn, 1 wiersz = 1 zgłoszenie BNC).
+> **Format**: tabela (**10 kolumn** — schema v2, 1 wiersz = 1 zgłoszenie BNC).
 > **Skala**: typowo 10–30 records/miesiąc/user, 120–360/rok/user.
 
-### Schema (11 kolumn)
+### Schema v2 (10 kolumn, 2026-07-26)
 
 | # | Kolumna | Typ | Rola |
 |---|---|---|---|
 | 1 | `ReportID` | Long | **PK** · autoincrement (logika w VBA, `GetNextReportID = max(ID) + 1`) |
 | 2 | `KlientFK` | Long | FK klienta (free-text w Fazie A, w Fazie B FK do `tbl_Clients`) |
 | 3 | `NazwaKlienta` | String(3..200) | Wpisana przez handlowca |
-| 4 | `MiesiacZgloszenia` | String "yyyy-MM" | Default = bieżący miesiąc |
-| 5 | `Fields` | String(0..1000) | Pole dodatkowe (opcjonalne) |
-| 6 | `CNA_HandlowcaID` | Long | **SNAPSHOT** z `ws_UserCache` przy INSERT |
-| 7 | `NrOddzialu` | String | **SNAPSHOT** z `ws_UserCache` przy INSERT |
-| 8 | `CreatedTimestamp` | Date | `Now()` w momencie INSERT |
-| 9 | `Status` | Enum: `pending` \| `sent` | Stan wniosku · UPDATE przez `MarkAsSent` |
-| 10 | `EmailRecipient` | String (email) | **AUDIT** — rzeczywisty adresat wysyłki |
-| 11 | `BatchSentTimestamp` | Date | Timestamp momentu `MarkAsSent` |
+| 4 | `MiesiacObrotu` | String "yyyy-MM" | **Miesiąc wykonania obrotu przez klienta** (business time klienta). Default = bieżący miesiąc. Rename z `MiesiacZgloszenia` w schema v2 dla jasności semantyki. |
+| 5 | `CNA_HandlowcaID` | Long | **SNAPSHOT** z `ws_UserCache` przy INSERT |
+| 6 | `NrOddzialu` | String | **SNAPSHOT** z `ws_UserCache` przy INSERT |
+| 7 | `CreatedTimestamp` | Date | `Now()` w momencie INSERT (**system time** — audit fact, kiedy record trafił do systemu) |
+| 8 | `Status` | Enum: `pending` \| `sent` | Stan wniosku · UPDATE przez `MarkAsSent` |
+| 9 | `EmailRecipient` | String (email) | **AUDIT** — rzeczywisty adresat wysyłki |
+| 10 | `BatchSentTimestamp` | Date | Timestamp momentu `MarkAsSent` (**system time**) |
+
+### Schema v1 → v2 diff
+
+| Zmiana | Powód |
+|---|---|
+| **Rename** `MiesiacZgloszenia` → `MiesiacObrotu` (kolumna 4) | Jaśniejsza semantyka — pole opisuje **kiedy klient wykonał obrót** (fakt biznesowy klienta), nie **kiedy handlowiec zgłasza** (co jest już w `CreatedTimestamp`). |
+| **Usunięcie** `Fields` (kolumna 5, wraz z `MAX_FIELDS=1000`) | YAGNI — nieużywane pole "dodatkowe" bez konkretnego business case. Kolumny 6-11 przesunięte na 5-10. |
+| **NIE dodane** `DataZgloszenia` | Rozważane, odrzucone — redundancja z `CreatedTimestamp`. Bez konkretnego scenariusza backdatingu nie ma wartości analitycznej ponad tym co już mamy. |
+
+**Migration Faza A**: brak production data (0 userów productionowych). Manual delete starego `BNC_DataCache.xlsx` przed pierwszym otwarciem nowej wersji → `EnsureCacheFileExists` tworzy fresh 10-kolumnowy plik. Zero migration code w aplikacji (YAGNI).
 
 ### Cykl życia rekordu
 

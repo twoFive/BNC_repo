@@ -114,9 +114,10 @@ Private Function ExpectedSheetHeaders(sheetName As String) As Variant
             ' Key-value - naglowka nie ma, klucze w kolumnie A
             ExpectedSheetHeaders = Array()  ' skip check
         Case "ws_DataCache"
+            ' Schema v2: 10 kolumn (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
             ExpectedSheetHeaders = Array( _
-                "ReportID", "KlientFK", "NazwaKlienta", "MiesiacZgloszenia", _
-                "Fields", "CNA_HandlowcaID", "NrOddzialu", "CreatedTimestamp", _
+                "ReportID", "KlientFK", "NazwaKlienta", "MiesiacObrotu", _
+                "CNA_HandlowcaID", "NrOddzialu", "CreatedTimestamp", _
                 "Status", "EmailRecipient", "BatchSentTimestamp")
         Case "ws_UsersRegistry"
             ExpectedSheetHeaders = Array( _
@@ -165,9 +166,10 @@ Private Function ExpectedFormControls(formName As String) As Variant
                 "txt_CacheFolderPath", "chk_DontShowSetupAgain", _
                 "btn_Save", "btn_Cancel", "btn_CreateCacheFolder", "btn_ShowTutorial")
         Case "frm_Main"
+            ' Schema v2: bez txt_Fields, txt_MiesiacObrotu zamiast txt_MiesiacZgloszenia.
             ExpectedFormControls = Array( _
                 "lbl_UserInfo", "lbl_RoleInfo", "lbl_BatchCount", _
-                "txt_KlientFK", "txt_NazwaKlienta", "txt_MiesiacZgloszenia", "txt_Fields", _
+                "txt_KlientFK", "txt_NazwaKlienta", "txt_MiesiacObrotu", _
                 "btn_AddToList", "btn_Clear", "btn_SendBatch", "btn_ShowLog", _
                 "btn_DeleteSelected", "lst_PendingBatch")
         Case "frm_Log"

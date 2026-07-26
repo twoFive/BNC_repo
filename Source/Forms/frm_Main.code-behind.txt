@@ -30,7 +30,7 @@ Private Sub UserForm_Initialize()
         lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysylane do kierownika)"
     End If
 
-    txt_MiesiacZgloszenia.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
+    txt_MiesiacObrotu.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
     SetListBoxHeaders
 End Sub
 
@@ -43,13 +43,12 @@ End Sub
 ' ----- Buttons -------------------------------------------------------------
 
 Private Sub btn_AddToList_Click()
-    ' 1. Zbierz dane z pol.
+    ' 1. Zbierz dane z pol (Schema v2: bez Fields, MiesiacObrotu).
     Dim reportData As Object
     Set reportData = CreateObject("Scripting.Dictionary")
     reportData("KlientFK") = Trim$(txt_KlientFK.Text)
     reportData("NazwaKlienta") = Trim$(txt_NazwaKlienta.Text)
-    reportData("MiesiacZgloszenia") = Trim$(txt_MiesiacZgloszenia.Text)
-    reportData("Fields") = Trim$(txt_Fields.Text)
+    reportData("MiesiacObrotu") = Trim$(txt_MiesiacObrotu.Text)
 
     ' 2. Walidacja.
     Dim errMsg As String
@@ -158,8 +157,7 @@ End Sub
 Private Sub ClearFormFields()
     txt_KlientFK.Text = ""
     txt_NazwaKlienta.Text = ""
-    txt_Fields.Text = ""
-    ' MiesiacZgloszenia zostaje (user moze dodac kilka zgloszen na ten sam miesiac).
+    ' MiesiacObrotu zostaje (user moze dodac kilka zgloszen na ten sam miesiac).
     On Error Resume Next
     txt_KlientFK.SetFocus
     On Error GoTo 0
@@ -170,7 +168,7 @@ End Sub
 ' albo przez specjalny zaczepowy zapis - w VBA UserForm trzeba zrobic obejscie:
 ' wpisac dane ze sztucznym pierwszym wierszem ktory pelni role naglowka.
 ' My uzywamy ColumnHeads=False i wlasnego Label-baru nie jest potrzebny,
-' bo dane sa czytelne same w sobie (ID, FK, Nazwa, Miesiac, Fields).
+' bo dane sa czytelne same w sobie (ID, FK, Nazwa, MiesiacObrotu).
 '
 ' Tu robimy NIC - zostawiamy ColumnHeads jak ustawione w designerze.
 ' Funkcja jest zachowana jako placeholder na wypadek refaktoru.
@@ -197,8 +195,9 @@ Private Sub RefreshPendingList()
     lst_PendingBatch.Clear
     If pending.Count = 0 Then Exit Sub
 
+    ' Schema v2: 4 kolumny (ID, KlientFK, Nazwa, MiesiacObrotu) - bez Fields.
     Dim arr() As Variant
-    ReDim arr(0 To pending.Count - 1, 0 To 4)
+    ReDim arr(0 To pending.Count - 1, 0 To 3)
 
     ' Newest first: fill od konca array do poczatku.
     Dim i As Long
@@ -208,8 +207,7 @@ Private Sub RefreshPendingList()
         arr(i, 0) = record("ReportID")
         arr(i, 1) = record("KlientFK")
         arr(i, 2) = record("NazwaKlienta")
-        arr(i, 3) = record("MiesiacZgloszenia")
-        arr(i, 4) = record("Fields")
+        arr(i, 3) = record("MiesiacObrotu")
         i = i - 1
     Next record
 

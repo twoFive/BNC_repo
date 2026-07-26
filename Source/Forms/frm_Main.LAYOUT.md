@@ -6,7 +6,7 @@
 
 ---
 
-## Krok 1 — utwórz UserForm
+## Krok 1 — utwórz UserForm |x
 
 W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
@@ -20,37 +20,40 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
 ---
 
-## Krok 2 — kontrolki
+## Krok 2 — kontrolki |
 
-### Sekcja: header (info o userze)
+### Sekcja: header (info o userze)  |x
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| Label | `lbl_UserInfo` | wypełnia `UserForm_Initialize` (np. "Zalogowany: Jan Kowalski (CNA: 12345, oddział: W001)") |
-| Label | `lbl_RoleInfo` | wypełnia `UserForm_Initialize` (np. "Tryb: HANDLOWIEC (wnioski wysyłane do kierownika)") |
+| Label | `lbl_UserInfo` | wypełnia `UserForm_Initialize` (np. "Zalogowany: Jan Kowalski (CNA: 12345, oddział: W001)") |x
+| Label | `lbl_RoleInfo` | wypełnia `UserForm_Initialize` (np. "Tryb: HANDLOWIEC (wnioski wysyłane do kierownika)") |x
 
 ### Sekcja: nowe zgłoszenie
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| Label | `lbl_HeaderNew` | `Caption = "── Nowe zgłoszenie ──"` |
-| Label | `lbl_KlientFK` | `Caption = "Klient FK:"` |
-| TextBox | `txt_KlientFK` | `MaxLength = 20` |
-| Label | `lbl_NazwaKlienta` | `Caption = "Nazwa klienta:"` |
-| TextBox | `txt_NazwaKlienta` | `MaxLength = 200` |
-| Label | `lbl_MiesiacZgloszenia` | `Caption = "Miesiąc zgłoszenia:"` |
-| TextBox | `txt_MiesiacZgloszenia` | `MaxLength = 7` (format YYYY-MM, default = bieżący miesiąc) |
-| Label | `lbl_Fields` | `Caption = "Pole dodatkowe:"` |
-| TextBox | `txt_Fields` | `MultiLine = True`, `Height = 60`, `MaxLength = 1000` |
-| CommandButton | `btn_Clear` | `Caption = "Wyczyść"` |
-| CommandButton | `btn_AddToList` | `Caption = "Dodaj do listy"`, `Default = True` |
+| Label | `lbl_HeaderNew` | `Caption = "── Nowe zgłoszenie ──"` |x
+| Label | `lbl_KlientFK` | `Caption = "Klient FK:"` |x
+| TextBox | `txt_KlientFK` | `MaxLength = 6` | x --edit `MaxLength = 20` na `MaxLength = 6`
+| Label | `lbl_NazwaKlienta` | `Caption = "Nazwa klienta:"` |x
+| TextBox | `txt_NazwaKlienta` | `MaxLength = 200` |x
+| Label | `lbl_MiesiacObrotu` | `Caption = "Miesiąc wykonania obrotu przez klienta:"` — **rename z `lbl_MiesiacZgloszenia`** (Schema v2) |
+| TextBox | `txt_MiesiacObrotu` | `MaxLength = 7` (format YYYY-MM, default = bieżący miesiąc) — **rename z `txt_MiesiacZgloszenia`** (Schema v2) |
+| CommandButton | `btn_Clear` | `Caption = "Wyczyść"` |x
+| CommandButton | `btn_AddToList` | `Caption = "Dodaj do listy"`, `Default = True` |x
+
+> **Usunięte w Schema v2** (nie dodawać do projektu):
+> - ~~`lbl_Fields` (Caption "Pole dodatkowe:")~~
+> - ~~`txt_Fields` (MultiLine TextBox)~~
+> Kolumna `Fields` usunięta z `ws_DataCache` bez zastąpienia (YAGNI — analityka pokryta przez `CreatedTimestamp` + `MiesiacObrotu`).
 
 ### Sekcja: lista pending
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
 | Label | `lbl_BatchCount` | wypełnia `RefreshPendingList` (np. "Lista zgłoszeń do wysłania (3)") |
-| ListBox | `lst_PendingBatch` | `ColumnCount = 5`, `ColumnHeads = True`, `ColumnWidths = "30;60;180;60;200"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) |
+| ListBox | `lst_PendingBatch` | `ColumnCount = 4`, `ColumnHeads = True`, `ColumnWidths = "30;60;220;80"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) — **Schema v2: 5→4 kolumn** (usunięto Fields) |
 | CommandButton | `btn_DeleteSelected` | `Caption = "Usuń zaznaczone"` — pozycja: pod ListBox po lewej |
 
 > **Zachowanie**:

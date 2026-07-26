@@ -17,7 +17,6 @@ Private Const MIN_NAZWA_KLIENTA As Long = 3
 Private Const MAX_NAZWA_KLIENTA As Long = 200
 Private Const MIN_IMIE_NAZWISKO As Long = 2
 Private Const MAX_IMIE_NAZWISKO As Long = 100
-Private Const MAX_FIELDS As Long = 1000
 
 ' ============================================================================
 '  Walidacje atomowe
@@ -160,7 +159,7 @@ Public Function ValidateSetupData(userData As Object) As String
 End Function
 
 ' Walidacja danych z frm_Main (jedno zgloszenie). reportData = Dictionary:
-'   KlientFK, NazwaKlienta, MiesiacZgloszenia, Fields
+'   KlientFK, NazwaKlienta, MiesiacObrotu
 Public Function ValidateReportData(reportData As Object) As String
     If reportData Is Nothing Then
         ValidateReportData = "Brak danych do walidacji."
@@ -181,18 +180,10 @@ Public Function ValidateReportData(reportData As Object) As String
         Exit Function
     End If
 
-    ' MiesiacZgloszenia - format YYYY-MM lub data
-    If Not ValidateMonthYear(GetField(reportData, "MiesiacZgloszenia")) Then
-        ValidateReportData = "Miesiac zgloszenia w niepoprawnym formacie." & vbCrLf & _
+    ' MiesiacObrotu - format YYYY-MM lub data (miesiac wykonania obrotu przez klienta)
+    If Not ValidateMonthYear(GetField(reportData, "MiesiacObrotu")) Then
+        ValidateReportData = "Miesiac wykonania obrotu przez klienta w niepoprawnym formacie." & vbCrLf & _
                              "Wymagany format: YYYY-MM (np. 2026-05)."
-        Exit Function
-    End If
-
-    ' Fields - opcjonalne, ale jesli jest to max 1000 znakow
-    Dim fields As String
-    fields = GetField(reportData, "Fields")
-    If Len(fields) > MAX_FIELDS Then
-        ValidateReportData = "Pole dodatkowe za dlugie (max " & MAX_FIELDS & " znakow)."
         Exit Function
     End If
 
