@@ -58,8 +58,8 @@ Współrzędne w punktach (pt). Form area: 558 × 420 (bez title bar).
 
 | # | Typ | Name | Left | Top | Width | Height | Properties |
 |---|---|---|---:|---:|---:|---:|---|
-| 5 | CommandButton | `btn_Prev` | 18 | 380 | 100 | 26 | `Caption = "< Wstecz"`, `Enabled = False` na 1. stronie (kod dynamicznie), `TakeFocusOnClick = True` |x
-| 6 | CommandButton | `btn_Next` | 340 | 380 | 100 | 26 | `Caption = "Dalej >"`, **`Default = True`** (Enter = Next), kod zmienia na `"Zakoncz"` na ostatniej stronie |x
+| 5 | CommandButton | `btn_Prev` | 18 | 380 | 100 | 26 | `Caption = "<- Wstecz"`, `Enabled = False` na 1. stronie (kod dynamicznie), `TakeFocusOnClick = True` |x
+| 6 | CommandButton | `btn_Next` | 340 | 380 | 100 | 26 | `Caption = "Dalej ->"`, **`Default = True`** (Enter = Next), kod zmienia na `"Zakoncz"` na ostatniej stronie |x
 | 7 | CommandButton | `btn_Skip` | 450 | 380 | 100 | 26 | `Caption = "Pomiń"`, **`Cancel = True`** (Esc = Skip) |x
 
 > **ASCII-only captions** (v3.1): VBA UserForm renderer nie wyświetla poprawnie znaków ▶ ◀ ✓ w standardowych fontach. Substytucje: `▶` → `>`, `◀` → `<`, `✓` → usunięte. Patrz sekcja "Emoji + special characters" na dole.
@@ -80,7 +80,7 @@ Pełny code w [`frm_Tutorial.code-behind.txt`](frm_Tutorial.code-behind.txt). St
 **Właściwości specjalne w RenderPage**:
 - `lbl_PageIndicator.Caption` update every page
 - `btn_Prev.Enabled` = False on page 1, True elsewhere
-- `btn_Next.Caption` = "Zakończ ✓" on last page, "Dalej ▶" elsewhere
+- `btn_Next.Caption` = "Zakoncz" on last page, "Dalej ->" elsewhere (ASCII-only v3.1)
 
 ---
 
@@ -131,7 +131,7 @@ End Sub
 │  wychodzi z Outlooka.                                       │
 │                                                             │
 │                                                             │
-│  [◀ Wstecz]                        [Dalej ▶]  [Pomiń]       │  ← footer (y=380)
+│  [<- Wstecz]                       [Dalej ->]  [Pomiń]      │  ← footer (y=380)
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -161,8 +161,8 @@ Rozwiązania rozważane i odrzucone:
 
 | Original (TEXT.md) | Substitute (code-behind) | Kontekst |
 |---|---|---|
-| `▶` (right arrow) | `>` | Button "Dalej >" |
-| `◀` (left arrow) | `<` | Button "< Wstecz" |
+| `▶` (right arrow) | `->` | Button "Dalej ->" (user decyzja 2026-08-09: `->` a nie `>` - lepsza czytelność jako strzałka) |
+| `◀` (left arrow) | `<-` | Button "<- Wstecz" (symetria z "Dalej ->") |
 | `✓` (check) | (usunięte) | Button "Zakoncz" |
 | `→` (body arrow) | `->` | Body text steps |
 | `•` (bullet) | `-` | Body bullet lists |

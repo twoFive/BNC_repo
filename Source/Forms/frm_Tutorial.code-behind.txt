@@ -12,7 +12,7 @@
 '  Substitutions:
 '    - Titles: usuniete 👋 ⚙ 🛟 (pure decoration)
 '    - Body ✉ 📈 usuniete
-'    - Buttons: ▶ -> ">", ◀ -> "<", ✓ -> ""
+'    - Buttons: ▶ -> "->", ◀ -> "<-", ✓ -> ""
 '    - Body: → -> "->", • -> "-", · -> " - "
 '
 '  Patrz: frm_Tutorial.LAYOUT.md
@@ -66,7 +66,7 @@ Private Sub RenderPage()
     If m_currentPage = TOTAL_PAGES Then
         btn_Next.Caption = "Zakoncz"
     Else
-        btn_Next.Caption = "Dalej >"
+        btn_Next.Caption = "Dalej ->"
     End If
 
     Select Case m_currentPage
@@ -90,7 +90,7 @@ Private Sub RenderPage1_Welcome()
         "i mail ze wszystkimi zgłoszeniami jest wysyłany przez Outlook do " & _
         "właściwego adresata (do Twojego kierownika, a jeśli sam nim jesteś, " & _
         "wprost na skrzynkę BNC)." & vbCrLf & vbCrLf
-    s = s & "Samouczek zajmie ~2 minuty. Naciśnij " & Chr(34) & "Dalej >" & Chr(34) & "."
+    s = s & "Samouczek zajmie ~2 minuty. Naciśnij " & Chr(34) & "Dalej ->" & Chr(34) & "."
 
     txt_PageBody.Text = s
 End Sub
