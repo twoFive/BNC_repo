@@ -177,8 +177,11 @@ Private Function ExpectedFormControls(formName As String) As Variant
                 "btn_Save", "btn_Cancel", "btn_CreateCacheFolder", "btn_ShowTutorial")
         Case "frm_Main"
             ' Schema v2: bez txt_Fields, txt_MiesiacObrotu zamiast txt_MiesiacZgloszenia.
+            ' Post-smoke-test: dodane 4 fake header labels (lbl_Hdr*) nad lst_PendingBatch
+            ' bo ColumnHeads=True w VBA nie dziala z .List = arr.
             ExpectedFormControls = Array( _
                 "lbl_UserInfo", "lbl_RoleInfo", "lbl_BatchCount", _
+                "lbl_HdrID", "lbl_HdrFK", "lbl_HdrNazwa", "lbl_HdrMiesiac", _
                 "txt_KlientFK", "txt_NazwaKlienta", "txt_MiesiacObrotu", _
                 "btn_AddToList", "btn_Clear", "btn_SendBatch", "btn_ShowLog", _
                 "btn_DeleteSelected", "lst_PendingBatch")

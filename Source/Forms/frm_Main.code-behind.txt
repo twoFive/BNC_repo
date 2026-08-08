@@ -163,17 +163,18 @@ Private Sub ClearFormFields()
     On Error GoTo 0
 End Sub
 
-' Ustawia naglowki kolumn ListBox. Wymaga ColumnHeads=True w designerze.
-' Bez wlasciwego data source (RowSource), naglowki nadawane przez .List
-' albo przez specjalny zaczepowy zapis - w VBA UserForm trzeba zrobic obejscie:
-' wpisac dane ze sztucznym pierwszym wierszem ktory pelni role naglowka.
-' My uzywamy ColumnHeads=False i wlasnego Label-baru nie jest potrzebny,
-' bo dane sa czytelne same w sobie (ID, FK, Nazwa, MiesiacObrotu).
-'
-' Tu robimy NIC - zostawiamy ColumnHeads jak ustawione w designerze.
-' Funkcja jest zachowana jako placeholder na wypadek refaktoru.
+' Ustawia captions fake header bar (4 labels nad lst_PendingBatch).
+' VBA UserForm ColumnHeads = True dziala tylko z RowSource (Range), NIE z
+' .List = arr (my uzywamy array-assign bo ~10x szybsze). Standard workaround:
+' 4 statyczne Labels (lbl_Hdr*) w designerze na wysokosci nad ListBox,
+' szerokosci matching ColumnWidths="30;60;220;80".
+' Captions ustawiamy w kodzie (nie w designerze) zeby: (a) wszystko w jednym
+' miejscu maintenance, (b) wsparcie i18n w przyszlosci.
 Private Sub SetListBoxHeaders()
-    ' Intentionally empty - ColumnHeads naglowki nie sa trywialne w VBA UserForm.
+    lbl_HdrID.Caption = "ID"
+    lbl_HdrFK.Caption = "Klient FK"
+    lbl_HdrNazwa.Caption = "Nazwa klienta"
+    lbl_HdrMiesiac.Caption = "Miesiąc obrotu"
 End Sub
 
 ' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List

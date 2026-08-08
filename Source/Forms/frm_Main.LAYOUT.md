@@ -29,7 +29,7 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 | Label | `lbl_UserInfo` | wypełnia `UserForm_Initialize` (np. "Zalogowany: Jan Kowalski (CNA: 12345, oddział: W001)") |x
 | Label | `lbl_RoleInfo` | wypełnia `UserForm_Initialize` (np. "Tryb: HANDLOWIEC (wnioski wysyłane do kierownika)") |x
 
-### Sekcja: nowe zgłoszenie
+### Sekcja: nowe zgłoszenie |x
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
@@ -38,8 +38,8 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 | TextBox | `txt_KlientFK` | `MaxLength = 6` | x --edit `MaxLength = 20` na `MaxLength = 6`
 | Label | `lbl_NazwaKlienta` | `Caption = "Nazwa klienta:"` |x
 | TextBox | `txt_NazwaKlienta` | `MaxLength = 200` |x
-| Label | `lbl_MiesiacObrotu` | `Caption = "Miesiąc wykonania obrotu przez klienta:"` — **rename z `lbl_MiesiacZgloszenia`** (Schema v2) |
-| TextBox | `txt_MiesiacObrotu` | `MaxLength = 7` (format YYYY-MM, default = bieżący miesiąc) — **rename z `txt_MiesiacZgloszenia`** (Schema v2) |
+| Label | `lbl_MiesiacObrotu` | `Caption = "Miesiąc wykonania obrotu przez klienta:"` — **rename z `lbl_MiesiacZgloszenia`** (Schema v2) |x
+| TextBox | `txt_MiesiacObrotu` | `MaxLength = 7` (format YYYY-MM, default = bieżący miesiąc) — **rename z `txt_MiesiacZgloszenia`** (Schema v2) |x
 | CommandButton | `btn_Clear` | `Caption = "Wyczyść"` |x
 | CommandButton | `btn_AddToList` | `Caption = "Dodaj do listy"`, `Default = True` |x
 
@@ -52,9 +52,13 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| Label | `lbl_BatchCount` | wypełnia `RefreshPendingList` (np. "Lista zgłoszeń do wysłania (3)") |
-| ListBox | `lst_PendingBatch` | `ColumnCount = 4`, `ColumnHeads = True`, `ColumnWidths = "30;60;220;80"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) — **Schema v2: 5→4 kolumn** (usunięto Fields) |
-| CommandButton | `btn_DeleteSelected` | `Caption = "Usuń zaznaczone"` — pozycja: pod ListBox po lewej |
+| Label | `lbl_BatchCount` | wypełnia `RefreshPendingList` (np. "Lista zgłoszeń do wysłania (3)") |x
+| Label | `lbl_HdrID` | `Caption = "ID"` — **fake header** nad `lst_PendingBatch`, szerokość ~30pt, wyrównanie do 1. kolumny (`Font.Bold = True` opcjonalnie) |
+| Label | `lbl_HdrFK` | `Caption = "Klient FK"` — szerokość ~60pt, 2. kolumna |
+| Label | `lbl_HdrNazwa` | `Caption = "Nazwa klienta"` — szerokość ~220pt, 3. kolumna |
+| Label | `lbl_HdrMiesiac` | `Caption = "Miesiąc obrotu"` — szerokość ~80pt, 4. kolumna |
+| ListBox | `lst_PendingBatch` | `ColumnCount = 4`, **`ColumnHeads = False`**, `ColumnWidths = "30;60;220;80"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) — **Schema v2: 5→4 kolumn** (usunięto Fields). Nagłówki przez **fake header bar** (4 labels wyżej) bo `ColumnHeads = True` w VBA UserForm nie działa z `.List = arr` (tylko z RowSource) |
+| CommandButton | `btn_DeleteSelected` | `Caption = "Usuń zaznaczone"` — pozycja: pod ListBox po lewej |x
 
 > **Zachowanie**:
 > - Najnowszy rekord pojawia się na **górze** listy (newest first); user musi sam kliknąć row żeby zaznaczyć.
@@ -67,14 +71,14 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
 | Typ | Name | Caption / Properties |
 |---|---|---|
-| CommandButton | `btn_ShowLog` | `Caption = "Pokaż historię"` |
-| CommandButton | `btn_SendBatch` | `Caption = "Wyślij Wniosek BNC"` |
+| CommandButton | `btn_ShowLog` | `Caption = "Pokaż historię"` |x
+| CommandButton | `btn_SendBatch` | `Caption = "Wyślij Wniosek BNC"` |x
 
 ---
 
-## Krok 3 — wklej code-behind
+## Krok 3 — wklej code-behind |x
 
-W VBE prawy klik na `frm_Main` → **View Code**. Wklej zawartość `frm_Main.code-behind.txt`.
+W VBE prawy klik na `frm_Main` → **View Code**. Wklej zawartość `frm_Main.code-behind.txt`. |x
 
 ---
 
