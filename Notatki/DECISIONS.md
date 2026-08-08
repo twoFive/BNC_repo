@@ -19,27 +19,43 @@ Format ADR: krótki opis decyzji, uzasadnienie, konsekwencje.
 
 ## ADR-001: Repository Pattern dla cache
 
-**Data**: 2026-05-06
+**Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry)
 **Status**: zatwierdzona
 
-**Decyzja**: Każdy ukryty arkusz (`ws_UserCache`, `ws_DataCache`) ma dedykowany moduł (`mod_UserCacheSync`, `mod_DataCacheSync`), który jest **jedynym miejscem dostępu** do tego arkusza. Reszta aplikacji woła publiczne funkcje tych modułów, nigdy nie czyta/pisze bezpośrednio do worksheets.
+**Decyzja**: Każdy ukryty arkusz (`ws_UserCache`, `ws_DataCache`, `ws_UsersRegistry`) ma dedykowany moduł, który jest **jedynym miejscem dostępu** do tego arkusza. Reszta aplikacji woła publiczne funkcje tych modułów, nigdy nie czyta/pisze bezpośrednio do worksheets.
 
-**Uzasadnienie**: Hermetyzacja danych. Reszta aplikacji nie wie, czy dane są w worksheet, w pliku xlsx, czy gdzieś indziej. W fazie B podmienimy implementację na bazę Access (`mod_DataAccess`) bez zmian w warstwach wyższych.
+- `ws_UserCache` → `mod_UserCacheSync` (key-value, current user)
+- `ws_UsersRegistry` → `mod_UserCacheSync` (tabelaryczny, wszyscy userzy — M3.3)
+- `ws_DataCache` → `mod_DataCacheSync` (tabelaryczny, zgłoszenia)
 
-**Konsekwencja**: Trochę więcej kodu (każda operacja ma function w `mod_*Sync`), ale zero duplikacji i pełna kontrola nad zmianami. Wszystkie wywołania `ws_UserCache.Cells(...)` w kodzie poza `mod_UserCacheSync` traktuję jako **smell** do refaktora.
+**Uzasadnienie**: Hermetyzacja danych. Reszta aplikacji nie wie, czy dane są w worksheet, w pliku xlsx, czy gdzieś indziej. W fazie B podmienimy implementację na bazę Access/SQL (`mod_DataAccess`) bez zmian w warstwach wyższych.
+
+**Konsekwencja**: Trochę więcej kodu (każda operacja ma function w `mod_*Sync`), ale zero duplikacji i pełna kontrola nad zmianami. Wszystkie wywołania `ws_UserCache.Cells(...)` / `ws_UsersRegistry.Cells(...)` / `ws_DataCache.Cells(...)` w kodzie poza dedykowanym modułem traktuję jako **smell** do refaktora.
 
 ---
 
-## ADR-002: Sync `worksheet → xlsx` bez clipboard
+## ADR-002: Sync `worksheet → xlsx` bez clipboard (jednostronny write-through)
 
-**Data**: 2026-05-06
+**Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry)
 **Status**: zatwierdzona
 
-**Decyzja**: `SyncToFile` w obu modułach Sync używa przypisania `destWs.Range(...).Value = srcWs.UsedRange.Value` zamiast `Range.Copy` + `PasteSpecial`.
+**Decyzja**: Wszystkie trzy warstwy cache używają **write-through**, **jednostronnego** sync `worksheet → xlsx`:
 
-**Uzasadnienie**: Schowek systemowy jest zasobem współdzielonym. Jeśli user zrobi Ctrl+C w trakcie sync, paste może odpalić się na cudzych danych albo VBA dostanie błąd "PasteSpecial method of Range class failed". Range.Value = Range.Value to operacja in-process, deterministyczna, race-free i ~10× szybsza dla małych arkuszy.
+| Warstwa | ws | xlsx | Sync trigger |
+|---|---|---|---|
+| UserCache | `ws_UserCache` | `BNC_UserCache.xlsx` | `SetUserField`, `SaveUserData`, `LoadUserFromRegistry` |
+| DataCache | `ws_DataCache` | `BNC_DataCache.xlsx` | `AppendRecord`, `MarkAsSent`, `DeleteRecord` |
+| Registry | `ws_UsersRegistry` | `BNC_UsersRegistry.xlsx` | `AppendUserToRegistry`, `UpdateLastLoginInRegistry` |
 
-**Konsekwencja**: Tracimy formatowanie komórek (kolory, czcionki) — ale w pliku backupu nie potrzebujemy formatowania, tylko wartości.
+Wszystkie `SyncToFile` / `SyncRegistryToFile` używają przypisania `destWs.Range(...).Value = srcWs.UsedRange.Value` zamiast `Range.Copy` + `PasteSpecial`.
+
+**Uzasadnienie**: 
+- **Bez clipboard**: Schowek systemowy jest zasobem współdzielonym. Jeśli user zrobi Ctrl+C w trakcie sync, paste może odpalić się na cudzych danych albo VBA dostanie błąd "PasteSpecial method of Range class failed". Range.Value = Range.Value to operacja in-process, deterministyczna, race-free i ~10× szybsza dla małych arkuszy.
+- **Jednostronny**: brak read-back z xlsx do ws eliminuje conflict resolution (kto wygrywa: xlsx czy ws?). Trade-off — admin nie może edytować xlsx żeby zmienić stan ws (patrz ADR-008 "Konsekwencje").
+
+**Konsekwencja**: 
+- Tracimy formatowanie komórek (kolory, czcionki) — ale w pliku backupu nie potrzebujemy formatowania, tylko wartości.
+- Admin może **READ** cache xlsx (dowolne narzędzie), ale **nie push** zmian z powrotem. Bi-directional dla Registry rozważany w Faza B / M7.
 
 ---
 
@@ -192,7 +208,20 @@ Gdyby `LoadRecords` siedział w `Initialize`, drugi `Show` `frm_Log` nie wywoła
 - `frm_Setup` **zawsze** tworzy nowego usera (`AddNewUser`), nigdy nie edytuje istniejącego. **Edycja profilu** to future feature (poza zakresem M3.3) — będzie wymagać osobnego formularza `frm_UserEdit` albo trybu dla `frm_Setup`.
 - `ThisWorkbook.Workbook_Open` routing: `GetUsersCount() = 0` → `frm_Setup` (pierwszy user), `≥ 1` → `frm_UserPicker` (nawet gdy 1 user — świadome działanie, user musi kliknąć "Wybierz").
 - **Nie propagujemy zmian UserCache do Registry automatycznie**. Zmiany propagowane tylko przez explicit `SwitchUser` (przed zmianą aktywnego usera zapisujemy stan z UserCache do Registry). Jeśli user zamknie xlsm w trakcie edycji **bez** kliknięcia "Zapisz", zmiany zostają tylko w UserCache — przy następnym uruchomieniu wygaśnie i Registry zwycięży. To akceptowalne w Fazie A.
-- **BNC_UserCache.xlsx** synchronizuje tylko aktualnie aktywnego usera. Registry NIE jest synchronizowany do xlsx w Fazie A — jeśli laptop padnie, tracimy listę userów. W Fazie B (SQL Server) Registry ma migrować do `tbl_Users` z pełnym backupem.
+
+**Persistence — Registry xlsx sync (post-M3.3 extension, 2026-07-26)**:
+
+Pierwotna decyzja M3.3 była: "Registry NIE jest synchronizowany do xlsx w Fazie A". Zostało **odwrócone** po analizie asymetrii warstw cache — Registry teraz synchronizowany do `BNC_UsersRegistry.xlsx` (write-through, jednostronny — patrz ADR-002). Trzy powody:
+
+1. **Symetria z UserCache/DataCache** — brak edge case "który z arkuszy ma backup". Trzy warstwy = trzy xlsx = trzy write-through pipelines.
+2. **Disaster recovery** — utrata xlsm nie kasuje listy userów (Registry.xlsx zostaje na dysku). W Fazie A wpływ mały (1-3 userów), w M7 rollout (20 handlowców) znaczący.
+3. **Admin READ visibility** — Registry.xlsx na `CacheFolderPath` (docelowo OneDrive w Faza B) daje adminowi **centralny wgląd w user roster** bez konieczności otwierania czyjegoś xlsm. Analogicznie do już istniejącego DataCache.
+
+**Deferred do Fazy B / M7** (świadomie NIE zaimplementowane teraz):
+- **Bi-directional sync dla Registry** (admin push — edycja xlsx propaguje się do ws) — łamie jednostronność ADR-002, wymaga conflict resolution.
+- **Read-only file lock** dla cache xlsx (attrib +R lub Excel struct protect) — patrz [`HOWTO_readonly_cache_produkcja.md`](HOWTO_readonly_cache_produkcja.md).
+
+**Konsekwencja**: `mod_UserCacheSync` API wzrosło z 13 do 14 procedur (dodane `EnsureRegistryCacheFileExists`). `SyncRegistryToFile` wywoływany po każdej mutacji Registry (`AppendUserToRegistry`, `UpdateLastLoginInRegistry`).
 
 ---
 

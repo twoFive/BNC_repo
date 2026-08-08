@@ -480,6 +480,14 @@ Public Sub Test_MultiUser()
     Next u
     AssertEqual "GetAllUsers contains new UserID", True, found
 
+    ' --- Registry xlsx sync (post-M3.3 symetria z UserCache/DataCache) ---
+    Dim regCachePath As String
+    regCachePath = mod_Utils.JoinPath( _
+        CStr(mod_UserCacheSync.GetUserField("CacheFolderPath")), _
+        "BNC_UsersRegistry.xlsx")
+    AssertEqual "BNC_UsersRegistry.xlsx istnieje po AddNewUser", True, _
+                mod_Utils.FileExists(regCachePath)
+
     ' --- SwitchUser back do poprzedniego (jesli byl) ---
     If Len(origUserId) > 0 Then
         mod_UserCacheSync.SwitchUser origUserId

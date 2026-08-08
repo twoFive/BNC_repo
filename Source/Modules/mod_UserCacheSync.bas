@@ -18,6 +18,11 @@ Private Const CACHE_FILE_NAME As String = "BNC_UserCache.xlsx"
 
 ' Multi-user Registry (M3.3) - tabelaryczny arkusz z lista wszystkich userow.
 ' UserCache reprezentuje AKTYWNEGO usera, Registry - PELNA liste.
+' BNC_UsersRegistry.xlsx (write-through, jednostronny sync ws -> xlsx) dodany
+' post-M3.3 - symetria z UserCache/DataCache + admin visibility (READ na dysku
+' bez otwierania xlsm usera). Read-back (admin push) NIE zaimplementowany -
+' patrz ADR-008, deferred do Fazy B lub M7.
+Private Const REGISTRY_CACHE_FILE_NAME As String = "BNC_UsersRegistry.xlsx"
 Private Const REGISTRY_SHEET As String = "ws_UsersRegistry"
 Private Const REG_USER_ID As Long = 1
 Private Const REG_IMIE As Long = 2
@@ -172,6 +177,25 @@ Public Sub EnsureCacheFileExists()
     fullPath = mod_Utils.JoinPath(folderPath, CACHE_FILE_NAME)
 
     If Not mod_Utils.FileExists(fullPath) Then SyncToFile
+End Sub
+
+' Auto-recreate: jesli BNC_UsersRegistry.xlsx nie istnieje przy starcie
+' aplikacji, tworzy go z aktualnej zawartosci ws_UsersRegistry.
+' Symetria z EnsureCacheFileExists (UserCache) i mod_DataCacheSync
+' (DataCache). Registry xlsx wprowadzone post-M3.3 dla:
+' - disaster recovery (utrata xlsm nie kasuje listy userow)
+' - admin READ visibility (central lookup roster bez otwierania xlsm usera)
+Public Sub EnsureRegistryCacheFileExists()
+    Dim folderPath As String
+    folderPath = CStr(GetUserField("CacheFolderPath"))
+    If Len(folderPath) = 0 Then Exit Sub  ' setup jeszcze nieukonczony
+
+    mod_Utils.EnsureFolderExists folderPath
+
+    Dim fullPath As String
+    fullPath = mod_Utils.JoinPath(folderPath, REGISTRY_CACHE_FILE_NAME)
+
+    If Not mod_Utils.FileExists(fullPath) Then SyncRegistryToFile
 End Sub
 
 ' ============================================================================
@@ -387,6 +411,68 @@ Cleanup:
     If restoreScreen Then Application.ScreenUpdating = True
 End Sub
 
+' Best-effort sync ws_UsersRegistry -> BNC_UsersRegistry.xlsx.
+' Analog SyncToFile dla warstwy Registry. Bez clipboard (ADR-002).
+' Wywolywany po kazdej mutacji Registry: AppendUserToRegistry,
+' UpdateLastLoginInRegistry. Bledy tylko do logu (nie MsgBox).
+Private Sub SyncRegistryToFile()
+    Dim wbOut As Workbook
+    Dim restoreScreen As Boolean
+    Dim restoreAlerts As Boolean
+    On Error GoTo Cleanup
+
+    Dim folderPath As String
+    folderPath = CStr(GetUserField("CacheFolderPath"))
+    If Len(folderPath) = 0 Then Exit Sub
+
+    mod_Utils.EnsureFolderExists folderPath
+
+    Dim fullPath As String
+    fullPath = mod_Utils.JoinPath(folderPath, REGISTRY_CACHE_FILE_NAME)
+
+    Dim srcWs As Worksheet
+    On Error Resume Next
+    Set srcWs = ThisWorkbook.Worksheets(REGISTRY_SHEET)
+    On Error GoTo Cleanup
+    If srcWs Is Nothing Then Exit Sub  ' Registry jeszcze nie utworzony
+
+    Application.ScreenUpdating = False
+    restoreScreen = True
+    Application.DisplayAlerts = False
+    restoreAlerts = True
+
+    Set wbOut = Workbooks.Add
+
+    Dim destWs As Worksheet
+    Set destWs = wbOut.Worksheets(1)
+    destWs.Name = REGISTRY_SHEET
+
+    Dim usedRange As Range
+    Set usedRange = srcWs.UsedRange
+    If usedRange.Cells.Count > 0 Then
+        destWs.Range( _
+            destWs.Cells(1, 1), _
+            destWs.Cells(usedRange.Rows.Count, usedRange.Columns.Count) _
+        ).Value = usedRange.Value
+    End If
+
+    If mod_Utils.FileExists(fullPath) Then Kill fullPath
+    wbOut.SaveAs Filename:=fullPath, FileFormat:=xlOpenXMLWorkbook
+    wbOut.Close SaveChanges:=False
+    Set wbOut = Nothing
+
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+    Exit Sub
+
+Cleanup:
+    mod_Utils.LogError "mod_UserCacheSync.SyncRegistryToFile", Err.Number, Err.Description
+    On Error Resume Next
+    If Not wbOut Is Nothing Then wbOut.Close SaveChanges:=False
+    If restoreAlerts Then Application.DisplayAlerts = True
+    If restoreScreen Then Application.ScreenUpdating = True
+End Sub
+
 ' ============================================================================
 '  Private - Registry helpers (M3.3)
 ' ============================================================================
@@ -501,6 +587,7 @@ Private Sub AppendUserToRegistry(userData As Object)
     ws.Cells(r, REG_LAST_LOGIN).Value = Now()
 
     ThisWorkbook.Save
+    SyncRegistryToFile
 End Sub
 
 ' Kopiuje pola z wiersza Registry do ws_UserCache (key-value).
@@ -576,6 +663,7 @@ Private Sub UpdateLastLoginInRegistry(userId As String)
 
     ws.Cells(r, REG_LAST_LOGIN).Value = Now()
     ThisWorkbook.Save
+    SyncRegistryToFile
 End Sub
 
 ' Set key-value pair na konkretnym arkuszu bez auto-save. Uzywany w

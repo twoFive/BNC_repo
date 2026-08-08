@@ -20,8 +20,10 @@ Private Sub Workbook_Open()
 
     ' 1. Auto-recreate plikow cache jesli nie istnieja (no-op gdy
     '    CacheFolderPath nie ustawiony - przed pierwszym setupem).
-    mod_UserCacheSync.EnsureCacheFileExists
-    mod_DataCacheSync.EnsureCacheFileExists
+    '    Trzy warstwy cache (symetria - post-M3.3 extension dla Registry):
+    mod_UserCacheSync.EnsureCacheFileExists          ' BNC_UserCache.xlsx
+    mod_DataCacheSync.EnsureCacheFileExists          ' BNC_DataCache.xlsx
+    mod_UserCacheSync.EnsureRegistryCacheFileExists  ' BNC_UsersRegistry.xlsx
 
     ' 2. Routing multi-user (M3.3):
     '    - 0 userow -> pierwszy raz -> setup nowego usera

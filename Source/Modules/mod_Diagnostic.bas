@@ -82,6 +82,7 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
             ExpectedPublicProcs = Array( _
                 "GetUserField", "GetUserData", "SetUserField", "SaveUserData", _
                 "IsSetupCompleted", "IsUserManager", "EnsureCacheFileExists", _
+                "EnsureRegistryCacheFileExists", _
                 "GetUsersCount", "CurrentUserID", "GetAllUsers", "SwitchUser", _
                 "AddNewUser", "PrepareForNewUser")
         Case "mod_DataCacheSync"

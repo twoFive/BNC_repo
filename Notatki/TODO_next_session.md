@@ -414,3 +414,86 @@ Oczekiwane: ~76 asercji PASS (bez zmiany liczby, bo Fields test usunięty ale no
 - `mod_Utils`, `mod_Export` — bez zmian.
 - ADR-y — bez nowego ADR (rename kolumny to zmiana kosmetyczna, usunięcie Fields to YAGNI cleanup — nie decyzja architektoniczna zmieniająca kierunek projektu).
 
+---
+
+## 🆕 Registry xlsx sync (2026-07-26) — symetria 3 warstw cache
+
+**Kontekst**: dodano `BNC_UsersRegistry.xlsx` jako trzeci write-through cache, analogicznie do UserCache/DataCache. Motywacje: symetria (spójność ADR-001/002/008), disaster recovery, admin READ visibility. Kierunek nadal jednostronny (`ws → xlsx`) — admin push (bi-directional) **deferred** do Fazy B lub M7.
+
+### Wymagane re-imports
+
+- `mod_UserCacheSync.bas` — API 13 → 14 (dodane `EnsureRegistryCacheFileExists` + wewnętrzny `SyncRegistryToFile`)
+- `mod_Diagnostic.bas` — `ExpectedPublicProcs("mod_UserCacheSync")` update
+- `mod_Tests.bas` — nowa asercja w `Test_MultiUser` (xlsx exists check)
+- `ThisWorkbook` — dodane `EnsureRegistryCacheFileExists` w `Workbook_Open`
+
+### ☐ R1. Re-import 4 zmienionych modułów
+
+VBE → Remove → No → Import File dla:
+- `Source/Modules/mod_UserCacheSync.bas`
+- `Source/Modules/mod_Diagnostic.bas`
+- `Source/Modules/mod_Tests.bas`
+
+`ThisWorkbook` — dwuklik w Project Explorer → wklej code z `Source/ThisWorkbook/ThisWorkbook.code.txt` (nadpisz current).
+
+### ☐ R2. Ctrl+S + Debug → Compile VBAProject
+
+Verify że kompiluje bez błędów. Jeśli błąd — nazwa procedury nie zgadza się (np. literówka w ExpectedPublicProcs) — poprawić.
+
+### ☐ R3. Zamknij i otwórz xlsm
+
+Verify `Workbook_Open` log:
+```
+[timestamp] INFO: Workbook_Open: N uzytkownikow w Registry, pokazuje frm_UserPicker
+```
+
+I sprawdź czy powstał plik:
+```
+? mod_Utils.FileExists("C:\BNC_CacheFolder\BNC_UsersRegistry.xlsx")
+```
+→ **`True`** (nowy plik utworzony automatycznie przy pierwszym `Workbook_Open` po deploy)
+
+### ☐ R4. AuditFullProject — expected 14/14 API dla UserCacheSync
+
+```
+mod_Diagnostic.AuditFullProject
+```
+
+Oczekiwane:
+```
+[OK]  mod_UserCacheSync   XXX lin.  API: 14/14
+```
+
+Jeśli `13/14 (brak: EnsureRegistryCacheFileExists)` — re-import nie zadziałał, patrz R1.
+
+### ☐ R5. `Test_MultiUser` — nowa asercja
+
+```
+mod_Tests.Test_MultiUser
+```
+
+Oczekiwane (nowa linia): `[PASS] BNC_UsersRegistry.xlsx istnieje po AddNewUser | expected=True actual=True`
+
+### ☐ R6. Manual smoke test admin READ scenario
+
+1. Explorer → `C:\BNC_CacheFolder\`
+2. Powinny być 3 pliki: `BNC_UserCache.xlsx`, `BNC_DataCache.xlsx`, **`BNC_UsersRegistry.xlsx`** (nowy)
+3. Otwórz `BNC_UsersRegistry.xlsx` w Excelu (nie w VBA, po prostu double-click)
+4. Verify: widzisz **wszystkich** userów z Registry — nagłówki 13 kolumn + wiersze per user
+5. Zamknij xlsx bez zapisu
+6. Wróć do BNC_Sender xlsm → `frm_UserPicker.btn_AddNew` → dodaj testowego usera przez `frm_Setup`
+7. Wróć do Explorera → otwórz ponownie `BNC_UsersRegistry.xlsx` — nowy user powinien być widoczny (sync po `AppendUserToRegistry`)
+
+### ☐ R7. Manual test — `SwitchUser` triggers sync (LastLogin update)
+
+1. `frm_UserPicker` otwórz → wybierz **innego** usera (nie current)
+2. → `frm_Main` się otwiera
+3. Otwórz `BNC_UsersRegistry.xlsx` w Excelu
+4. Verify: kolumna 13 (`LastLogin`) dla wybranego usera pokazuje **nowy** timestamp (kilka sekund temu)
+
+### 🚫 Co świadomie NIE działa (deferred)
+
+- **Admin push** — edycja `BNC_UsersRegistry.xlsx` w Excelu nie propaguje się do `ws_UsersRegistry` w xlsm. Read-back deferred do Fazy B (patrz ADR-008 "Persistence" sekcja).
+- **Read-only lock** — plik nie ma atrybutu `+R`. Patrz [`HOWTO_readonly_cache_produkcja.md`](HOWTO_readonly_cache_produkcja.md) — implementacja przed M7.
+- **Cleanup xlsx przy delete usera** — brak `DeleteUser` API. Manual cleanup przez unhide `ws_UsersRegistry` + delete row.
+

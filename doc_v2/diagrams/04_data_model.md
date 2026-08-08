@@ -135,12 +135,46 @@ Akceptowalne, ponieważ:
 
 ---
 
-## 3. Kluczowe wzorce modelu danych
+## 3. `ws_UsersRegistry` — lista wszystkich handlowców (M3.3)
+
+> **Lokalizacja**: ukryty arkusz (`Visible = xlSheetVeryHidden`).
+> **Format**: tabela (13 kolumn, 1 wiersz = 1 handlowiec).
+> **Skala**: 1-5 userów per laptop w Fazie A (dev), 20+ w M7 rollout.
+
+### Schema (13 kolumn)
+
+| # | Kolumna | Typ | Rola |
+|---|---|---|---|
+| 1 | `UserID` | String | **PK** — format `UZYTKOWNIK_<N>_CNA<cna>` (patrz [ADR-008](../../Notatki/DECISIONS.md)) |
+| 2-12 | canonical fields | (miks) | Kopia 11 pól z `ws_UserCache` (Imie, Nazwisko, EmailHandlowca, CNA_HandlowcaID, NrOddzialu, EmailKierownika, EmailBNC, CacheFolderPath, DataRejestracji, SetupCompleted, DontShowSetupAgain) |
+| 13 | `LastLogin` | Date | Timestamp ostatniego `SwitchUser` |
+
+### Relacja z `ws_UserCache`
+
+- **Registry** = *storage of record* (persistent, wszyscy userzy).
+- **UserCache** = *working memory* (aktywny user, szybki dostęp).
+- Analogia: L1 cache + main memory w architekturze CPU.
+- `SwitchUser` = zapisuje UserCache → Registry (poprzedni user), potem ładuje nowego z Registry → UserCache.
+
+### Synchronized backup (post-M3.3, 2026-07-26)
+
+→ `BNC_UsersRegistry.xlsx` (write-through cache, sync po każdej mutacji). ADR-001/002/008.
+
+**Sync trigger points**:
+- `AppendUserToRegistry` — nowy user dodany przez `AddNewUser`
+- `UpdateLastLoginInRegistry` — `SwitchUser` update LastLogin
+
+**Sync direction**: jednostronny `ws → xlsx`. Read-back **nie zaimplementowany** — admin może READ xlsx (visibility bez ingerencji w usera xlsm), ale nie push zmian. Bi-directional deferred do Fazy B (SQL Server) lub M7.
+
+---
+
+## 4. Kluczowe wzorce modelu danych
 
 ### 🗄 Hybrid cache (ADR-001, ADR-002)
-- **Primary**: `ws_*Cache` w xlsm (very hidden) — szybki dostęp, in-memory.
-- **Backup**: `BNC_*Cache.xlsx` w `CacheFolderPath` — bezpieczna kopia poza xlsm.
+- **Primary**: `ws_*Cache` / `ws_UsersRegistry` w xlsm (very hidden) — szybki dostęp, in-memory.
+- **Backup**: `BNC_*Cache.xlsx` / `BNC_UsersRegistry.xlsx` w `CacheFolderPath` — bezpieczna kopia poza xlsm.
 - **Sync jednostronny** worksheet → xlsx (nigdy odwrotnie). Eliminuje conflict resolution.
+- **Trzy warstwy** (post-M3.3): UserCache (current user), Registry (wszyscy userzy), DataCache (zgłoszenia). Symetryczne pipeline.
 
 ### 🔒 Audit trail (ADR-005, ADR-006)
 - `EmailRecipient` + `BatchSentTimestamp` jako dowód kontaktu.
@@ -159,7 +193,7 @@ Akceptowalne, ponieważ:
 
 ---
 
-## 4. Ścieżka migracji do Fazy B
+## 5. Ścieżka migracji do Fazy B
 
 ### `ws_UserCache` → zostaje
 Mała tabela (jeden user per laptop), mała wartość przeniesienia do SQL. Może zostać jako single-source-of-truth dla identity (faza A) lub przejść do `tbl_Users` w SQL przy okazji migracji innych komponentów.
