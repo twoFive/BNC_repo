@@ -13,7 +13,7 @@
 
 ---
 
-## Krok 1 - utwórz UserForm
+## Krok 1 - utwórz UserForm |x
 
 W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 
@@ -38,8 +38,8 @@ Współrzędne w punktach (pt). Form area: 558 × 420 (bez title bar).
 
 | # | Typ | Name | Left | Top | Width | Height | Properties |
 |---|---|---|---:|---:|---:|---:|---|
-| 1 | Label | `lbl_TutorialHeader` | 12 | 12 | 380 | 22 | `Caption = "Samouczek BNC_Sender"`, `Font = Segoe UI 14 Bold`, `ForeColor = &H00804000&` (ciemnoniebieski) |
-| 2 | Label | `lbl_PageIndicator` | 420 | 16 | 130 | 18 | `Caption` wypełnia `RenderPage` (np. `"Strona 3 z 5"`), `Font = 9pt italic`, `TextAlign = 3 - fmTextAlignRight`, `ForeColor = &H00666666&` (medium gray) |
+| 1 | Label | `lbl_TutorialHeader` | 12 | 12 | 380 | 22 | `Caption = "Samouczek BNC_Sender"`, `Font = Segoe UI 14 Bold`, `ForeColor = &H00804000&` (ciemnoniebieski) |x
+| 2 | Label | `lbl_PageIndicator` | 420 | 16 | 130 | 18 | `Caption` wypełnia `RenderPage` (np. `"Strona 3 z 5"`), `Font = 9pt italic`, `TextAlign = 3 - fmTextAlignRight`, `ForeColor = &H00666666&` (medium gray) |x
 
 **Separator visualny** (opcjonalny): Label z `Height = 1`, `BackColor = &H00CCCCCC&`, position (12, 46), width=536 - tworzy poziomą linię pod headerem.
 
@@ -47,8 +47,8 @@ Współrzędne w punktach (pt). Form area: 558 × 420 (bez title bar).
 
 | # | Typ | Name | Left | Top | Width | Height | Properties |
 |---|---|---|---:|---:|---:|---:|---|
-| 3 | Label | `lbl_PageTitle` | 18 | 58 | 524 | 24 | `Caption` wypełnia `RenderPage`, `Font = Segoe UI 12 Bold`, `ForeColor = &H00404040&` (dark gray) |
-| 4 | TextBox | `txt_PageBody` | 18 | 90 | 524 | 260 | `Text` wypełnia `RenderPage`, `Font = Segoe UI 10`, **`MultiLine = True`**, **`Locked = True`**, **`Enabled = False`**, `BackColor = &H8000000F&` (BtnFace - matchuje formę żeby wyglądał jak text label, nie edit box), `SpecialEffect = 0 - fmSpecialEffectFlat` (bez border), `ScrollBars = 0 - fmScrollBarsNone`, `ForeColor = &H00404040&` |
+| 3 | Label | `lbl_PageTitle` | 18 | 58 | 524 | 24 | `Caption` wypełnia `RenderPage`, `Font = Segoe UI 12 Bold`, `ForeColor = &H00404040&` (dark gray) |x
+| 4 | TextBox | `txt_PageBody` | 18 | 90 | 524 | 260 | `Text` wypełnia `RenderPage`, `Font = Segoe UI 10`, **`MultiLine = True`**, **`Locked = True`**, **`Enabled = False`**, `BackColor = &H8000000F&` (BtnFace - matchuje formę żeby wyglądał jak text label, nie edit box), `SpecialEffect = 0 - fmSpecialEffectFlat` (bez border), `ScrollBars = 0 - fmScrollBarsNone`, `ForeColor = &H00404040&` |x
 
 > **Dlaczego TextBox a nie Label**: TextBox ma natywny word-wrap i nie obcina długich linii. Label z `WordWrap=True` bywa zawodny (obcinanie w połowie zdania przy różnych DPI). `Locked=True + Enabled=False` = user nie może zaznaczać/edytować, ale nadal widzi normalnie renderowany tekst.
 >
@@ -58,9 +58,11 @@ Współrzędne w punktach (pt). Form area: 558 × 420 (bez title bar).
 
 | # | Typ | Name | Left | Top | Width | Height | Properties |
 |---|---|---|---:|---:|---:|---:|---|
-| 5 | CommandButton | `btn_Prev` | 18 | 380 | 100 | 26 | `Caption = "◀ Wstecz"`, `Enabled = False` na 1. stronie (kod dynamicznie), `TakeFocusOnClick = True` |
-| 6 | CommandButton | `btn_Next` | 340 | 380 | 100 | 26 | `Caption = "Dalej ▶"`, **`Default = True`** (Enter = Next), kod zmienia na `"Zakończ ✓"` na ostatniej stronie |
-| 7 | CommandButton | `btn_Skip` | 450 | 380 | 100 | 26 | `Caption = "Pomiń"`, **`Cancel = True`** (Esc = Skip) |
+| 5 | CommandButton | `btn_Prev` | 18 | 380 | 100 | 26 | `Caption = "< Wstecz"`, `Enabled = False` na 1. stronie (kod dynamicznie), `TakeFocusOnClick = True` |x
+| 6 | CommandButton | `btn_Next` | 340 | 380 | 100 | 26 | `Caption = "Dalej >"`, **`Default = True`** (Enter = Next), kod zmienia na `"Zakoncz"` na ostatniej stronie |x
+| 7 | CommandButton | `btn_Skip` | 450 | 380 | 100 | 26 | `Caption = "Pomiń"`, **`Cancel = True`** (Esc = Skip) |x
+
+> **ASCII-only captions** (v3.1): VBA UserForm renderer nie wyświetla poprawnie znaków ▶ ◀ ✓ w standardowych fontach. Substytucje: `▶` → `>`, `◀` → `<`, `✓` → usunięte. Patrz sekcja "Emoji + special characters" na dole.
 
 ### Suma kontrolek: 7 (+ opcjonalny separator = 8)
 
@@ -145,22 +147,26 @@ End Sub
 | txt_PageBody.ForeColor | Dark gray | `&H00404040&` |
 | Separator (opcjonalny) | Light gray | `&H00CCCCCC&` |
 
-## Emoji + special characters w treści
+## Emoji + special characters w treści (v3.1 - ASCII-only)
 
-Tekst z `frm_Tutorial.TEXT.md` używa następujących non-ASCII characters. Code-behind embeduje je jako **literal Unicode w String literals**. Wymaga żeby .bas file był **UTF-8 with BOM** przy imporcie do VBE.
+**Empirical finding** (2026-08-09): VBA UserForm renderer w Excel 2019/365 **nie wyświetla znaków non-ANSI** takich jak `▶ ◀ ✓ ⚙ ✉` w domyślnych fontach (Tahoma, Segoe UI). Zmiana fontu na Segoe UI Symbol renderuje symbole, ale **rozwala polskie diakrytyki** w tym samym caption.
 
-| Znak | Unicode | Kod ChrW alt | Uwagi |
-|---|---|---|---|
-| ▶ | U+25B6 | `ChrW(9654)` | BMP - safe |
-| ◀ | U+25C0 | `ChrW(9664)` | BMP - safe |
-| ✓ | U+2713 | `ChrW(10003)` | BMP - safe |
-| · | U+00B7 | `ChrW(183)` | ANSI - safe |
-| ⚙ | U+2699 | `ChrW(9881)` | BMP - safe |
-| ✉ | U+2709 | `ChrW(9993)` | BMP - safe |
-| 👋 | U+1F44B | N/A | **non-BMP** - literal only |
-| 🛟 | U+1F6DF | N/A | **non-BMP** - literal only |
-| 📈 | U+1F4C8 | N/A | **non-BMP** - literal only |
+Rozwiązania rozważane i odrzucone:
+- **Osobne Labele per emoji z Segoe UI Symbol font** - +5-10 kontrolek, positioning nightmare, non-BMP (👋 🛟 📈) nadal nie działa
+- **Image controls z PNG icons** - "maski" pod textem, wymaga ship PNG assets, nie skaluje z DPI
+- **Wingdings/Webdings** - legacy fonts, glyphs mapped na dziwne kody (`3` = strzałka), nieczytelne w kodzie
+- **Extended ANSI** - zawodne, coraz mniej działa w Win11
 
-**Fallback jeśli emoji się psują przy imporcie**:
-- Non-BMP (👋, 🛟, 📈) - manualnie edytuj w VBE po imporcie, copy-paste z TEXT.md
-- BMP (▶ ◀ ✓ · ⚙ ✉) - w code-behind użyte przez `ChrW(N)` - zero problem z encoding
+**Decyzja: ASCII-only** (v3.1 code-behind). Substytucje w wyświetlanym tekście:
+
+| Original (TEXT.md) | Substitute (code-behind) | Kontekst |
+|---|---|---|
+| `▶` (right arrow) | `>` | Button "Dalej >" |
+| `◀` (left arrow) | `<` | Button "< Wstecz" |
+| `✓` (check) | (usunięte) | Button "Zakoncz" |
+| `→` (body arrow) | `->` | Body text steps |
+| `•` (bullet) | `-` | Body bullet lists |
+| `·` (middle dot separator) | ` - ` (space-hyphen-space) | Title separators |
+| `👋 ⚙ 🛟 ✉ 📈` | (usunięte) | Pure decoration - no info loss |
+
+**Divergence TEXT.md ↔ code-behind**: TEXT.md pozostaje "spec ideal" z emoji dla czytelności w markdown viewerze. Code-behind reflektuje **actual UI** (ASCII). Jeśli w M8+ VBA UserForms zaczną poprawnie renderować emoji (upgrade Excel / new font ecosystem) - refactor będzie 5-min edit.

@@ -6,9 +6,14 @@
 '  Content source of truth: Source/Forms/frm_Tutorial.TEXT.md
 '  Kazda edycja tresci = update TEXT.md najpierw, potem re-paste tego kodu.
 '
-'  Encoding: plik powinien byc UTF-8 with BOM zeby polskie znaki + emoji
-'  (👋 🛟 📈) importowaly sie poprawnie do VBE. Jesli import je zepsuje,
-'  manualnie skopiuj z frm_Tutorial.TEXT.md.
+'  ASCII-ONLY VERSION (v3.1) - emoji z TEXT.md zastapione ASCII bo VBA
+'  UserForm renderer nie wyswietla znakow non-ANSI w domyslnych fontach
+'  (Segoe UI Symbol wymaga per-control font, uszkadza polskie diakrytyki).
+'  Substitutions:
+'    - Titles: usuniete 👋 ⚙ 🛟 (pure decoration)
+'    - Body ✉ 📈 usuniete
+'    - Buttons: ▶ -> ">", ◀ -> "<", ✓ -> ""
+'    - Body: → -> "->", • -> "-", · -> " - "
 '
 '  Patrz: frm_Tutorial.LAYOUT.md
 ' ============================================================================
@@ -59,9 +64,9 @@ Private Sub RenderPage()
     btn_Prev.Enabled = (m_currentPage > 1)
 
     If m_currentPage = TOTAL_PAGES Then
-        btn_Next.Caption = "Zakoncz " & ChrW(10003)  ' Zakoncz ✓
+        btn_Next.Caption = "Zakoncz"
     Else
-        btn_Next.Caption = "Dalej " & ChrW(9654)     ' Dalej ▶
+        btn_Next.Caption = "Dalej >"
     End If
 
     Select Case m_currentPage
@@ -73,10 +78,10 @@ Private Sub RenderPage()
     End Select
 End Sub
 
-' ----- Per-page renderers (content z frm_Tutorial.TEXT.md) -----------------
+' ----- Per-page renderers (content z frm_Tutorial.TEXT.md, ASCII-only) -----
 
 Private Sub RenderPage1_Welcome()
-    lbl_PageTitle.Caption = "Witaj w BNC_Sender 👋"
+    lbl_PageTitle.Caption = "Witaj w BNC_Sender"
 
     Dim s As String
     s = "BNC_Sender to aplikacja do zbiorczej wysyłki zgłoszeń BNC." & vbCrLf & vbCrLf
@@ -85,14 +90,13 @@ Private Sub RenderPage1_Welcome()
         "i mail ze wszystkimi zgłoszeniami jest wysyłany przez Outlook do " & _
         "właściwego adresata (do Twojego kierownika, a jeśli sam nim jesteś, " & _
         "wprost na skrzynkę BNC)." & vbCrLf & vbCrLf
-    s = s & "Samouczek zajmie ~2 minuty. Naciśnij " & Chr(34) & "Dalej " & _
-        ChrW(9654) & Chr(34) & "."
+    s = s & "Samouczek zajmie ~2 minuty. Naciśnij " & Chr(34) & "Dalej >" & Chr(34) & "."
 
     txt_PageBody.Text = s
 End Sub
 
 Private Sub RenderPage2_Setup()
-    lbl_PageTitle.Caption = "Konfiguracja (jednorazowa) " & ChrW(9881)  ' ⚙
+    lbl_PageTitle.Caption = "Konfiguracja (jednorazowa)"
 
     Dim s As String
     s = "Przy pierwszym uruchomieniu aplikacji wypełniasz formularz z Twoimi " & _
@@ -121,21 +125,20 @@ Private Sub RenderPage3_DailyWork()
         "(YYYY-MM, domyślnie bieżący). Kliknij " & Chr(34) & _
         "Dodaj do listy" & Chr(34) & "." & vbCrLf & vbCrLf
     s = s & "POMYŁKA:" & vbCrLf
-    s = s & "Kliknij na wiersz w liście pending " & ChrW(8594) & " " & _
-        Chr(34) & "Usuń zaznaczone" & Chr(34) & " " & ChrW(8594) & _
-        " potwierdź. Wysłane zgłoszenia są NIEUSUWALNE, " & _
-        "sprawdzaj przed wysyłką." & vbCrLf & vbCrLf
+    s = s & "Kliknij na wiersz w liście pending -> " & Chr(34) & _
+        "Usuń zaznaczone" & Chr(34) & " -> potwierdź. " & _
+        "Wysłane zgłoszenia są NIEUSUWALNE, sprawdzaj przed wysyłką." & _
+        vbCrLf & vbCrLf
     s = s & "WYSYŁKA (najlepiej raz w miesiącu):" & vbCrLf
     s = s & "Kliknij " & Chr(34) & "Wyślij Wniosek BNC" & Chr(34) & _
-        " " & ChrW(8594) & " potwierdzenie " & ChrW(8594) & _
-        " mail wychodzi z Outlooka. Lista pending czyści się, " & _
-        "zgłoszenia trafiają do historii."
+        " -> potwierdzenie -> mail wychodzi z Outlooka. " & _
+        "Lista pending czyści się, zgłoszenia trafiają do historii."
 
     txt_PageBody.Text = s
 End Sub
 
 Private Sub RenderPage4_HistoryExport()
-    lbl_PageTitle.Caption = "Pokaż historię " & ChrW(183) & " Eksport"  ' ·
+    lbl_PageTitle.Caption = "Pokaż historię - Eksport"
 
     Dim s As String
     s = Chr(34) & "POKAŻ HISTORIĘ" & Chr(34) & ": widzisz wszystkie zgłoszenia " & _
@@ -151,22 +154,21 @@ Private Sub RenderPage4_HistoryExport()
 End Sub
 
 Private Sub RenderPage5_Help()
-    lbl_PageTitle.Caption = "Gdy coś nie działa " & ChrW(183) & " Kontakt 🛟"  ' ·
+    lbl_PageTitle.Caption = "Gdy coś nie działa - Kontakt"
 
     Dim s As String
     s = "NAJCZĘSTSZE:" & vbCrLf
-    s = s & ChrW(8226) & " Excel pyta o makra " & ChrW(8594) & " klik " & _
-        Chr(34) & "Włącz zawartość" & Chr(34) & vbCrLf
-    s = s & ChrW(8226) & " Outlook pyta o pozwolenie na wysyłkę " & ChrW(8594) & _
-        " klik " & Chr(34) & "Allow" & Chr(34) & vbCrLf
-    s = s & ChrW(8226) & " " & Chr(34) & "Wyślij" & Chr(34) & _
-        " nic nie robi " & ChrW(8594) & " sprawdź czy Outlook jest otwarty" & _
+    s = s & "- Excel pyta o makra -> klik " & Chr(34) & "Włącz zawartość" & _
+        Chr(34) & vbCrLf
+    s = s & "- Outlook pyta o pozwolenie na wysyłkę -> klik " & _
+        Chr(34) & "Allow" & Chr(34) & vbCrLf
+    s = s & "- " & Chr(34) & "Wyślij" & Chr(34) & _
+        " nic nie robi -> sprawdź czy Outlook jest otwarty" & _
         vbCrLf & vbCrLf & vbCrLf
     s = s & "Inne problemy / Sugestie:" & vbCrLf
     s = s & "tomasz.pirszel@inter-team.com.pl" & vbCrLf & vbCrLf
-    s = s & "Powodzenia! " & ChrW(9993) & " 📈" & vbCrLf   ' ✉ 📈
-    s = s & "Kliknij " & Chr(34) & "Zakończ " & ChrW(10003) & Chr(34) & _
-        " żeby zamknąć."
+    s = s & "Powodzenia!" & vbCrLf
+    s = s & "Kliknij " & Chr(34) & "Zakoncz" & Chr(34) & " żeby zamknąć."
 
     txt_PageBody.Text = s
 End Sub
