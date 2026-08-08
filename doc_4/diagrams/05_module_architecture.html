@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>BNC_Sender — Architektura modułów (faza A)</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { width: 1600px; height: 1100px; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowDown" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1565c0"/>
+    </marker>
+    <linearGradient id="lyr1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e3f2fd"/><stop offset="100%" stop-color="#90caf9"/>
+    </linearGradient>
+    <linearGradient id="lyr2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff3e0"/><stop offset="100%" stop-color="#ffcc80"/>
+    </linearGradient>
+    <linearGradient id="lyr3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f3e5f5"/><stop offset="100%" stop-color="#ce93d8"/>
+    </linearGradient>
+    <linearGradient id="lyr4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#eceff1"/><stop offset="100%" stop-color="#b0bec5"/>
+    </linearGradient>
+    <linearGradient id="hl" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff59d"/><stop offset="100%" stop-color="#ffd54f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="800" y="50" text-anchor="middle" font-size="32" font-weight="700" fill="#1a237e">
+    BNC_Sender — Architektura modułów (faza A)
+  </text>
+  <text x="800" y="80" text-anchor="middle" font-size="16" fill="#546e7a">
+    Component Diagram (C4 model · poziom 3) · stan po M5
+  </text>
+
+  <!-- ============== WARSTWA 1: PREZENTACJA ============== -->
+  <rect x="50" y="120" width="1500" height="170" rx="12" fill="url(#lyr1)" stroke="#1565c0" stroke-width="2"/>
+  <text x="70" y="153" font-size="20" font-weight="700" fill="#0d47a1">▶ Warstwa prezentacji</text>
+  <text x="70" y="175" font-size="13" fill="#1565c0">UserForms — interakcja z userem</text>
+
+  <!-- frm_Setup -->
+  <rect x="100" y="195" width="320" height="80" rx="10" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <text x="260" y="222" text-anchor="middle" font-size="16" font-weight="700" fill="#0d47a1">frm_Setup</text>
+  <text x="260" y="244" text-anchor="middle" font-size="12" fill="#37474f">jednorazowa rejestracja handlowca</text>
+  <text x="260" y="262" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">EmailBNC + CacheFolderPath hardcoded (ADR-003)</text>
+
+  <!-- frm_Main -->
+  <rect x="450" y="195" width="320" height="80" rx="10" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <text x="610" y="222" text-anchor="middle" font-size="16" font-weight="700" fill="#0d47a1">frm_Main</text>
+  <text x="610" y="244" text-anchor="middle" font-size="12" fill="#37474f">batch zgłoszeń + wysyłka</text>
+  <text x="610" y="262" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">ListBox pending · btn_SendBatch</text>
+
+  <!-- frm_Log -->
+  <rect x="800" y="195" width="320" height="80" rx="10" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <text x="960" y="222" text-anchor="middle" font-size="16" font-weight="700" fill="#0d47a1">frm_Log</text>
+  <text x="960" y="244" text-anchor="middle" font-size="12" fill="#37474f">historia + eksport literal copy</text>
+  <text x="960" y="262" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">statystyki pending/sent</text>
+
+  <!-- frm_Tutorial (deferred) -->
+  <rect x="1150" y="195" width="320" height="80" rx="10" fill="#fafafa" stroke="#90a4ae" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="1310" y="222" text-anchor="middle" font-size="16" font-weight="700" fill="#78909c">frm_Tutorial</text>
+  <text x="1310" y="244" text-anchor="middle" font-size="12" fill="#90a4ae">samouczek (M6/M7 — odłożone)</text>
+  <text x="1310" y="262" text-anchor="middle" font-size="11" fill="#b0bec5" font-style="italic">btn_ShowTutorial placeholder</text>
+
+  <!-- ============== WARSTWA 2: LOGIKA BIZNESOWA ============== -->
+  <rect x="50" y="320" width="1500" height="170" rx="12" fill="url(#lyr2)" stroke="#ef6c00" stroke-width="2"/>
+  <text x="70" y="353" font-size="20" font-weight="700" fill="#bf360c">▶ Warstwa logiki biznesowej</text>
+  <text x="70" y="375" font-size="13" fill="#e65100">reguły, decyzje, transformacje — bez direct access do worksheets</text>
+
+  <!-- mod_Validation -->
+  <rect x="100" y="395" width="380" height="80" rx="10" fill="#ffffff" stroke="#ef6c00" stroke-width="2"/>
+  <text x="290" y="422" text-anchor="middle" font-size="16" font-weight="700" fill="#bf360c">mod_Validation</text>
+  <text x="290" y="444" text-anchor="middle" font-size="12" fill="#37474f">czyste, bezstanowe reguły walidacji</text>
+  <text x="290" y="462" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">ValidateSetupData · ValidateReportData</text>
+
+  <!-- mod_MailSender (highlighted) -->
+  <rect x="510" y="395" width="380" height="80" rx="10" fill="url(#hl)" stroke="#f57c00" stroke-width="3"/>
+  <text x="700" y="422" text-anchor="middle" font-size="16" font-weight="700" fill="#bf360c">★ mod_MailSender</text>
+  <text x="700" y="444" text-anchor="middle" font-size="12" fill="#37474f">Outlook COM + decision diamond (ADR-005)</text>
+  <text x="700" y="462" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">SendBatch · DetermineRecipient</text>
+
+  <!-- mod_Export -->
+  <rect x="920" y="395" width="380" height="80" rx="10" fill="#ffffff" stroke="#ef6c00" stroke-width="2"/>
+  <text x="1110" y="422" text-anchor="middle" font-size="16" font-weight="700" fill="#bf360c">mod_Export</text>
+  <text x="1110" y="444" text-anchor="middle" font-size="12" fill="#37474f">literal copy BNC_DataCache.xlsx</text>
+  <text x="1110" y="462" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">ExportDataCache · GetSuggestedExportFileName</text>
+
+  <!-- ============== WARSTWA 3: DOSTĘP DO DANYCH ============== -->
+  <rect x="50" y="520" width="1500" height="170" rx="12" fill="url(#lyr3)" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="70" y="553" font-size="20" font-weight="700" fill="#4a148c">▶ Warstwa dostępu do danych (Repository Pattern · ADR-001)</text>
+  <text x="70" y="575" font-size="13" fill="#6a1b9a">jedyne miejsce dostępu do worksheets · w fazie B → mod_DataAccess</text>
+
+  <!-- mod_AppStateSync (post-ADR-009) -->
+  <rect x="70" y="595" width="460" height="80" rx="10" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="300" y="622" text-anchor="middle" font-size="16" font-weight="700" fill="#4a148c">mod_AppStateSync</text>
+  <text x="300" y="644" text-anchor="middle" font-size="12" fill="#37474f">DAO dla ws_AppState (session marker)</text>
+  <text x="300" y="662" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">GetAppValue · SetAppValue · EnsureAppStateSheet</text>
+
+  <!-- mod_UsersRegistrySync (post-ADR-009 - sole source of truth) -->
+  <rect x="560" y="595" width="460" height="80" rx="10" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="790" y="622" text-anchor="middle" font-size="16" font-weight="700" fill="#4a148c">mod_UsersRegistrySync</text>
+  <text x="790" y="644" text-anchor="middle" font-size="12" fill="#37474f">DAO dla ws_UsersRegistry · current user API · IsUserManager()</text>
+  <text x="790" y="662" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">GetCurrentUserField · SwitchUser · AddNewUser · SyncRegistryToFile</text>
+
+  <!-- mod_DataCacheSync -->
+  <rect x="1050" y="595" width="460" height="80" rx="10" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <text x="1280" y="622" text-anchor="middle" font-size="16" font-weight="700" fill="#4a148c">mod_DataCacheSync</text>
+  <text x="1280" y="644" text-anchor="middle" font-size="12" fill="#37474f">DAO dla ws_DataCache · autoincrement ReportID</text>
+  <text x="1280" y="662" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">AppendRecord · GetPendingRecords · MarkAsSent · DeleteRecord</text>
+
+  <!-- ============== WARSTWA 4: INFRASTRUKTURA ============== -->
+  <rect x="50" y="720" width="1500" height="240" rx="12" fill="url(#lyr4)" stroke="#455a64" stroke-width="2"/>
+  <text x="70" y="753" font-size="20" font-weight="700" fill="#263238">▶ Warstwa infrastruktury</text>
+  <text x="70" y="775" font-size="13" fill="#37474f">storage, helpery, integracje COM — fundament dla pozostałych warstw</text>
+
+  <!-- mod_Utils -->
+  <rect x="60" y="795" width="290" height="140" rx="10" fill="#ffffff" stroke="#455a64" stroke-width="2"/>
+  <text x="205" y="822" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">mod_Utils</text>
+  <text x="205" y="843" text-anchor="middle" font-size="11" fill="#37474f">helpery dla wszystkich warstw</text>
+  <line x1="80" y1="855" x2="330" y2="855" stroke="#90a4ae" stroke-dasharray="3,2"/>
+  <text x="205" y="877" text-anchor="middle" font-size="10" fill="#546e7a">LogInfo · LogError · IsValidEmail</text>
+  <text x="205" y="895" text-anchor="middle" font-size="10" fill="#546e7a">FileExists · EnsureFolderExists · JoinPath</text>
+  <text x="205" y="913" text-anchor="middle" font-size="10" fill="#546e7a">FormatTimestampISO · GetCurrentMonthYear</text>
+
+  <!-- ws_AppState (post-ADR-009) -->
+  <rect x="370" y="795" width="220" height="140" rx="10" fill="#ffffff" stroke="#455a64" stroke-width="2"/>
+  <text x="480" y="822" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ws_AppState</text>
+  <text x="480" y="843" text-anchor="middle" font-size="10" fill="#78909c" font-style="italic">very hidden · key-value</text>
+  <line x1="390" y1="855" x2="570" y2="855" stroke="#90a4ae" stroke-dasharray="3,2"/>
+  <text x="480" y="877" text-anchor="middle" font-size="10" fill="#546e7a">session marker</text>
+  <text x="480" y="895" text-anchor="middle" font-size="10" fill="#546e7a">_CurrentUserID</text>
+  <text x="480" y="913" text-anchor="middle" font-size="10" fill="#546e7a" font-style="italic">BEZ xlsx sync (ADR-009)</text>
+
+  <!-- ws_UsersRegistry (post-ADR-009 sole source) -->
+  <rect x="610" y="795" width="250" height="140" rx="10" fill="#ffffff" stroke="#455a64" stroke-width="2"/>
+  <text x="735" y="822" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ws_UsersRegistry</text>
+  <text x="735" y="843" text-anchor="middle" font-size="10" fill="#78909c" font-style="italic">very hidden · tabela · 13 kol</text>
+  <line x1="630" y1="855" x2="840" y2="855" stroke="#90a4ae" stroke-dasharray="3,2"/>
+  <text x="735" y="877" text-anchor="middle" font-size="10" fill="#546e7a">UserID PK · wszyscy handlowcy</text>
+  <text x="735" y="895" text-anchor="middle" font-size="10" fill="#546e7a">sole source of truth (ADR-009)</text>
+  <text x="735" y="913" text-anchor="middle" font-size="10" fill="#546e7a">→ BNC_UsersRegistry.xlsx</text>
+
+  <!-- ws_DataCache (schema v2) -->
+  <rect x="880" y="795" width="250" height="140" rx="10" fill="#ffffff" stroke="#455a64" stroke-width="2"/>
+  <text x="1005" y="822" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ws_DataCache</text>
+  <text x="1005" y="843" text-anchor="middle" font-size="10" fill="#78909c" font-style="italic">very hidden · tabela · 10 kol (v2)</text>
+  <line x1="900" y1="855" x2="1110" y2="855" stroke="#90a4ae" stroke-dasharray="3,2"/>
+  <text x="1005" y="877" text-anchor="middle" font-size="10" fill="#546e7a">ReportID autoincrement</text>
+  <text x="1005" y="895" text-anchor="middle" font-size="10" fill="#546e7a">Status: pending/sent, MiesiacObrotu</text>
+  <text x="1005" y="913" text-anchor="middle" font-size="10" fill="#546e7a">snapshot CNA/NrOddzialu z Registry</text>
+
+  <!-- Outlook COM -->
+  <rect x="1150" y="795" width="370" height="140" rx="10" fill="#ffffff" stroke="#455a64" stroke-width="2"/>
+  <text x="1335" y="822" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">Outlook COM</text>
+  <text x="1335" y="843" text-anchor="middle" font-size="11" fill="#78909c" font-style="italic">CreateObject("Outlook.Application")</text>
+  <line x1="1170" y1="855" x2="1500" y2="855" stroke="#90a4ae" stroke-dasharray="3,2"/>
+  <text x="1335" y="877" text-anchor="middle" font-size="11" fill="#546e7a">MailItem.Send (late binding)</text>
+  <text x="1335" y="895" text-anchor="middle" font-size="11" fill="#546e7a">Wymaga: Trust access to Outlook object model</text>
+  <text x="1335" y="913" text-anchor="middle" font-size="11" fill="#546e7a">Ticket do IT: pkt 3 (02_system_architecture)</text>
+
+  <!-- ============== STRZAŁKI ZALEŻNOŚCI (only down) ============== -->
+  <!-- presentation -> business -->
+  <line x1="260" y1="275" x2="290" y2="395" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="610" y1="275" x2="700" y2="395" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="610" y1="275" x2="290" y2="395" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="960" y1="275" x2="1110" y2="395" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- business -> data access (3 targets: AppState, Registry, DataCache) -->
+  <line x1="700" y1="475" x2="300" y2="595" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="700" y1="475" x2="790" y2="595" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="700" y1="475" x2="1280" y2="595" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="1110" y1="475" x2="1280" y2="595" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- data access -> infrastructure -->
+  <line x1="300" y1="675" x2="480" y2="795" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="790" y1="675" x2="735" y2="795" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="1280" y1="675" x2="1005" y2="795" stroke="#1565c0" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- cross-module dep: mod_UsersRegistrySync -> mod_AppStateSync (post-ADR-009) -->
+  <line x1="620" y1="635" x2="480" y2="635" stroke="#7b1fa2" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowDown)"/>
+  <text x="550" y="628" font-size="9" fill="#7b1fa2" font-style="italic">cross-module (session lookup)</text>
+
+  <!-- mod_MailSender -> Outlook COM (cross-layer infrastructure direct) -->
+  <line x1="700" y1="475" x2="1335" y2="795" stroke="#ef6c00" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowDown)"/>
+  <text x="1100" y="640" font-size="11" fill="#ef6c00" font-style="italic">COM call</text>
+
+  <!-- mod_Utils used by all (drawn as floating text) -->
+  <text x="205" y="945" font-size="10" fill="#546e7a" text-anchor="middle" font-style="italic">↑ wykorzystywany przez wszystkie warstwy</text>
+
+  <!-- LEGENDA -->
+  <rect x="50" y="990" width="1500" height="80" rx="10" fill="#fafafa" stroke="#90a4ae" stroke-width="1.5"/>
+  <text x="70" y="1015" font-size="14" font-weight="700" fill="#37474f">Reguła warstw:</text>
+  <text x="180" y="1015" font-size="13" fill="#37474f">strzałki tylko w dół, nigdy w górę · UserForms → logika → sync → worksheets · mod_Utils dostępny dla wszystkich</text>
+  <text x="70" y="1040" font-size="13" fill="#37474f"><tspan font-weight="700">Highlight ★ mod_MailSender:</tspan> jedyny moduł z decyzją kierownik/handlowiec (ADR-005). Reszta aplikacji nie wie o roli usera w kontekście wysyłki.</text>
+  <text x="70" y="1062" font-size="12" fill="#78909c">frm_Tutorial — dashed border = zaplanowany w M6/M7 (samouczek za btn_ShowTutorial; obecnie placeholder MsgBox)</text>
+</svg>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Model danych — Faza A (ERD)</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { width: 1400px; height: 900px; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1400" height="900" viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowDiamond" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,7 L7,0 L14,7 L7,14 z" fill="white" stroke="#4527a0" stroke-width="1.5"/>
+    </marker>
+    <linearGradient id="userCacheHeader" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#43a047"/><stop offset="100%" stop-color="#2e7d32"/>
+    </linearGradient>
+    <linearGradient id="dataCacheHeader" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e88e5"/><stop offset="100%" stop-color="#1565c0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="700" y="42" text-anchor="middle" font-size="28" font-weight="700" fill="#1a237e">
+    Model danych — Faza A
+  </text>
+  <text x="700" y="68" text-anchor="middle" font-size="13" fill="#546e7a">
+    ERD · trzy ukryte arkusze (ws_AppState + ws_UsersRegistry + ws_DataCache) · post-ADR-009 · opis: 04_data_model.md
+  </text>
+
+  <!-- ============================================================ -->
+  <!-- ws_UserCache — entity table                                  -->
+  <!-- ============================================================ -->
+  <rect x="80" y="110" width="550" height="700" rx="6" fill="white" stroke="#2e7d32" stroke-width="2.5"/>
+
+  <!-- Header -->
+  <rect x="80" y="110" width="550" height="60" rx="6" fill="url(#userCacheHeader)"/>
+  <text x="355" y="138" text-anchor="middle" font-size="22" font-weight="700" fill="white">ws_UsersRegistry</text>
+  <text x="355" y="158" text-anchor="middle" font-size="12" fill="#c8e6c9" font-style="italic">very hidden · tabelaryczny · 13 kolumn · N wierszy (1 = 1 handlowiec) · sole source of truth (ADR-009)</text>
+
+  <!-- Column header -->
+  <rect x="80" y="170" width="550" height="32" fill="#f1f8e9" stroke="#2e7d32" stroke-width="1"/>
+  <text x="100" y="190" font-size="12" font-weight="700" fill="#1b5e20">Kolumna</text>
+  <text x="330" y="190" font-size="12" font-weight="700" fill="#1b5e20">Typ</text>
+  <text x="470" y="190" font-size="12" font-weight="700" fill="#1b5e20">Constraint</text>
+
+  <!-- Rows -->
+  <line x1="80" y1="232" x2="630" y2="232" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="225" font-size="13" font-family="monospace" fill="#bf360c" font-weight="700">UserID</text>
+  <text x="330" y="225" font-size="12" fill="#546e7a">String</text>
+  <text x="470" y="225" font-size="11" font-weight="700" fill="#bf360c">PK · UZYTKOWNIK_&lt;N&gt;_CNA&lt;cna&gt;</text>
+
+  <line x1="80" y1="262" x2="630" y2="262" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="255" font-size="13" font-family="monospace" fill="#37474f">Imie</text>
+  <text x="330" y="255" font-size="12" fill="#546e7a">String</text>
+  <text x="470" y="255" font-size="11" fill="#37474f">NOT NULL</text>
+
+  <line x1="80" y1="292" x2="630" y2="292" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="285" font-size="13" font-family="monospace" fill="#37474f">Nazwisko</text>
+  <text x="330" y="285" font-size="12" fill="#546e7a">String</text>
+  <text x="470" y="285" font-size="11" fill="#37474f">NOT NULL</text>
+
+  <line x1="80" y1="322" x2="630" y2="322" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="315" font-size="13" font-family="monospace" fill="#37474f">EmailHandlowca</text>
+  <text x="330" y="315" font-size="12" fill="#546e7a">String (email)</text>
+  <text x="470" y="315" font-size="11" fill="#37474f">NOT NULL · role detection</text>
+
+  <line x1="80" y1="352" x2="630" y2="352" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="345" font-size="13" font-family="monospace" fill="#37474f">CNA_HandlowcaID</text>
+  <text x="330" y="345" font-size="12" fill="#546e7a">Long</text>
+  <text x="470" y="345" font-size="11" fill="#37474f">NOT NULL · &gt; 0</text>
+
+  <line x1="80" y1="382" x2="630" y2="382" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="375" font-size="13" font-family="monospace" fill="#37474f">NrOddzialu</text>
+  <text x="330" y="375" font-size="12" fill="#546e7a">String</text>
+  <text x="470" y="375" font-size="11" fill="#37474f">NOT NULL</text>
+
+  <line x1="80" y1="412" x2="630" y2="412" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="405" font-size="13" font-family="monospace" fill="#37474f">EmailKierownika</text>
+  <text x="330" y="405" font-size="12" fill="#546e7a">String (email)</text>
+  <text x="470" y="405" font-size="11" fill="#37474f">NOT NULL · role detection</text>
+
+  <line x1="80" y1="442" x2="630" y2="442" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="435" font-size="13" font-family="monospace" fill="#37474f">EmailBNC</text>
+  <text x="330" y="435" font-size="12" fill="#546e7a">String (email)</text>
+  <text x="470" y="435" font-size="11" fill="#37474f">CONST (hardcoded ADR-003)</text>
+
+  <line x1="80" y1="472" x2="630" y2="472" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="465" font-size="13" font-family="monospace" fill="#37474f">CacheFolderPath</text>
+  <text x="330" y="465" font-size="12" fill="#546e7a">String (path)</text>
+  <text x="470" y="465" font-size="11" fill="#37474f">CONST (hardcoded ADR-003)</text>
+
+  <line x1="80" y1="502" x2="630" y2="502" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="495" font-size="13" font-family="monospace" fill="#37474f">DataRejestracji</text>
+  <text x="330" y="495" font-size="12" fill="#546e7a">Date</text>
+  <text x="470" y="495" font-size="11" fill="#37474f">NOT NULL</text>
+
+  <line x1="80" y1="532" x2="630" y2="532" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="525" font-size="13" font-family="monospace" fill="#37474f">SetupCompleted</text>
+  <text x="330" y="525" font-size="12" fill="#546e7a">Boolean</text>
+  <text x="470" y="525" font-size="11" fill="#37474f">DEFAULT False</text>
+
+  <line x1="80" y1="562" x2="630" y2="562" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="555" font-size="13" font-family="monospace" fill="#37474f">DontShowSetupAgain</text>
+  <text x="330" y="555" font-size="12" fill="#546e7a">Boolean</text>
+  <text x="470" y="555" font-size="11" fill="#37474f">DEFAULT False</text>
+
+  <line x1="80" y1="592" x2="630" y2="592" stroke="#c8e6c9" stroke-width="1"/>
+  <text x="100" y="585" font-size="13" font-family="monospace" fill="#bf360c" font-weight="700">LastLogin</text>
+  <text x="330" y="585" font-size="12" fill="#546e7a">Date</text>
+  <text x="470" y="585" font-size="11" font-weight="700" fill="#bf360c">SwitchUser trigger update</text>
+
+  <!-- ws_AppState note (post-ADR-009) - small compact info -->
+  <rect x="80" y="620" width="550" height="80" rx="4" fill="#e0f2f1" stroke="#00695c" stroke-width="1.5"/>
+  <text x="100" y="640" font-size="12" font-weight="700" fill="#004d40">📌 ws_AppState (post-ADR-009 session marker)</text>
+  <text x="100" y="660" font-size="11" font-family="monospace" fill="#37474f">_CurrentUserID</text>
+  <text x="330" y="660" font-size="11" fill="#546e7a">String (UserID)</text>
+  <text x="470" y="660" font-size="10" fill="#00695c">FK → UsersRegistry.UserID</text>
+  <text x="100" y="680" font-size="10" fill="#546e7a" font-style="italic">key-value, extensible (przyszłe: _LastVersion, _FeatureFlags), BEZ xlsx sync (marker sesji, YAGNI)</text>
+
+  <!-- ============================================================ -->
+  <!-- ws_DataCache — entity table                                  -->
+  <!-- ============================================================ -->
+  <rect x="770" y="110" width="550" height="700" rx="6" fill="white" stroke="#1565c0" stroke-width="2.5"/>
+
+  <!-- Header -->
+  <rect x="770" y="110" width="550" height="60" rx="6" fill="url(#dataCacheHeader)"/>
+  <text x="1045" y="138" text-anchor="middle" font-size="22" font-weight="700" fill="white">ws_DataCache</text>
+  <text x="1045" y="158" text-anchor="middle" font-size="12" fill="#bbdefb" font-style="italic">very hidden · tabela · 10 kolumn (schema v2) · N wierszy (1 = 1 zgłoszenie)</text>
+
+  <!-- Column header -->
+  <rect x="770" y="170" width="550" height="32" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="790" y="190" font-size="12" font-weight="700" fill="#0d47a1">Kolumna</text>
+  <text x="1020" y="190" font-size="12" font-weight="700" fill="#0d47a1">Typ</text>
+  <text x="1160" y="190" font-size="12" font-weight="700" fill="#0d47a1">Constraint</text>
+
+  <!-- Rows: PK -->
+  <line x1="770" y1="232" x2="1320" y2="232" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="225" font-size="13" font-family="monospace" fill="#bf360c" font-weight="700">ReportID</text>
+  <text x="1020" y="225" font-size="12" fill="#546e7a">Long</text>
+  <text x="1160" y="225" font-size="11" font-weight="700" fill="#bf360c">PK · AUTOINCREMENT</text>
+
+  <!-- Business cols -->
+  <line x1="770" y1="262" x2="1320" y2="262" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="255" font-size="13" font-family="monospace" fill="#37474f">KlientFK</text>
+  <text x="1020" y="255" font-size="12" fill="#546e7a">Long</text>
+  <text x="1160" y="255" font-size="11" fill="#37474f">NOT NULL · &gt; 0</text>
+
+  <line x1="770" y1="292" x2="1320" y2="292" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="285" font-size="13" font-family="monospace" fill="#37474f">NazwaKlienta</text>
+  <text x="1020" y="285" font-size="12" fill="#546e7a">String(3..200)</text>
+  <text x="1160" y="285" font-size="11" fill="#37474f">NOT NULL</text>
+
+  <line x1="770" y1="322" x2="1320" y2="322" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="315" font-size="13" font-family="monospace" fill="#37474f">MiesiacObrotu</text>
+  <text x="1020" y="315" font-size="12" fill="#546e7a">String "yyyy-MM"</text>
+  <text x="1160" y="315" font-size="11" fill="#37474f">NOT NULL · biz time klienta</text>
+
+  <!-- Snapshot cols (highlight strzałką z Registry current user) -->
+  <line x1="770" y1="352" x2="1320" y2="352" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="345" font-size="13" font-family="monospace" fill="#7b1fa2" font-weight="700">CNA_HandlowcaID</text>
+  <text x="1020" y="345" font-size="12" fill="#546e7a">Long</text>
+  <text x="1160" y="345" font-size="11" fill="#7b1fa2">SNAPSHOT z Registry (current)</text>
+
+  <line x1="770" y1="382" x2="1320" y2="382" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="375" font-size="13" font-family="monospace" fill="#7b1fa2" font-weight="700">NrOddzialu</text>
+  <text x="1020" y="375" font-size="12" fill="#546e7a">String</text>
+  <text x="1160" y="375" font-size="11" fill="#7b1fa2">SNAPSHOT z Registry (current)</text>
+
+  <line x1="770" y1="412" x2="1320" y2="412" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="405" font-size="13" font-family="monospace" fill="#546e7a" font-style="italic">// (kolumna Fields USUNIĘTA w schema v2)</text>
+
+  <line x1="770" y1="442" x2="1320" y2="442" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="435" font-size="13" font-family="monospace" fill="#37474f">CreatedTimestamp</text>
+  <text x="1020" y="435" font-size="12" fill="#546e7a">Date</text>
+  <text x="1160" y="435" font-size="11" fill="#37474f">NOT NULL · Now()</text>
+
+  <!-- Audit cols -->
+  <line x1="770" y1="472" x2="1320" y2="472" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="465" font-size="13" font-family="monospace" fill="#bf360c" font-weight="700">Status</text>
+  <text x="1020" y="465" font-size="12" fill="#546e7a">Enum</text>
+  <text x="1160" y="465" font-size="11" font-weight="700" fill="#bf360c">pending | sent</text>
+
+  <line x1="770" y1="502" x2="1320" y2="502" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="495" font-size="13" font-family="monospace" fill="#bf360c" font-weight="700">EmailRecipient</text>
+  <text x="1020" y="495" font-size="12" fill="#546e7a">String (email)</text>
+  <text x="1160" y="495" font-size="11" fill="#bf360c">AUDIT · NULLABLE</text>
+
+  <line x1="770" y1="532" x2="1320" y2="532" stroke="#bbdefb" stroke-width="1"/>
+  <text x="790" y="525" font-size="13" font-family="monospace" fill="#bf360c" font-weight="700">BatchSentTimestamp</text>
+  <text x="1020" y="525" font-size="12" fill="#546e7a">Date</text>
+  <text x="1160" y="525" font-size="11" fill="#bf360c">AUDIT · NULLABLE</text>
+
+  <!-- ============================================================ -->
+  <!-- Relacja: SNAPSHOT z Registry (current user) do DataCache    -->
+  <!-- ============================================================ -->
+  <!-- Linia od Registry prawa krawędź do DataCache lewa krawędź -->
+  <path d="M 630 365 C 690 365 690 365 770 365" fill="none" stroke="#7b1fa2" stroke-width="2.5" stroke-dasharray="6,4" marker-end="url(#arrowDiamond)"/>
+
+  <!-- Etykieta relacji -->
+  <rect x="650" y="345" width="80" height="40" rx="4" fill="white" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="690" y="362" text-anchor="middle" font-size="11" font-weight="700" fill="#7b1fa2">snapshot</text>
+  <text x="690" y="376" text-anchor="middle" font-size="10" fill="#546e7a">przy INSERT</text>
+
+  <!-- ============================================================ -->
+  <!-- Synced backup notes (compact, na dole pod tabelami)         -->
+  <!-- ============================================================ -->
+  <rect x="80" y="835" width="550" height="40" rx="4" fill="#f1f8e9" stroke="#388e3c" stroke-width="1"/>
+  <text x="100" y="853" font-size="11" font-weight="700" fill="#1b5e20">↓ synced backup (post-ADR-009):</text>
+  <text x="100" y="868" font-size="11" font-family="monospace" fill="#37474f">BNC_UsersRegistry.xlsx</text>
+  <text x="270" y="868" font-size="11" fill="#546e7a">(write-through · sync po każdej mutacji · jednostronny)</text>
+
+  <rect x="770" y="835" width="550" height="40" rx="4" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="790" y="853" font-size="11" font-weight="700" fill="#0d47a1">↓ synced backup:</text>
+  <text x="790" y="868" font-size="11" font-family="monospace" fill="#37474f">BNC_DataCache.xlsx</text>
+  <text x="960" y="868" font-size="11" fill="#546e7a">(write-through · po każdej zmianie · best-effort)</text>
+</svg>
+</body>
+</html>
