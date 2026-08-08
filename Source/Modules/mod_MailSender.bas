@@ -94,22 +94,22 @@ Public Function DetermineRecipient() As Object
     Dim emailHandlowca As String
     Dim emailKierownika As String
     Dim emailBNC As String
-    emailHandlowca = CStr(mod_UserCacheSync.GetUserField("EmailHandlowca"))
-    emailKierownika = CStr(mod_UserCacheSync.GetUserField("EmailKierownika"))
-    emailBNC = CStr(mod_UserCacheSync.GetUserField("EmailBNC"))
+    emailHandlowca = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailHandlowca"))
+    emailKierownika = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika"))
+    emailBNC = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailBNC"))
 
     Dim dateTag As String
     dateTag = Format(Now(), "yyyy-mm-dd")
 
-    If mod_UserCacheSync.IsUserManager() Then
+    If mod_UsersRegistrySync.IsUserManager() Then
         ' KIEROWNIK - wprost do BNC.
         result("To") = emailBNC
         result("Subject") = "Wniosek BNC - " & dateTag
         result("Body") = "Dzien dobry," & vbCrLf & vbCrLf & _
             "W zalaczeniu wniosek BNC. Prosze o weryfikacje." & vbCrLf & vbCrLf & _
             "Pozdrawiam," & vbCrLf & _
-            CStr(mod_UserCacheSync.GetUserField("Imie")) & " " & _
-            CStr(mod_UserCacheSync.GetUserField("Nazwisko"))
+            CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
+            CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko"))
     Else
         ' HANDLOWIEC - do kierownika z prosba o przekazanie do BNC.
         result("To") = emailKierownika
@@ -118,8 +118,8 @@ Public Function DetermineRecipient() As Object
             "W zalaczeniu wniosek BNC. Prosze o weryfikacje i przekazanie do " & _
             emailBNC & "." & vbCrLf & vbCrLf & _
             "Pozdrawiam," & vbCrLf & _
-            CStr(mod_UserCacheSync.GetUserField("Imie")) & " " & _
-            CStr(mod_UserCacheSync.GetUserField("Nazwisko"))
+            CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
+            CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko"))
     End If
 
     Set DetermineRecipient = result

@@ -19,12 +19,12 @@ Option Explicit
 ' - headers ListBox.
 Private Sub UserForm_Initialize()
     lbl_UserInfo.Caption = "Zalogowany: " & _
-        CStr(mod_UserCacheSync.GetUserField("Imie")) & " " & _
-        CStr(mod_UserCacheSync.GetUserField("Nazwisko")) & _
-        " (CNA: " & CStr(mod_UserCacheSync.GetUserField("CNA_HandlowcaID")) & _
-        ", oddzial: " & CStr(mod_UserCacheSync.GetUserField("NrOddzialu")) & ")"
+        CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
+        CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko")) & _
+        " (CNA: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")) & _
+        ", oddzial: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")) & ")"
 
-    If mod_UserCacheSync.IsUserManager() Then
+    If mod_UsersRegistrySync.IsUserManager() Then
         lbl_RoleInfo.Caption = "Tryb: KIEROWNIK (wnioski wysylane wprost do BNC)"
     Else
         lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysylane do kierownika)"
@@ -83,11 +83,11 @@ Private Sub btn_SendBatch_Click()
 
     ' Potwierdzenie z info o trybie.
     Dim msg As String
-    If mod_UserCacheSync.IsUserManager() Then
+    If mod_UsersRegistrySync.IsUserManager() Then
         msg = "Wyslac " & pending.Count & " zgloszen wprost do BNC?"
     Else
         msg = "Wyslac " & pending.Count & " zgloszen do kierownika " & _
-              "(" & CStr(mod_UserCacheSync.GetUserField("EmailKierownika")) & ")?"
+              "(" & CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika")) & ")?"
     End If
     If MsgBox(msg, vbYesNo + vbQuestion, "Potwierdzenie wysylki") <> vbYes Then Exit Sub
 

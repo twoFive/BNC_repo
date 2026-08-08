@@ -39,7 +39,7 @@ Private Function ExpectedModules() As Variant
     ExpectedModules = Array( _
         "mod_Utils", _
         "mod_Validation", _
-        "mod_UserCacheSync", _
+        "mod_AppStateSync", _
         "mod_UsersRegistrySync", _
         "mod_DataCacheSync", _
         "mod_MailSender", _
@@ -60,7 +60,7 @@ End Function
 
 Private Function ExpectedSheets() As Variant
     ExpectedSheets = Array( _
-        "ws_UserCache", _
+        "ws_AppState", _
         "ws_DataCache", _
         "ws_UsersRegistry" _
     )
@@ -79,18 +79,21 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
                 "ValidateEmail", "ValidateClientFK", "ValidateNonEmpty", _
                 "ValidateLength", "ValidateMonthYear", "ValidateFolderPath", _
                 "ValidateSetupData", "ValidateReportData")
-        Case "mod_UserCacheSync"
-            ' Post-refactor 2026-07-26: Registry API wyekstrahowany do
-            ' mod_UsersRegistrySync. Tutaj tylko UserCache-owned API + nowe
-            ' ClearUserCache (Public helper dla PrepareForNewUser).
+        Case "mod_AppStateSync"
+            ' Post-ADR-009: nowy modul dla app-level state (marker _CurrentUserID).
+            ' Zastapil mod_UserCacheSync w duchu 'single source of truth' - Registry
+            ' trzyma dane usera, AppState tylko session marker.
             ExpectedPublicProcs = Array( _
-                "GetUserField", "GetUserData", "SetUserField", "SaveUserData", _
-                "ClearUserCache", _
-                "IsSetupCompleted", "IsUserManager", "EnsureCacheFileExists")
+                "GetAppValue", "SetAppValue", "EnsureAppStateSheet")
         Case "mod_UsersRegistrySync"
+            ' Post-ADR-009: Registry to sole source of truth dla user data.
+            ' Current user API (GetCurrentUserField, SetCurrentUserField, ...)
+            ' zastapilo dawne mod_UserCacheSync.GetUserField/SetUserField.
             ExpectedPublicProcs = Array( _
                 "GetUsersCount", "CurrentUserID", "GetAllUsers", "SwitchUser", _
-                "AddNewUser", "PrepareForNewUser", "EnsureRegistryCacheFileExists")
+                "AddNewUser", "EnsureRegistryCacheFileExists", _
+                "GetCurrentUserField", "SetCurrentUserField", "GetCurrentUserData", _
+                "UpdateCurrentUserFields", "IsUserManager")
         Case "mod_DataCacheSync"
             ExpectedPublicProcs = Array( _
                 "AppendRecord", "GetPendingRecords", "GetAllRecords", _
@@ -101,7 +104,7 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
             ExpectedPublicProcs = Array("ExportDataCache", "GetSuggestedExportFileName")
         Case "mod_Tests"
             ExpectedPublicProcs = Array( _
-                "RunAllTests", "Test_mod_Utils", "Test_mod_UserCacheSync", _
+                "RunAllTests", "Test_mod_Utils", "Test_mod_AppStateSync", _
                 "Test_mod_DataCacheSync", "Test_mod_Validation", _
                 "Test_mod_MailSender", "Test_mod_Export", "Test_MultiUser")
         Case "mod_Diagnostic"
@@ -117,8 +120,8 @@ End Function
 ' Naglowki oczekiwane w wierszu 1 arkusza (kolumny 1..N).
 Private Function ExpectedSheetHeaders(sheetName As String) As Variant
     Select Case sheetName
-        Case "ws_UserCache"
-            ' Key-value - naglowka nie ma, klucze w kolumnie A
+        Case "ws_AppState"
+            ' Key-value - naglowka nie ma, klucze w kolumnie A (post-ADR-009)
             ExpectedSheetHeaders = Array()  ' skip check
         Case "ws_DataCache"
             ' Schema v2: 10 kolumn (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
@@ -335,7 +338,9 @@ Public Sub AuditSheets()
             Dim autoNote As String
             If sheetName = "ws_UsersRegistry" Then
                 autoNote = "  (auto-created przy pierwszym GetUsersCount/AddNewUser)"
-            ElseIf sheetName = "ws_UserCache" Or sheetName = "ws_DataCache" Then
+            ElseIf sheetName = "ws_AppState" Then
+                autoNote = "  (auto-created przy Workbook_Open - EnsureAppStateSheet)"
+            ElseIf sheetName = "ws_DataCache" Then
                 autoNote = "  (utworzyc recznie w Excelu, tab-name = klucz)"
             End If
             Debug.Print "  [MISSING] " & sheetName & autoNote
@@ -659,8 +664,8 @@ Private Function CheckSheetHeaders(ws As Worksheet, sheetName As String) As Stri
     End If
 
     If expectedCount = 0 Then
-        ' Special case ws_UserCache - key-value, brak naglowka
-        If sheetName = "ws_UserCache" Then
+        ' Special case ws_AppState - key-value, brak naglowka (post-ADR-009)
+        If sheetName = "ws_AppState" Then
             Dim keyCount As Long
             keyCount = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
             If ws.Cells(1, 1).Value = "" Then keyCount = 0

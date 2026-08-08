@@ -19,16 +19,19 @@ Format ADR: krótki opis decyzji, uzasadnienie, konsekwencje.
 
 ## ADR-001: Repository Pattern dla cache
 
-**Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry)
+**Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry, zaktualizowane 2026-08-08 przez ADR-009)
 **Status**: zatwierdzona
 
-**Decyzja**: Każdy ukryty arkusz (`ws_UserCache`, `ws_UsersRegistry`, `ws_DataCache`) ma dedykowany moduł, który jest **jedynym miejscem dostępu** do tego arkusza. Reszta aplikacji woła publiczne funkcje tych modułów, nigdy nie czyta/pisze bezpośrednio do worksheets.
+**Decyzja**: Każdy ukryty arkusz (`ws_AppState`, `ws_UsersRegistry`, `ws_DataCache`) ma dedykowany moduł, który jest **jedynym miejscem dostępu** do tego arkusza. Reszta aplikacji woła publiczne funkcje tych modułów, nigdy nie czyta/pisze bezpośrednio do worksheets.
 
-- `ws_UserCache` → `mod_UserCacheSync` (key-value, current user — 8 public procs)
-- `ws_UsersRegistry` → `mod_UsersRegistrySync` (tabelaryczny, wszyscy userzy — M3.3 + refactor 2026-07-26 — 7 public procs)
+- `ws_AppState` → `mod_AppStateSync` (key-value, session state marker — 3 public procs, post-ADR-009)
+- `ws_UsersRegistry` → `mod_UsersRegistrySync` (tabelaryczny, wszyscy userzy + current user API — 11 public procs, post-ADR-009)
 - `ws_DataCache` → `mod_DataCacheSync` (tabelaryczny, zgłoszenia — 6 public procs)
 
-**Historia**: Registry pierwotnie (M3.3) był w tym samym module co UserCache (`mod_UserCacheSync`). Wyekstrahowany 2026-07-26 do osobnego `mod_UsersRegistrySync` — symetria "sheet ↔ module" spójna z ADR-001. Cross-module dependency: `mod_UsersRegistrySync` woła `mod_UserCacheSync` (SwitchUser, LoadUserFromRegistry piszą do UserCache aktywnego usera; PrepareForNewUser czyści UserCache). Kierunek jednostronny — UserCache nic nie wie o Registry.
+**Historia**:
+- **M3.3** (2026-07): `ws_UsersRegistry` dołożony do istniejącego `mod_UserCacheSync` — łamał ADR-001 (jeden moduł = dwa sheety).
+- **2026-07-26**: Registry wyekstrahowany do `mod_UsersRegistrySync` — symetria sheet↔module przywrócona, ale UserCache + Registry duplikowały dane current usera.
+- **2026-08-08 (ADR-009)**: `ws_UserCache` **usunięty** jako duplikacja — Registry jest sole source of truth. Session marker (`_CurrentUserID`) przeniesiony do `ws_AppState`. Cross-module dependency: `mod_UsersRegistrySync` woła `mod_AppStateSync` (session lookup). Kierunek jednostronny.
 
 **Uzasadnienie**: Hermetyzacja danych. Reszta aplikacji nie wie, czy dane są w worksheet, w pliku xlsx, czy gdzieś indziej. W fazie B podmienimy implementację na bazę Access/SQL (`mod_DataAccess`) bez zmian w warstwach wyższych.
 
@@ -38,16 +41,17 @@ Format ADR: krótki opis decyzji, uzasadnienie, konsekwencje.
 
 ## ADR-002: Sync `worksheet → xlsx` bez clipboard (jednostronny write-through)
 
-**Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry)
+**Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry, zmodyfikowane 2026-08-08 przez ADR-009 — usunięcie UserCache)
 **Status**: zatwierdzona
 
-**Decyzja**: Wszystkie trzy warstwy cache używają **write-through**, **jednostronnego** sync `worksheet → xlsx`:
+**Decyzja**: Dwie warstwy cache używają **write-through**, **jednostronnego** sync `worksheet → xlsx`:
 
 | Warstwa | ws | xlsx | Sync trigger |
 |---|---|---|---|
-| UserCache | `ws_UserCache` | `BNC_UserCache.xlsx` | `SetUserField`, `SaveUserData`, `LoadUserFromRegistry` |
 | DataCache | `ws_DataCache` | `BNC_DataCache.xlsx` | `AppendRecord`, `MarkAsSent`, `DeleteRecord` |
-| Registry | `ws_UsersRegistry` | `BNC_UsersRegistry.xlsx` | `AppendUserToRegistry`, `UpdateLastLoginInRegistry` |
+| Registry | `ws_UsersRegistry` | `BNC_UsersRegistry.xlsx` | `AppendUserToRegistry`, `UpdateLastLoginInRegistry`, `SetCurrentUserField`, `UpdateCurrentUserFields` |
+
+**AppState** (`ws_AppState`) — nowy 3-ci sheet post-ADR-009, ale **bez xlsx sync** (YAGNI — marker sesji, nie critical data).
 
 Wszystkie `SyncToFile` / `SyncRegistryToFile` używają przypisania `destWs.Range(...).Value = srcWs.UsedRange.Value` zamiast `Range.Copy` + `PasteSpecial`.
 
@@ -182,7 +186,7 @@ Gdyby `LoadRecords` siedział w `Initialize`, drugi `Show` `frm_Log` nie wywoła
 ## ADR-008: Multi-user support przez Registry pattern (UserCache jako current-user cache)
 
 **Data**: 2026-07-04
-**Status**: zatwierdzona (M3.3)
+**Status**: **partially superseded by [ADR-009](#adr-009)** (2026-08-08) — UserCache usunięty, Registry sole source of truth. Reszta decyzji (Registry pattern, UserID format, routing) nadal obowiązuje.
 
 **Decyzja**: Aplikacja wspiera **wielu użytkowników** w tym samym pliku xlsm. Model danych:
 
@@ -224,6 +228,56 @@ Pierwotna decyzja M3.3 była: "Registry NIE jest synchronizowany do xlsx w Fazie
 - **Read-only file lock** dla cache xlsx (attrib +R lub Excel struct protect) — patrz [`HOWTO_readonly_cache_produkcja.md`](HOWTO_readonly_cache_produkcja.md).
 
 **Konsekwencja**: Post-refactor 2026-07-26: `mod_UserCacheSync` schudł z 14 procedur (M3.3 kombinowany moduł) do **8** (UserCache-only + nowe `ClearUserCache`). Nowy `mod_UsersRegistrySync` ma **7 procedur** (całe Registry API + `EnsureRegistryCacheFileExists`). `SyncRegistryToFile` (Private w `mod_UsersRegistrySync`) wywoływany po każdej mutacji Registry (`AppendUserToRegistry`, `UpdateLastLoginInRegistry`).
+
+---
+
+## ADR-009: Removal of `ws_UserCache` — Registry as sole source of truth for user data
+
+**Data**: 2026-08-08
+**Status**: zatwierdzona
+
+**Decyzja**: **Usunięcie `ws_UserCache` całkowicie**. `ws_UsersRegistry` staje się jedynym źródłem prawdy dla danych użytkowników (wszystkich, w tym current). Session marker (`_CurrentUserID`) przeniesiony do nowego lekkiego `ws_AppState`. Zniknięcie modułu `mod_UserCacheSync` — jego API zastąpione:
+- `GetUserField` → `mod_UsersRegistrySync.GetCurrentUserField`
+- `SetUserField` → `mod_UsersRegistrySync.SetCurrentUserField`
+- `GetUserData` → `mod_UsersRegistrySync.GetCurrentUserData`
+- `SaveUserData` → `mod_UsersRegistrySync.UpdateCurrentUserFields` (dla update current) LUB `AddNewUser` (dla nowego usera)
+- `IsUserManager` → `mod_UsersRegistrySync.IsUserManager` (moved as-is)
+- `IsSetupCompleted` → **usunięte** (single caller w frm_Setup był dead code od M3.3)
+- `EnsureCacheFileExists` → **usunięte** (BNC_UserCache.xlsx nie istnieje już)
+
+**Uzasadnienie** (reversal ADR-008 duality):
+
+**Problem**: Multi-user support (M3.3) dodał Registry jako storage of record, ale UserCache pozostał z pre-M3.3 era jako materialized view current usera. Efekty:
+1. **Duplikacja** — te same dane w dwóch miejscach (Registry row + UserCache key-value).
+2. **Choreografia SwitchUser** — save-back UserCache → Registry, potem load Registry → UserCache (4 operacje dla jednej zmiany usera).
+3. **Drift risk** — manual edit UserCache lub Registry bez API → stale state do następnego SwitchUser.
+4. **Cognitive load** — devs muszą pamiętać "UserCache reflects current, Registry has all".
+
+**Alternatywy rozważane**:
+- **A) Zostaw jak jest** — accepted debt. Odrzucone: user's mandate "single source of truth MUSI być jeden".
+- **B) UserCache jako thin adapter** (delegate do Registry) — anti-pattern (martwa warstwa).
+- **C) Rename UserCache** — redundancja z Registry.
+- **D) Full removal** ✓ — zwycięskie. Registry pełni obie role. Session marker w separate tiny AppState.
+
+**Design**:
+- `ws_AppState` (nowy) — key-value dla app-level state, obecnie tylko `_CurrentUserID`. Extensible dla przyszłych session/version markers.
+- `ws_UsersRegistry` — bez zmian schema, ale expanded API: `GetCurrentUserField`, `SetCurrentUserField`, `GetCurrentUserData`, `UpdateCurrentUserFields`, `IsUserManager`. Lookup: read `_CurrentUserID` z AppState → find row in Registry → read/write column.
+- `SwitchUser` trivialized: `SetAppValue("_CurrentUserID", userId)` + `UpdateLastLoginInRegistry(userId)`. Koniec. Zero choreografii.
+- `AddNewUser` uproszczony: `AppendUserToRegistry` + `SetAppValue` + `UpdateLastLogin`.
+
+**Cross-module dependency**: `mod_UsersRegistrySync` → `mod_AppStateSync` (single dependency, kierunek jednostronny). AppState nic nie wie o Registry.
+
+**Migration Fazy A**: manual (user's decision — brak production data, YAGNI dla auto-migrate code). Instrukcje w `Notatki/TODO_next_session.md` sekcja T.
+
+**Konsekwencje**:
+- **Zero duplikacji** — Registry jest sole source, każde read/write jednoznaczne.
+- **Prostszy SwitchUser** — 2 linie zamiast 4-krokowej choreografii.
+- **Mniej modułów** — 9 zamiast 10 (mod_UserCacheSync usunięty, mod_AppStateSync dodany, ale UserCache miał 8 procs, AppState ma 3 → mniej API surface).
+- **Mniej xlsx** — 2 pliki cache (`BNC_DataCache.xlsx`, `BNC_UsersRegistry.xlsx`) zamiast 3.
+- **Perfomance impact** — każdy `GetCurrentUserField` wymaga lookup wiersza w Registry (linear scan). Dla ~20 userów × ~5 wywołań per operacja = ~100 iteracji cell, akceptowalne. Jeśli wąskie gardło — dodać module-level cache dict, ale YAGNI teraz.
+- **Faza B** (SQL Server): jedna tabela `tbl_Users` + `session_current_user_id`. Naturalna kontynuacja ADR-009 pattern.
+
+**Trigger do rewriteu**: gdyby okazało się że per-call lookup w Registry jest bottleneck (mało prawdopodobne w Fazie A/B) — dodać opt-in in-memory cache w `mod_UsersRegistrySync`.
 
 ---
 

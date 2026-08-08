@@ -509,3 +509,131 @@ Oczekiwane (nowa linia): `[PASS] BNC_UsersRegistry.xlsx istnieje po AddNewUser |
 - **Read-only lock** — plik nie ma atrybutu `+R`. Patrz [`HOWTO_readonly_cache_produkcja.md`](HOWTO_readonly_cache_produkcja.md) — implementacja przed M7.
 - **Cleanup xlsx przy delete usera** — brak `DeleteUser` API. Manual cleanup przez unhide `ws_UsersRegistry` + delete row.
 
+---
+
+## 🆕 ADR-009 Migration (2026-08-08) — usunięcie ws_UserCache
+
+**Kontekst**: refactor architektoniczny — Registry staje się **sole source of truth** dla user data. `ws_UserCache` usunięty (duplikacja). Nowy `ws_AppState` dla session marker (`_CurrentUserID`). Cały `mod_UserCacheSync` module usunięty, nowe `mod_AppStateSync`, rozszerzony `mod_UsersRegistrySync` (7→11 procs).
+
+**Wpływ na Twój laptop**: manual migration (per Twoja decyzja). Poniższa lista T1-T10 wykonuje przejście.
+
+### ☐ T1. Note obecny `_CurrentUserID` z ws_UserCache
+
+**Zanim** usuniesz ws_UserCache, zanotuj wartość `_CurrentUserID` żeby po migracji przywrócić sesję.
+
+W VBE:
+1. Project Explorer → `ws_UserCache` (Microsoft Excel Objects) → F4 → **Visible = -1 - xlSheetVisible**
+2. Excel: tab `ws_UserCache` → znajdź wiersz z kluczem `_CurrentUserID` w kolumnie A → **zanotuj wartość z kolumny B** (np. `UZYTKOWNIK_1_CNA1001`)
+3. Zostaw sheet visible tymczasowo — usuniesz go w T7
+
+### ☐ T2. Zamknij Excel całkowicie
+
+Ważne: żaden proces `EXCEL.EXE` nie może żyć (Task Manager verify), inaczej `Kill` xlsx zawiedzie.
+
+### ☐ T3. Delete `BNC_UserCache.xlsx`
+
+Explorer → `C:\BNC_CacheFolder\` → usuń `BNC_UserCache.xlsx`. Ten plik już nie będzie regenerowany (post-ADR-009).
+
+### ☐ T4. Otwórz xlsm → VBE
+
+- Skoro `ws_UserCache` nadal istnieje w xlsm, `Workbook_Open` **wywali się** na compile error (mod_UserCacheSync usunięty z Source, ale referencje w xlsm istnieją)
+- Zignoruj — kliknij Alt+F11 żeby wejść do VBE od razu
+
+### ☐ T5. VBE: remove `mod_UserCacheSync` moduł
+
+Project Explorer → prawy klik `mod_UserCacheSync` → **Remove mod_UserCacheSync** → **No** (nie eksportuj)
+
+Verify że zniknął z Project Explorer.
+
+### ☐ T6. VBE: Import nowego + updated modules
+
+**File → Import File** w kolejności:
+1. `Source/Modules/mod_AppStateSync.bas` (NEW module, ~80 lines)
+2. `Source/Modules/mod_UsersRegistrySync.bas` (major rewrite - **usuń poprzednią wersję najpierw**: Remove → No → Import File)
+3. `Source/Modules/mod_Diagnostic.bas` (Remove → No → Import File)
+4. `Source/Modules/mod_Tests.bas` (Remove → No → Import File)
+
+Re-paste code-behind formularzy (View Code → Ctrl+A → Delete → paste):
+5. `Source/Forms/frm_Main.code-behind.txt`
+6. `Source/Forms/frm_Setup.code-behind.txt` (usunięte dead prefill code)
+
+Re-paste ThisWorkbook:
+7. `Source/ThisWorkbook/ThisWorkbook.code.txt` (usuwa mod_UserCacheSync.EnsureCacheFileExists call, dodaje mod_AppStateSync.EnsureAppStateSheet)
+
+Update też `mod_DataCacheSync.bas`, `mod_MailSender.bas`, `mod_Export.bas` (jeśli już re-importowałeś w poprzednich turach, i tak zawierają odwołania do mod_UserCacheSync.GetUserField). Remove + Import każdy.
+
+### ☐ T7. Delete `ws_UserCache` sheet manualnie
+
+Excel: tab `ws_UserCache` (widoczny od T1) → prawy klik na nazwę tabu → **Delete** → **Delete** w confirmation dialog.
+
+Verify że tab zniknął.
+
+### ☐ T8. Setup `_CurrentUserID` w nowym ws_AppState
+
+Immediate Window (Ctrl+G):
+```
+mod_AppStateSync.EnsureAppStateSheet
+mod_AppStateSync.SetAppValue "_CurrentUserID", "UZYTKOWNIK_1_CNA111"
+```
+
+**Podmień `UZYTKOWNIK_1_CNA111`** na wartość zanotowaną w T1.
+
+### ☐ T9. Save xlsm + close + reopen
+
+Ctrl+S → zamknij Excel → otwórz xlsm ponownie.
+
+`Workbook_Open` powinien:
+- Wywołać `mod_AppStateSync.EnsureAppStateSheet` (sheet już istnieje, no-op)
+- Wywołać `mod_DataCacheSync.EnsureCacheFileExists`
+- Wywołać `mod_UsersRegistrySync.EnsureRegistryCacheFileExists`
+- Widzi że `GetUsersCount ≥ 1` → routes do `frm_UserPicker`
+- Widzisz swojego usera w liście → wybierz → `frm_Main` się otwiera z Twoimi danymi
+
+### ☐ T10. Verify wszystko all-green
+
+```
+mod_Diagnostic.AuditFullProject
+```
+
+Oczekiwane:
+```
+[OK]  mod_Utils              107 lin.   API: 10/10
+[OK]  mod_Validation         204 lin.   API: 8/8
+[OK]  mod_AppStateSync       ~90 lin.   API: 3/3    ← NEW
+[OK]  mod_UsersRegistrySync  ~450 lin.  API: 11/11  ← było 7, teraz 11 (dodane current-user API)
+[OK]  mod_DataCacheSync      318 lin.   API: 6/6
+[OK]  mod_MailSender         228 lin.   API: 2/2
+[OK]  mod_Export             81 lin.    API: 2/2
+[OK]  mod_Tests              ~500 lin.  API: 8/8
+[OK]  mod_Diagnostic         ~890 lin.  API: 10/10
+--> 9/9 modulow obecnych                             ← nadal 9 (swap UserCache→AppState)
+
+[OK]  ws_AppState       (very hidden)  1 kluczy w kol.A   ← NEW (_CurrentUserID)
+[OK]  ws_DataCache      (very hidden)  Naglowki: 10/10  Rows: N
+[OK]  ws_UsersRegistry  (very hidden)  Naglowki: 13/13
+```
+
+```
+mod_Tests.RunAllTests
+```
+
+Oczekiwane: wszystkie PASS, w szczególności nowy `Test_mod_AppStateSync` + refactorowany `Test_MultiUser` + `Test_mod_MailSender` (używają current-user API).
+
+### 🚫 Co świadomie NIE ma po migracji
+
+- `BNC_UserCache.xlsx` — usunięty na zawsze (żadna funkcja go już nie tworzy)
+- `mod_UserCacheSync` moduł — usunięty na zawsze
+- `IsSetupCompleted()` API — usunięte (dead code od M3.3)
+- `PrepareForNewUser()` API — usunięte (unnecessary bez UserCache)
+- `SaveCurrentUserToRegistry` / `LoadUserFromRegistry` (private) — usunięte (choreografia bez UserCache nie potrzebna)
+
+### 🎯 Rollback (last resort)
+
+Jeśli coś sypnie się nieodwracalnie:
+```
+git log --oneline | head -5    # find commit before ADR-009 refactor
+git checkout <commit-hash> -- Source/  # restore Source/ from before
+```
+
+Musisz też przywrócić xlsm ze snapshot w `Working/` z odpowiedniego commita. Ale to nuclear — prawdopodobnie łatwiej naprawić bug w bieżącym stanie.
+

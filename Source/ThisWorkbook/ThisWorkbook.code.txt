@@ -18,14 +18,17 @@ Option Explicit
 Private Sub Workbook_Open()
     On Error GoTo ErrorHandler
 
-    ' 1. Auto-recreate plikow cache jesli nie istnieja (no-op gdy
+    ' 1. Ensure app state sheet exists (ADR-009 - session marker _CurrentUserID).
+    '    ws_AppState nie ma xlsx sync (YAGNI - marker sesji nie jest critical).
+    mod_AppStateSync.EnsureAppStateSheet
+
+    ' 2. Auto-recreate plikow cache xlsx jesli nie istnieja (no-op gdy
     '    CacheFolderPath nie ustawiony - przed pierwszym setupem).
-    '    Trzy warstwy cache (symetria - post-M3.3 extension dla Registry):
-    mod_UserCacheSync.EnsureCacheFileExists          ' BNC_UserCache.xlsx
-    mod_DataCacheSync.EnsureCacheFileExists          ' BNC_DataCache.xlsx
+    '    Dwie warstwy cache z persistence:
+    mod_DataCacheSync.EnsureCacheFileExists              ' BNC_DataCache.xlsx
     mod_UsersRegistrySync.EnsureRegistryCacheFileExists  ' BNC_UsersRegistry.xlsx
 
-    ' 2. Routing multi-user (M3.3):
+    ' 3. Routing multi-user (M3.3):
     '    - 0 userow -> pierwszy raz -> setup nowego usera
     '    - 1+ userow -> picker (nawet dla 1 usera - Q4 decyzja: swiadome
     '      dzialanie, user musi kliknac zeby "wejsc")

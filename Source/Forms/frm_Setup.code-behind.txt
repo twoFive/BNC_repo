@@ -9,27 +9,16 @@ Private Const HARDCODED_CACHE_FOLDER As String = "C:\BNC_CacheFolder\"
 
 ' ----- Lifecycle -----------------------------------------------------------
 
+' Post-ADR-009 refactor: frm_Setup zawsze tworzy NOWEGO usera (nigdy nie
+' edytuje istniejacego). Dawny prefill code dla 'edit mode' usuniety -
+' byl dead code od M3.3 (AddNewUser wymusza pusty formularz).
+' Edycja profilu = future feature (poza zakresem Fazy A) - patrz ADR-008.
 Private Sub UserForm_Initialize()
     ' Pola hardcoded - polityka projektowa (ADR-003).
     txt_EmailBNC.Text = HARDCODED_EMAIL_BNC
     txt_EmailBNC.Locked = True
     txt_CacheFolderPath.Text = HARDCODED_CACHE_FOLDER
     txt_CacheFolderPath.Locked = True
-
-    ' Jezeli setup byl juz zrobiony - prefill pol edytowalnych.
-    ' EmailBNC i CacheFolderPath nie sa prefillowane bo zawsze sa stale.
-    If mod_UserCacheSync.IsSetupCompleted() Then
-        txt_Imie.Text = CStr(mod_UserCacheSync.GetUserField("Imie"))
-        txt_Nazwisko.Text = CStr(mod_UserCacheSync.GetUserField("Nazwisko"))
-        txt_EmailHandlowca.Text = CStr(mod_UserCacheSync.GetUserField("EmailHandlowca"))
-        txt_CNA.Text = CStr(mod_UserCacheSync.GetUserField("CNA_HandlowcaID"))
-        txt_NrOddzialu.Text = CStr(mod_UserCacheSync.GetUserField("NrOddzialu"))
-        txt_EmailKierownika.Text = CStr(mod_UserCacheSync.GetUserField("EmailKierownika"))
-
-        Dim dontShow As Variant
-        dontShow = mod_UserCacheSync.GetUserField("DontShowSetupAgain")
-        chk_DontShowSetupAgain.Value = (CStr(dontShow) = "True")
-    End If
 End Sub
 
 ' ----- Buttons -------------------------------------------------------------

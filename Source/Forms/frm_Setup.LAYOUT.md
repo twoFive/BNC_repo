@@ -1,7 +1,7 @@
 # frm_Setup — specyfikacja layoutu
 
 > **Cel**: jednorazowa rejestracja handlowca przy pierwszym otwarciu pliku.
-> Pokazywany przez `ThisWorkbook.Workbook_Open`, gdy `mod_UserCacheSync.IsSetupCompleted() = False`.
+> Pokazywany przez `ThisWorkbook.Workbook_Open`, gdy `mod_UsersRegistrySync.GetUsersCount() = 0` (pierwszy user) LUB przez `frm_UserPicker.btn_AddNew` (kolejny user).
 > **Plan**: M2.2.
 
 ---

@@ -9,7 +9,7 @@
 
 Trzy pliki cache xlsx generowane przez aplikację w `CacheFolderPath` (`C:\BNC_CacheFolder\`):
 
-- `BNC_UserCache.xlsx` — profil aktywnego usera
+- `BNC_UsersRegistry.xlsx` — lista wszystkich userów (post-ADR-009 zastąpił BNC_UserCache.xlsx jako "user identity storage")
 - `BNC_DataCache.xlsx` — historia wszystkich zgłoszeń handlowca
 - `BNC_UsersRegistry.xlsx` — lista wszystkich userów (post-M3.3 symetria)
 
@@ -45,7 +45,7 @@ W wersji produkcyjnej warto **oznaczyć pliki jako read-only** — sygnał "nie 
 
 ## 📋 Implementacja (referencyjny szkielet — DO NOT COPY YET)
 
-W `mod_UserCacheSync.SyncToFile`, `SyncRegistryToFile`, `mod_DataCacheSync.SyncToFile`:
+W `mod_UsersRegistrySync.SyncRegistryToFile`, `mod_DataCacheSync.SyncToFile` (2 sync points post-ADR-009):
 
 ```vba
 ' Przed SaveAs — zdejmij read-only jeśli był

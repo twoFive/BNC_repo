@@ -12,7 +12,7 @@ Option Explicit
 Public Sub RunAllTests()
     Debug.Print "==================== RunAllTests START ===================="
     Test_mod_Utils
-    Test_mod_UserCacheSync
+    Test_mod_AppStateSync
     Test_mod_DataCacheSync
     Test_mod_Validation
     Test_mod_MailSender
@@ -74,49 +74,40 @@ Public Sub Test_mod_Utils()
     Debug.Print "----- Test_mod_Utils DONE -----"
 End Sub
 
-' ----- mod_UserCacheSync ---------------------------------------------------
+' ----- mod_AppStateSync (post-ADR-009 replaces Test_mod_UserCacheSync) -----
 
-' UWAGA: ten test pisze i odczytuje z ws_UserCache. Operuje na tymczasowych
-' kluczach z prefiksem "_TEST_" zeby nie zepsuc setupu uzytkownika - na koncu
-' kasuje uzyte klucze.
-Public Sub Test_mod_UserCacheSync()
-    Debug.Print "----- Test_mod_UserCacheSync -----"
+' UWAGA: ten test pisze i odczytuje z ws_AppState. Operuje na tymczasowym
+' kluczu "_TEST_RoundTrip_" - na koncu kasuje. NIE dotyka _CurrentUserID
+' zeby nie zepsuc sesji.
+Public Sub Test_mod_AppStateSync()
+    Debug.Print "----- Test_mod_AppStateSync -----"
 
-    Dim ws As Worksheet
-    On Error Resume Next
-    Set ws = ThisWorkbook.Worksheets("ws_UserCache")
-    On Error GoTo 0
-    If ws Is Nothing Then
-        Debug.Print "  [SKIP] arkusz ws_UserCache nie istnieje - wymagany manualny setup z M0"
-        Exit Sub
-    End If
-
-    ' --- read API ---
-    Debug.Print "GetUserField('Imie') = '" & CStr(mod_UserCacheSync.GetUserField("Imie")) & "'"
-    Debug.Print "IsSetupCompleted    = " & mod_UserCacheSync.IsSetupCompleted()
-    Debug.Print "IsUserManager       = " & mod_UserCacheSync.IsUserManager()
-
-    ' --- write API na tymczasowym kluczu ---
+    ' Round-trip write/read
     Const TEST_KEY As String = "_TEST_RoundTrip_"
     Const TEST_VAL As String = "smoke_test_value_42"
 
-    mod_UserCacheSync.SetUserField TEST_KEY, TEST_VAL
-    AssertEqual "SetUserField round-trip", TEST_VAL, mod_UserCacheSync.GetUserField(TEST_KEY)
+    mod_AppStateSync.SetAppValue TEST_KEY, TEST_VAL
+    AssertEqual "SetAppValue round-trip", TEST_VAL, _
+        CStr(mod_AppStateSync.GetAppValue(TEST_KEY))
 
-    ' --- IsUserManager: przemiennosc ---
-    ' Tylko log - nie wymuszamy konkretnej wartosci, bo zalezy od stanu UserCache.
-    Debug.Print "  [info] EmailHandlowca='" & _
-        CStr(mod_UserCacheSync.GetUserField("EmailHandlowca")) & "'"
-    Debug.Print "  [info] EmailKierownika='" & _
-        CStr(mod_UserCacheSync.GetUserField("EmailKierownika")) & "'"
+    ' Missing key returns ""
+    AssertEqual "GetAppValue missing key returns empty", "", _
+        CStr(mod_AppStateSync.GetAppValue("_TEST_NonExistent_"))
 
-    ' --- GetUserData zwraca Dictionary z wszystkimi kanonicznymi polami ---
-    Dim d As Object
-    Set d = mod_UserCacheSync.GetUserData()
-    AssertEqual "GetUserData has Imie", True, d.Exists("Imie")
-    AssertEqual "GetUserData has SetupCompleted", True, d.Exists("SetupCompleted")
+    ' _CurrentUserID present (assuming session has active user)
+    Dim currentId As String
+    currentId = CStr(mod_AppStateSync.GetAppValue("_CurrentUserID"))
+    Debug.Print "  [info] _CurrentUserID = '" & currentId & "'"
+    AssertEqual "_CurrentUserID non-empty (session ma aktywnego usera)", True, _
+        (Len(currentId) > 0)
 
-    ' --- cleanup tymczasowego klucza ---
+    ' EnsureAppStateSheet is idempotent
+    Dim ws As Worksheet
+    Set ws = mod_AppStateSync.EnsureAppStateSheet()
+    AssertEqual "EnsureAppStateSheet returns sheet", True, Not (ws Is Nothing)
+    AssertEqual "EnsureAppStateSheet ws.Name", "ws_AppState", ws.Name
+
+    ' Cleanup tymczasowego klucza
     Dim r As Long
     Dim lastRow As Long
     lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
@@ -129,7 +120,7 @@ Public Sub Test_mod_UserCacheSync()
     Next r
     ThisWorkbook.Save
 
-    Debug.Print "----- Test_mod_UserCacheSync DONE -----"
+    Debug.Print "----- Test_mod_AppStateSync DONE -----"
 End Sub
 
 ' ----- mod_DataCacheSync ---------------------------------------------------
@@ -322,23 +313,19 @@ End Sub
 Public Sub Test_mod_MailSender()
     Debug.Print "----- Test_mod_MailSender -----"
 
-    Dim ws As Worksheet
-    On Error Resume Next
-    Set ws = ThisWorkbook.Worksheets("ws_UserCache")
-    On Error GoTo 0
-    If ws Is Nothing Then
-        Debug.Print "  [SKIP] arkusz ws_UserCache nie istnieje"
+    If mod_UsersRegistrySync.GetUsersCount() = 0 Then
+        Debug.Print "  [SKIP] Registry pusty - wymagany aktywny user do test scenariuszy"
         Exit Sub
     End If
 
-    ' Backup oryginalnych wartosci
+    ' Backup oryginalnych wartosci (post-ADR-009: przez Registry API)
     Dim origKierownika As String, origHandlowca As String
-    origKierownika = CStr(mod_UserCacheSync.GetUserField("EmailKierownika"))
-    origHandlowca = CStr(mod_UserCacheSync.GetUserField("EmailHandlowca"))
+    origKierownika = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika"))
+    origHandlowca = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailHandlowca"))
 
     ' Scenariusz 1: HANDLOWIEC (kierownika != handlowca) -> mail do kierownika
-    mod_UserCacheSync.SetUserField "EmailHandlowca", "handlowiec@firma.pl"
-    mod_UserCacheSync.SetUserField "EmailKierownika", "kierownik@firma.pl"
+    mod_UsersRegistrySync.SetCurrentUserField "EmailHandlowca", "handlowiec@firma.pl"
+    mod_UsersRegistrySync.SetCurrentUserField "EmailKierownika", "kierownik@firma.pl"
 
     Dim r As Object
     Set r = mod_MailSender.DetermineRecipient()
@@ -346,20 +333,20 @@ Public Sub Test_mod_MailSender()
     AssertEqual "Handlowiec.Subject ma 'akceptacji'", _
         True, (InStr(CStr(r("Subject")), "akceptacji") > 0)
     AssertEqual "Handlowiec.Body ma EmailBNC", _
-        True, (InStr(CStr(r("Body")), CStr(mod_UserCacheSync.GetUserField("EmailBNC"))) > 0)
+        True, (InStr(CStr(r("Body")), CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailBNC"))) > 0)
 
     ' Scenariusz 2: KIEROWNIK (kierownika == handlowca) -> mail wprost do BNC
-    mod_UserCacheSync.SetUserField "EmailKierownika", "handlowiec@firma.pl"
+    mod_UsersRegistrySync.SetCurrentUserField "EmailKierownika", "handlowiec@firma.pl"
 
     Set r = mod_MailSender.DetermineRecipient()
     AssertEqual "Kierownik.To = EmailBNC", _
-        CStr(mod_UserCacheSync.GetUserField("EmailBNC")), CStr(r("To"))
+        CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailBNC")), CStr(r("To"))
     AssertEqual "Kierownik.Subject NIE ma 'akceptacji'", _
         False, (InStr(CStr(r("Subject")), "akceptacji") > 0)
 
     ' Przywroc oryginalne wartosci
-    mod_UserCacheSync.SetUserField "EmailHandlowca", origHandlowca
-    mod_UserCacheSync.SetUserField "EmailKierownika", origKierownika
+    mod_UsersRegistrySync.SetCurrentUserField "EmailHandlowca", origHandlowca
+    mod_UsersRegistrySync.SetCurrentUserField "EmailKierownika", origKierownika
 
     Debug.Print "----- Test_mod_MailSender DONE -----"
 End Sub
@@ -380,7 +367,7 @@ Public Sub Test_mod_Export()
 
     ' ExportDataCache - probuje skopiowac, jesli zrodlo nie istnieje -> False
     Dim folderPath As String
-    folderPath = CStr(mod_UserCacheSync.GetUserField("CacheFolderPath"))
+    folderPath = CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath"))
     If Len(folderPath) = 0 Then
         Debug.Print "  [SKIP] CacheFolderPath nie ustawiony - wymagany setup"
         Exit Sub
@@ -460,10 +447,13 @@ Public Sub Test_MultiUser()
     AssertEqual "GetUsersCount incremented", origUserCount + 1, mod_UsersRegistrySync.GetUsersCount()
     AssertEqual "CurrentUserID = newUserId (auto-switch)", newUserId, mod_UsersRegistrySync.CurrentUserID()
 
-    ' --- UserCache ma nowego usera ---
-    AssertEqual "UserCache.Imie = _TEST_", "_TEST_", CStr(mod_UserCacheSync.GetUserField("Imie"))
-    AssertEqual "UserCache.CNA = 999999", 999999, mod_UserCacheSync.GetUserField("CNA_HandlowcaID")
-    AssertEqual "IsUserManager = True (email kierownika=handlowca)", True, mod_UserCacheSync.IsUserManager()
+    ' --- Current user data (post-ADR-009: bezposredni odczyt z Registry) ---
+    AssertEqual "GetCurrentUserField.Imie = _TEST_", "_TEST_", _
+                CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie"))
+    AssertEqual "GetCurrentUserField.CNA = 999999", 999999, _
+                mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")
+    AssertEqual "IsUserManager = True (email kierownika=handlowca)", True, _
+                mod_UsersRegistrySync.IsUserManager()
 
     ' --- GetAllUsers zawiera nowego ---
     Dim users As Collection
@@ -480,10 +470,10 @@ Public Sub Test_MultiUser()
     Next u
     AssertEqual "GetAllUsers contains new UserID", True, found
 
-    ' --- Registry xlsx sync (post-M3.3 symetria z UserCache/DataCache) ---
+    ' --- Registry xlsx sync (post-M3.3 symetria z DataCache) ---
     Dim regCachePath As String
     regCachePath = mod_Utils.JoinPath( _
-        CStr(mod_UserCacheSync.GetUserField("CacheFolderPath")), _
+        CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath")), _
         "BNC_UsersRegistry.xlsx")
     AssertEqual "BNC_UsersRegistry.xlsx istnieje po AddNewUser", True, _
                 mod_Utils.FileExists(regCachePath)

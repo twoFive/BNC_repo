@@ -60,8 +60,8 @@ Public Function AppendRecord(reportData As Object) As Long
     ws.Cells(r, COL_MIESIAC_OBROTU).Value = SafeGet(reportData, "MiesiacObrotu")
 
     ' Snapshot z UserCache - chroni historie przed zmianami w setupie.
-    ws.Cells(r, COL_CNA).Value = mod_UserCacheSync.GetUserField("CNA_HandlowcaID")
-    ws.Cells(r, COL_NR_ODDZIALU).Value = mod_UserCacheSync.GetUserField("NrOddzialu")
+    ws.Cells(r, COL_CNA).Value = mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")
+    ws.Cells(r, COL_NR_ODDZIALU).Value = mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")
 
     ws.Cells(r, COL_CREATED).Value = Now()
     ws.Cells(r, COL_STATUS).Value = STATUS_PENDING
@@ -161,7 +161,7 @@ End Function
 ' Auto-recreate: tworzy BNC_DataCache.xlsx jesli nie istnieje (Workbook_Open).
 Public Sub EnsureCacheFileExists()
     Dim folderPath As String
-    folderPath = CStr(mod_UserCacheSync.GetUserField("CacheFolderPath"))
+    folderPath = CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath"))
     If Len(folderPath) = 0 Then Exit Sub
 
     mod_Utils.EnsureFolderExists folderPath
@@ -270,7 +270,7 @@ Private Sub SyncToFile()
     On Error GoTo Cleanup
 
     Dim folderPath As String
-    folderPath = CStr(mod_UserCacheSync.GetUserField("CacheFolderPath"))
+    folderPath = CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath"))
     If Len(folderPath) = 0 Then Exit Sub
 
     mod_Utils.EnsureFolderExists folderPath

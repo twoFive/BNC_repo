@@ -1,50 +1,36 @@
 # Model danych — Faza A
 
-> **Aktualizacja oryginału**: `pdfs/BNC_fazaA_04_data_model.pdf` opisuje strukturę baseline. Ten dokument **uzupełnia** o zmiany z M2.2 (rename `DontShowTutorial` → `DontShowSetupAgain`), M3.2 (hard delete pending — ADR-006) i **Schema v2** (2026-07-26 — rename `MiesiacZgloszenia` → `MiesiacObrotu`, usunięto kolumnę `Fields`; breaking change wymagający hard reset `BNC_DataCache.xlsx`, brak production data w Fazie A).
+> **Aktualizacja oryginału**: `pdfs/BNC_fazaA_04_data_model.pdf` opisuje strukturę baseline. Ten dokument **uzupełnia** o zmiany z M2.2 (rename `DontShowTutorial` → `DontShowSetupAgain`), M3.2 (hard delete pending — ADR-006), **Schema v2** (2026-07-26 — rename `MiesiacZgloszenia` → `MiesiacObrotu`, usunięto kolumnę `Fields`) oraz **ADR-009** (2026-08-08 — **usunięcie `ws_UserCache`**, Registry as sole source of truth, `ws_AppState` dla session marker).
 >
 > 📊 **Graf**: [`04_data_model.jpg`](04_data_model.jpg)
 
 ---
 
-## 1. `ws_UserCache` — tożsamość handlowca
+## 1. `ws_AppState` — session state marker (post-ADR-009)
 
 > **Lokalizacja**: ukryty arkusz (`Visible = xlSheetVeryHidden`) wewnątrz pliku xlsm.
 > **Format**: key-value — kolumna A = klucz, kolumna B = wartość.
-> **Skala**: 1 wiersz danych usera (~11 pól), zmiany rzadkie.
+> **Skala**: ~1-5 kluczy meta-stanu aplikacji, zmiany rzadkie.
 
-### Schema
+### Schema (obecnie 1 klucz)
 
 | Klucz (kolumna A) | Typ | Rola |
 |---|---|---|
-| `Imie` | String | Tożsamość handlowca |
-| `Nazwisko` | String | Tożsamość handlowca |
-| `EmailHandlowca` | String (email) | **Detekcja roli** ↓ |
-| `CNA_HandlowcaID` | Long | Numer handlowca w firmie |
-| `NrOddzialu` | String | Identyfikator oddziału |
-| `EmailKierownika` | String (email) | **Detekcja roli** ↑ |
-| `EmailBNC` | String (email) | Hardcoded `jessica.cant@swim.omg` ([ADR-003](../../Notatki/DECISIONS.md)) |
-| `CacheFolderPath` | String (path) | Hardcoded `C:\BNC_CacheFolder\` ([ADR-003](../../Notatki/DECISIONS.md)) |
-| `DataRejestracji` | Date | Timestamp setupu |
-| `SetupCompleted` | Boolean | `True` → pomiń `frm_Setup` przy `Workbook_Open` |
-| `DontShowSetupAgain` | Boolean | Preferencja usera (M2.2 — rename z `DontShowTutorial`) |
+| `_CurrentUserID` | String | UserID aktualnie zalogowanego usera (lookup w Registry). Format `UZYTKOWNIK_<N>_CNA<cna>`. |
 
-### Convention over configuration — detekcja roli
+**Extensible** dla przyszłych session/version markers: `_LastVersion`, `_InstallDate`, `_FeatureFlags`, itp.
 
-Brak osobnego pola `IsKierownik`. Rola usera **detektowana** przez porównanie:
+### Convention: `_` prefix = pole systemowe
 
-```vba
-If EmailKierownika = EmailHandlowca Then
-    ' user jest kierownikiem (sam siebie wpisał) → mail wprost do BNC
-Else
-    ' user jest handlowcem → mail do kierownika z prośbą o forward
-End If
-```
+Klucze z podkreślnikiem-prefixem to **meta-stan aplikacji** (nie business data usera). Analogicznie do konwencji w wielu językach (private/internal).
 
-Korzyść: jedna prawda o roli (nie da się mieć sprzecznych pól), brak nowego widoku w setup, brak nowych test casów. W Fazie B (SQL Server) zastąpione formalnym polem `Role` lub relacją do `tbl_Roles`.
+### Brak xlsx sync (świadome YAGNI)
 
-### Synchronized backup
+W przeciwieństwie do UserCache/DataCache/Registry, `ws_AppState` **nie ma** `BNC_AppState.xlsx`. Powód: `_CurrentUserID` to marker sesji, nie critical data — w razie utraty user przejdzie przez picker. Symmetryczny sync xlsx nie wnosiłby wartości ([ADR-002](../../Notatki/DECISIONS.md)).
 
-→ `BNC_UserCache.xlsx` (write-through cache, 1:1, jednostronny sync). ADR-001 (Repository Pattern), ADR-002 (sync bez clipboard).
+### Zniknięcie `ws_UserCache` (historyczne)
+
+Wcześniej w tym miejscu (do 2026-08-08) był `ws_UserCache` — 11 kluczy z danymi current usera. **Usunięty przez ADR-009** jako duplikacja z Registry. Dane current usera teraz odczytywane bezpośrednio z Registry przez `mod_UsersRegistrySync.GetCurrentUserField(fieldName)` (lookup po `_CurrentUserID`).
 
 ---
 
@@ -62,8 +48,8 @@ Korzyść: jedna prawda o roli (nie da się mieć sprzecznych pól), brak nowego
 | 2 | `KlientFK` | Long | FK klienta (free-text w Fazie A, w Fazie B FK do `tbl_Clients`) |
 | 3 | `NazwaKlienta` | String(3..200) | Wpisana przez handlowca |
 | 4 | `MiesiacObrotu` | String "yyyy-MM" | **Miesiąc wykonania obrotu przez klienta** (business time klienta). Default = bieżący miesiąc. Rename z `MiesiacZgloszenia` w schema v2 dla jasności semantyki. |
-| 5 | `CNA_HandlowcaID` | Long | **SNAPSHOT** z `ws_UserCache` przy INSERT |
-| 6 | `NrOddzialu` | String | **SNAPSHOT** z `ws_UserCache` przy INSERT |
+| 5 | `CNA_HandlowcaID` | Long | **SNAPSHOT** z Registry (current user) przy INSERT |
+| 6 | `NrOddzialu` | String | **SNAPSHOT** z Registry (current user) przy INSERT |
 | 7 | `CreatedTimestamp` | Date | `Now()` w momencie INSERT (**system time** — audit fact, kiedy record trafił do systemu) |
 | 8 | `Status` | Enum: `pending` \| `sent` | Stan wniosku · UPDATE przez `MarkAsSent` |
 | 9 | `EmailRecipient` | String (email) | **AUDIT** — rzeczywisty adresat wysyłki |
@@ -111,11 +97,11 @@ Z perspektywy aplikacji "wysłane do kierownika" to `Status=sent` — ale dzięk
 
 ### Snapshot przy zapisie — wzorzec ochrony historii
 
-Pola `CNA_HandlowcaID`, `NrOddzialu`, `EmailRecipient` są **kopiami** z `ws_UserCache` (lub z `mod_MailSender.DetermineRecipient`) w momencie zapisu.
+Pola `CNA_HandlowcaID`, `NrOddzialu`, `EmailRecipient` są **kopiami** z `ws_UsersRegistry` (current user row, przez `mod_UsersRegistrySync.GetCurrentUserField`) lub z `mod_MailSender.DetermineRecipient` w momencie zapisu.
 
 **Po co?** Jeśli handlowiec **zmieni oddział** miesiąc po wysyłce, jego stare zgłoszenia muszą **pamiętać stary oddział**. Bez snapshot byłoby: "wszystkie moje historyczne zgłoszenia z W001 nagle są z W007" — chaos audytowy.
 
-To klasyczny wzorzec **temporal data**: separacja "current state" (`ws_UserCache`) od "historical fact" (`ws_DataCache` snapshot).
+To klasyczny wzorzec **temporal data**: separacja "current state" (`ws_UsersRegistry` current user row) od "historical fact" (`ws_DataCache` snapshot).
 
 ### `ReportID` po hard delete
 
@@ -135,36 +121,62 @@ Akceptowalne, ponieważ:
 
 ---
 
-## 3. `ws_UsersRegistry` — lista wszystkich handlowców (M3.3)
+## 3. `ws_UsersRegistry` — lista wszystkich handlowców (M3.3, sole source post-ADR-009)
 
 > **Lokalizacja**: ukryty arkusz (`Visible = xlSheetVeryHidden`).
 > **Format**: tabela (13 kolumn, 1 wiersz = 1 handlowiec).
 > **Skala**: 1-5 userów per laptop w Fazie A (dev), 20+ w M7 rollout.
+> **Post-ADR-009**: **jedyne źródło prawdy** dla danych userów. Current user data odczytywana bezpośrednio z Registry (lookup po `_CurrentUserID` z `ws_AppState`).
 
 ### Schema (13 kolumn)
 
 | # | Kolumna | Typ | Rola |
 |---|---|---|---|
 | 1 | `UserID` | String | **PK** — format `UZYTKOWNIK_<N>_CNA<cna>` (patrz [ADR-008](../../Notatki/DECISIONS.md)) |
-| 2-12 | canonical fields | (miks) | Kopia 11 pól z `ws_UserCache` (Imie, Nazwisko, EmailHandlowca, CNA_HandlowcaID, NrOddzialu, EmailKierownika, EmailBNC, CacheFolderPath, DataRejestracji, SetupCompleted, DontShowSetupAgain) |
+| 2 | `Imie` | String | Tożsamość handlowca |
+| 3 | `Nazwisko` | String | Tożsamość handlowca |
+| 4 | `EmailHandlowca` | String (email) | **Detekcja roli** ↓ |
+| 5 | `CNA_HandlowcaID` | Long | Numer handlowca w firmie |
+| 6 | `NrOddzialu` | String | Identyfikator oddziału |
+| 7 | `EmailKierownika` | String (email) | **Detekcja roli** ↑ |
+| 8 | `EmailBNC` | String (email) | Hardcoded `jessica.cant@swim.omg` ([ADR-003](../../Notatki/DECISIONS.md)) |
+| 9 | `CacheFolderPath` | String (path) | Hardcoded `C:\BNC_CacheFolder\` ([ADR-003](../../Notatki/DECISIONS.md)) |
+| 10 | `DataRejestracji` | Date | Timestamp setupu |
+| 11 | `SetupCompleted` | Boolean | (M3.3: zawsze True dla userów w Registry) |
+| 12 | `DontShowSetupAgain` | Boolean | Preferencja usera (M2.2 — rename z `DontShowTutorial`) |
 | 13 | `LastLogin` | Date | Timestamp ostatniego `SwitchUser` |
 
-### Relacja z `ws_UserCache`
+### Convention over configuration — detekcja roli (ADR-005)
 
-- **Registry** = *storage of record* (persistent, wszyscy userzy).
-- **UserCache** = *working memory* (aktywny user, szybki dostęp).
-- Analogia: L1 cache + main memory w architekturze CPU.
-- `SwitchUser` = zapisuje UserCache → Registry (poprzedni user), potem ładuje nowego z Registry → UserCache.
+Brak osobnego pola `IsKierownik`. Rola usera **detektowana** przez porównanie:
+
+```vba
+If EmailKierownika = EmailHandlowca Then
+    ' user jest kierownikiem (sam siebie wpisał) → mail wprost do BNC
+Else
+    ' user jest handlowcem → mail do kierownika z prośbą o forward
+End If
+```
+
+Implementacja: `mod_UsersRegistrySync.IsUserManager()` — czyta oba pola z Registry dla current usera (post-ADR-009 — było w `mod_UserCacheSync`).
+
+### Current user access pattern (post-ADR-009)
+
+- `mod_UsersRegistrySync.CurrentUserID()` → czyta `_CurrentUserID` z `ws_AppState`
+- `mod_UsersRegistrySync.GetCurrentUserField("Imie")` → lookup wiersza po CurrentUserID → return column value
+- `mod_UsersRegistrySync.SetCurrentUserField("EmailBNC", newValue)` → lookup + write + save + sync xlsx
+- Zero duplikacji z osobnym cache — Registry pełni obie role (storage + read/write path).
 
 ### Synchronized backup (post-M3.3, 2026-07-26)
 
 → `BNC_UsersRegistry.xlsx` (write-through cache, sync po każdej mutacji). ADR-001/002/008.
 
-**Owner moduł**: `mod_UsersRegistrySync` (osobny od `mod_UserCacheSync` — refactor 2026-07-26 dla symetrii "sheet ↔ module" z ADR-001).
+**Owner moduł**: `mod_UsersRegistrySync`.
 
 **Sync trigger points**:
 - `AppendUserToRegistry` — nowy user dodany przez `AddNewUser`
 - `UpdateLastLoginInRegistry` — `SwitchUser` update LastLogin
+- `SetCurrentUserField` / `UpdateCurrentUserFields` — mutation current user
 
 **Sync direction**: jednostronny `ws → xlsx`. Read-back **nie zaimplementowany** — admin może READ xlsx (visibility bez ingerencji w usera xlsm), ale nie push zmian. Bi-directional deferred do Fazy B (SQL Server) lub M7.
 
@@ -172,11 +184,12 @@ Akceptowalne, ponieważ:
 
 ## 4. Kluczowe wzorce modelu danych
 
-### 🗄 Hybrid cache (ADR-001, ADR-002)
-- **Primary**: `ws_*Cache` / `ws_UsersRegistry` w xlsm (very hidden) — szybki dostęp, in-memory.
-- **Backup**: `BNC_*Cache.xlsx` / `BNC_UsersRegistry.xlsx` w `CacheFolderPath` — bezpieczna kopia poza xlsm.
+### 🗄 Hybrid cache (ADR-001, ADR-002, ADR-009)
+- **Primary storage**: `ws_UsersRegistry` / `ws_DataCache` w xlsm (very hidden) — szybki dostęp, in-memory.
+- **Backup xlsx**: `BNC_UsersRegistry.xlsx` / `BNC_DataCache.xlsx` w `CacheFolderPath` — bezpieczna kopia poza xlsm.
 - **Sync jednostronny** worksheet → xlsx (nigdy odwrotnie). Eliminuje conflict resolution.
-- **Trzy warstwy** (post-M3.3): UserCache (current user), Registry (wszyscy userzy), DataCache (zgłoszenia). Symetryczne pipeline.
+- **Dwie warstwy z persistence** (post-ADR-009): Registry (wszyscy userzy + current user API), DataCache (zgłoszenia).
+- **Trzeci sheet** — `ws_AppState` (session marker `_CurrentUserID`) bez xlsx sync (YAGNI — marker sesji).
 
 ### 🔒 Audit trail (ADR-005, ADR-006)
 - `EmailRecipient` + `BatchSentTimestamp` jako dowód kontaktu.
@@ -197,7 +210,7 @@ Akceptowalne, ponieważ:
 
 ## 5. Ścieżka migracji do Fazy B
 
-### `ws_UserCache` → zostaje
+### `ws_AppState` → zostaje jako session marker (albo migruje do SQL session)
 Mała tabela (jeden user per laptop), mała wartość przeniesienia do SQL. Może zostać jako single-source-of-truth dla identity (faza A) lub przejść do `tbl_Users` w SQL przy okazji migracji innych komponentów.
 
 ### `ws_DataCache` → `tbl_Reports` w MS SQL Server
@@ -241,5 +254,5 @@ pending → awaiting_acceptance → sent
 
 - Oryginalny PDF (baseline od architekta): [`../BNC_fazaA_04_data_model.pdf`](../BNC_fazaA_04_data_model.pdf)
 - Surowy extracted MD (raw pdftotext): [`../extracted/04_data_model.md`](../extracted/04_data_model.md)
-- Implementacja: [`mod_UserCacheSync.bas`](../../Source/Modules/mod_UserCacheSync.bas), [`mod_DataCacheSync.bas`](../../Source/Modules/mod_DataCacheSync.bas)
+- Implementacja: [`mod_AppStateSync.bas`](../../Source/Modules/mod_AppStateSync.bas), [`mod_UsersRegistrySync.bas`](../../Source/Modules/mod_UsersRegistrySync.bas), [`mod_DataCacheSync.bas`](../../Source/Modules/mod_DataCacheSync.bas)
 - Flows operujące na tych danych: [`03_data_flow_extended.jpg`](03_data_flow_extended.jpg) + [`03_data_flow_extended.md`](03_data_flow_extended.md)

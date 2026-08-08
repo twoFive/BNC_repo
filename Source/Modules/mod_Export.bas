@@ -48,7 +48,7 @@ End Function
 ' Sanityzuje nazwisko - usuwa spacje i znaki specjalne dla bezpiecznej nazwy.
 Public Function GetSuggestedExportFileName() As String
     Dim nazwisko As String
-    nazwisko = SanitizeFileName(CStr(mod_UserCacheSync.GetUserField("Nazwisko")))
+    nazwisko = SanitizeFileName(CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko")))
     If Len(nazwisko) = 0 Then nazwisko = "User"
 
     GetSuggestedExportFileName = "BNC_Eksport_" & nazwisko & "_" & _
@@ -61,7 +61,7 @@ End Function
 
 Private Function GetSourcePath() As String
     Dim folderPath As String
-    folderPath = CStr(mod_UserCacheSync.GetUserField("CacheFolderPath"))
+    folderPath = CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath"))
     GetSourcePath = mod_Utils.JoinPath(folderPath, SOURCE_FILE_NAME)
 End Function
 
