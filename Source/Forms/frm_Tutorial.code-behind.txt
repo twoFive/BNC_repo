@@ -1,0 +1,172 @@
+' ============================================================================
+'  frm_Tutorial - code-behind (wklej do okna kodu UserForm w VBE)
+'  5-page wizard z ~360 slow tresci. Zero persistencji - user zawsze
+'  swiadomie wywoluje przez frm_Setup.btn_ShowTutorial (bez auto-show).
+'
+'  Content source of truth: Source/Forms/frm_Tutorial.TEXT.md
+'  Kazda edycja tresci = update TEXT.md najpierw, potem re-paste tego kodu.
+'
+'  Encoding: plik powinien byc UTF-8 with BOM zeby polskie znaki + emoji
+'  (👋 🛟 📈) importowaly sie poprawnie do VBE. Jesli import je zepsuje,
+'  manualnie skopiuj z frm_Tutorial.TEXT.md.
+'
+'  Patrz: frm_Tutorial.LAYOUT.md
+' ============================================================================
+
+Option Explicit
+
+Private Const TOTAL_PAGES As Long = 5
+Private m_currentPage As Long  ' 1..TOTAL_PAGES
+
+' ----- Lifecycle -----------------------------------------------------------
+
+Private Sub UserForm_Initialize()
+    m_currentPage = 1
+    RenderPage
+End Sub
+
+' ----- Buttons -------------------------------------------------------------
+
+Private Sub btn_Next_Click()
+    If m_currentPage < TOTAL_PAGES Then
+        m_currentPage = m_currentPage + 1
+        RenderPage
+    Else
+        Me.Hide  ' na ostatniej stronie: Next == Zakoncz
+    End If
+End Sub
+
+Private Sub btn_Prev_Click()
+    If m_currentPage > 1 Then
+        m_currentPage = m_currentPage - 1
+        RenderPage
+    End If
+End Sub
+
+Private Sub btn_Skip_Click()
+    Me.Hide
+End Sub
+
+' ----- Rendering -----------------------------------------------------------
+
+' Dispatcher - wolany po kazdej zmianie strony. Aktualizuje:
+'   - lbl_PageIndicator (numer strony)
+'   - btn_Prev.Enabled (wylaczony na 1. stronie)
+'   - btn_Next.Caption (zmiana na "Zakoncz" na ostatniej stronie)
+'   - lbl_PageTitle + txt_PageBody (per-page renderer wybrany przez Select Case)
+Private Sub RenderPage()
+    lbl_PageIndicator.Caption = "Strona " & m_currentPage & " z " & TOTAL_PAGES
+    btn_Prev.Enabled = (m_currentPage > 1)
+
+    If m_currentPage = TOTAL_PAGES Then
+        btn_Next.Caption = "Zakoncz " & ChrW(10003)  ' Zakoncz ✓
+    Else
+        btn_Next.Caption = "Dalej " & ChrW(9654)     ' Dalej ▶
+    End If
+
+    Select Case m_currentPage
+        Case 1: RenderPage1_Welcome
+        Case 2: RenderPage2_Setup
+        Case 3: RenderPage3_DailyWork
+        Case 4: RenderPage4_HistoryExport
+        Case 5: RenderPage5_Help
+    End Select
+End Sub
+
+' ----- Per-page renderers (content z frm_Tutorial.TEXT.md) -----------------
+
+Private Sub RenderPage1_Welcome()
+    lbl_PageTitle.Caption = "Witaj w BNC_Sender 👋"
+
+    Dim s As String
+    s = "BNC_Sender to aplikacja do zbiorczej wysyłki zgłoszeń BNC." & vbCrLf & vbCrLf
+    s = s & "Zamiast wypełniać i wysyłać każde zgłoszenie osobno, " & _
+        "wpisujesz je do listy przez cały miesiąc, klikasz jeden przycisk " & _
+        "i mail ze wszystkimi zgłoszeniami jest wysyłany przez Outlook do " & _
+        "właściwego adresata (do Twojego kierownika, a jeśli sam nim jesteś, " & _
+        "wprost na skrzynkę BNC)." & vbCrLf & vbCrLf
+    s = s & "Samouczek zajmie ~2 minuty. Naciśnij " & Chr(34) & "Dalej " & _
+        ChrW(9654) & Chr(34) & "."
+
+    txt_PageBody.Text = s
+End Sub
+
+Private Sub RenderPage2_Setup()
+    lbl_PageTitle.Caption = "Konfiguracja (jednorazowa) " & ChrW(9881)  ' ⚙
+
+    Dim s As String
+    s = "Przy pierwszym uruchomieniu aplikacji wypełniasz formularz z Twoimi " & _
+        "danymi służbowymi: Imię, Nazwisko, Email, CNA, Nr oddziału, " & _
+        "Email kierownika. Dzięki temu nie musisz już powtarzać wpisywania " & _
+        "tych danych w każdym wniosku!" & vbCrLf & vbCrLf
+    s = s & "UWAGA: jeśli sam jesteś Kierownikiem, wpisz swój email także w polu " & _
+        Chr(34) & "Email kierownika" & Chr(34) & ". " & _
+        "Aplikacja rozpozna Twoją rolę automatycznie." & vbCrLf & vbCrLf
+    s = s & "Pola " & Chr(34) & "Email BNC" & Chr(34) & " i " & _
+        Chr(34) & "Folder cache" & Chr(34) & " są ustawione fabrycznie. " & _
+        "Kliknij " & Chr(34) & "Utwórz folder cache" & Chr(34) & _
+        " jeśli folder jeszcze nie istnieje na dysku." & vbCrLf & vbCrLf
+    s = s & "Kliknij " & Chr(34) & "Zapisz" & Chr(34) & ". Konfiguracja gotowa - " & _
+        "przechodzisz do głównego ekranu aplikacji (ekranu wysyłki wniosku)."
+
+    txt_PageBody.Text = s
+End Sub
+
+Private Sub RenderPage3_DailyWork()
+    lbl_PageTitle.Caption = "Dodawanie zgłoszeń i wysyłka"
+
+    Dim s As String
+    s = "DODAJESZ ZGŁOSZENIE:" & vbCrLf
+    s = s & "Wypełnij 3 pola: Klient FK, Nazwa klienta, Miesiąc obrotu " & _
+        "(YYYY-MM, domyślnie bieżący). Kliknij " & Chr(34) & _
+        "Dodaj do listy" & Chr(34) & "." & vbCrLf & vbCrLf
+    s = s & "POMYŁKA:" & vbCrLf
+    s = s & "Kliknij na wiersz w liście pending " & ChrW(8594) & " " & _
+        Chr(34) & "Usuń zaznaczone" & Chr(34) & " " & ChrW(8594) & _
+        " potwierdź. Wysłane zgłoszenia są NIEUSUWALNE, " & _
+        "sprawdzaj przed wysyłką." & vbCrLf & vbCrLf
+    s = s & "WYSYŁKA (najlepiej raz w miesiącu):" & vbCrLf
+    s = s & "Kliknij " & Chr(34) & "Wyślij Wniosek BNC" & Chr(34) & _
+        " " & ChrW(8594) & " potwierdzenie " & ChrW(8594) & _
+        " mail wychodzi z Outlooka. Lista pending czyści się, " & _
+        "zgłoszenia trafiają do historii."
+
+    txt_PageBody.Text = s
+End Sub
+
+Private Sub RenderPage4_HistoryExport()
+    lbl_PageTitle.Caption = "Pokaż historię " & ChrW(183) & " Eksport"  ' ·
+
+    Dim s As String
+    s = Chr(34) & "POKAŻ HISTORIĘ" & Chr(34) & ": widzisz wszystkie zgłoszenia " & _
+        "(wysłane + pending) z datą i adresatem. Przydaje się gdy BNC twierdzi " & _
+        Chr(34) & "nie dostaliśmy zgłoszenia" & Chr(34) & _
+        " - masz twardy dowód wysyłki." & vbCrLf & vbCrLf
+    s = s & Chr(34) & "EKSPORTUJ DO PLIKU" & Chr(34) & " (w oknie historii): " & _
+        "zapisuje wszystko do osobnego pliku xlsx w wybranej lokalizacji. " & _
+        "Backup / dla audytora / przekazanie zastępcy. " & _
+        "Możesz eksportować dowolnie często."
+
+    txt_PageBody.Text = s
+End Sub
+
+Private Sub RenderPage5_Help()
+    lbl_PageTitle.Caption = "Gdy coś nie działa " & ChrW(183) & " Kontakt 🛟"  ' ·
+
+    Dim s As String
+    s = "NAJCZĘSTSZE:" & vbCrLf
+    s = s & ChrW(8226) & " Excel pyta o makra " & ChrW(8594) & " klik " & _
+        Chr(34) & "Włącz zawartość" & Chr(34) & vbCrLf
+    s = s & ChrW(8226) & " Outlook pyta o pozwolenie na wysyłkę " & ChrW(8594) & _
+        " klik " & Chr(34) & "Allow" & Chr(34) & vbCrLf
+    s = s & ChrW(8226) & " " & Chr(34) & "Wyślij" & Chr(34) & _
+        " nic nie robi " & ChrW(8594) & " sprawdź czy Outlook jest otwarty" & _
+        vbCrLf & vbCrLf & vbCrLf
+    s = s & "Inne problemy / Sugestie:" & vbCrLf
+    s = s & "tomasz.pirszel@inter-team.com.pl" & vbCrLf & vbCrLf
+    s = s & "Powodzenia! " & ChrW(9993) & " 📈" & vbCrLf   ' ✉ 📈
+    s = s & "Kliknij " & Chr(34) & "Zakończ " & ChrW(10003) & Chr(34) & _
+        " żeby zamknąć."
+
+    txt_PageBody.Text = s
+End Sub

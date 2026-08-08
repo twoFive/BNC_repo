@@ -54,7 +54,8 @@ Private Function ExpectedForms() As Variant
         "frm_Setup", _
         "frm_Main", _
         "frm_Log", _
-        "frm_UserPicker" _
+        "frm_UserPicker", _
+        "frm_Tutorial" _
     )
 End Function
 
@@ -158,6 +159,10 @@ Private Function ExpectedFormHandlers(formName As String) As Variant
             ExpectedFormHandlers = Array( _
                 "UserForm_Activate", "btn_SelectUser_Click", "btn_AddNew_Click", _
                 "btn_Cancel_Click")
+        Case "frm_Tutorial"
+            ExpectedFormHandlers = Array( _
+                "UserForm_Initialize", "btn_Next_Click", "btn_Prev_Click", _
+                "btn_Skip_Click")
         Case Else
             ExpectedFormHandlers = Array()
     End Select
@@ -191,6 +196,10 @@ Private Function ExpectedFormControls(formName As String) As Variant
         Case "frm_UserPicker"
             ExpectedFormControls = Array( _
                 "cmb_Users", "btn_SelectUser", "btn_AddNew", "btn_Cancel")
+        Case "frm_Tutorial"
+            ExpectedFormControls = Array( _
+                "lbl_TutorialHeader", "lbl_PageIndicator", "lbl_PageTitle", _
+                "txt_PageBody", "btn_Prev", "btn_Next", "btn_Skip")
         Case Else
             ExpectedFormControls = Array()
     End Select
