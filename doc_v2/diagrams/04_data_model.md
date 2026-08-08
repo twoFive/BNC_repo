@@ -160,6 +160,8 @@ Akceptowalne, ponieważ:
 
 → `BNC_UsersRegistry.xlsx` (write-through cache, sync po każdej mutacji). ADR-001/002/008.
 
+**Owner moduł**: `mod_UsersRegistrySync` (osobny od `mod_UserCacheSync` — refactor 2026-07-26 dla symetrii "sheet ↔ module" z ADR-001).
+
 **Sync trigger points**:
 - `AppendUserToRegistry` — nowy user dodany przez `AddNewUser`
 - `UpdateLastLoginInRegistry` — `SwitchUser` update LastLogin

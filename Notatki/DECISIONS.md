@@ -22,11 +22,13 @@ Format ADR: krótki opis decyzji, uzasadnienie, konsekwencje.
 **Data**: 2026-05-06 (rozszerzone 2026-07-26 o Registry)
 **Status**: zatwierdzona
 
-**Decyzja**: Każdy ukryty arkusz (`ws_UserCache`, `ws_DataCache`, `ws_UsersRegistry`) ma dedykowany moduł, który jest **jedynym miejscem dostępu** do tego arkusza. Reszta aplikacji woła publiczne funkcje tych modułów, nigdy nie czyta/pisze bezpośrednio do worksheets.
+**Decyzja**: Każdy ukryty arkusz (`ws_UserCache`, `ws_UsersRegistry`, `ws_DataCache`) ma dedykowany moduł, który jest **jedynym miejscem dostępu** do tego arkusza. Reszta aplikacji woła publiczne funkcje tych modułów, nigdy nie czyta/pisze bezpośrednio do worksheets.
 
-- `ws_UserCache` → `mod_UserCacheSync` (key-value, current user)
-- `ws_UsersRegistry` → `mod_UserCacheSync` (tabelaryczny, wszyscy userzy — M3.3)
-- `ws_DataCache` → `mod_DataCacheSync` (tabelaryczny, zgłoszenia)
+- `ws_UserCache` → `mod_UserCacheSync` (key-value, current user — 8 public procs)
+- `ws_UsersRegistry` → `mod_UsersRegistrySync` (tabelaryczny, wszyscy userzy — M3.3 + refactor 2026-07-26 — 7 public procs)
+- `ws_DataCache` → `mod_DataCacheSync` (tabelaryczny, zgłoszenia — 6 public procs)
+
+**Historia**: Registry pierwotnie (M3.3) był w tym samym module co UserCache (`mod_UserCacheSync`). Wyekstrahowany 2026-07-26 do osobnego `mod_UsersRegistrySync` — symetria "sheet ↔ module" spójna z ADR-001. Cross-module dependency: `mod_UsersRegistrySync` woła `mod_UserCacheSync` (SwitchUser, LoadUserFromRegistry piszą do UserCache aktywnego usera; PrepareForNewUser czyści UserCache). Kierunek jednostronny — UserCache nic nie wie o Registry.
 
 **Uzasadnienie**: Hermetyzacja danych. Reszta aplikacji nie wie, czy dane są w worksheet, w pliku xlsx, czy gdzieś indziej. W fazie B podmienimy implementację na bazę Access/SQL (`mod_DataAccess`) bez zmian w warstwach wyższych.
 
@@ -188,7 +190,7 @@ Gdyby `LoadRecords` siedział w `Initialize`, drugi `Show` `frm_Log` nie wywoła
 
 2. **`ws_UserCache`** (istniejący) — **bez zmian**. Nadal key-value, ale semantycznie reprezentuje **aktualnie zalogowanego** usera. Dodatkowy klucz `_CurrentUserID` (prefix `_` = pole systemowe) przechowuje `UserID` z Registry.
 
-3. **`mod_UserCacheSync`** rozszerzony o multi-user API (`GetAllUsers`, `GetUsersCount`, `CurrentUserID`, `SwitchUser`, `AddNewUser`, `PrepareForNewUser`) bez łamania istniejącego API (`GetUserField`, `IsSetupCompleted`, `IsUserManager` nadal czytają z UserCache).
+3. **`mod_UsersRegistrySync`** — **osobny moduł** (od refactoru 2026-07-26; pierwotnie M3.3 API było w `mod_UserCacheSync`) z multi-user API: `GetAllUsers`, `GetUsersCount`, `CurrentUserID`, `SwitchUser`, `AddNewUser`, `PrepareForNewUser`, `EnsureRegistryCacheFileExists`. `mod_UserCacheSync` pozostaje z UserCache-only API (`GetUserField`, `SetUserField`, `SaveUserData`, `ClearUserCache`, `IsSetupCompleted`, `IsUserManager`, `EnsureCacheFileExists`).
 
 4. **Format `UserID`**: `UZYTKOWNIK_<N>_CNA<cna>` — autoincrement N + CNA (Q2 decyzja). Human-readable, debug-friendly w Immediate Window (np. `UZYTKOWNIK_1_CNA12345`).
 
@@ -221,7 +223,7 @@ Pierwotna decyzja M3.3 była: "Registry NIE jest synchronizowany do xlsx w Fazie
 - **Bi-directional sync dla Registry** (admin push — edycja xlsx propaguje się do ws) — łamie jednostronność ADR-002, wymaga conflict resolution.
 - **Read-only file lock** dla cache xlsx (attrib +R lub Excel struct protect) — patrz [`HOWTO_readonly_cache_produkcja.md`](HOWTO_readonly_cache_produkcja.md).
 
-**Konsekwencja**: `mod_UserCacheSync` API wzrosło z 13 do 14 procedur (dodane `EnsureRegistryCacheFileExists`). `SyncRegistryToFile` wywoływany po każdej mutacji Registry (`AppendUserToRegistry`, `UpdateLastLoginInRegistry`).
+**Konsekwencja**: Post-refactor 2026-07-26: `mod_UserCacheSync` schudł z 14 procedur (M3.3 kombinowany moduł) do **8** (UserCache-only + nowe `ClearUserCache`). Nowy `mod_UsersRegistrySync` ma **7 procedur** (całe Registry API + `EnsureRegistryCacheFileExists`). `SyncRegistryToFile` (Private w `mod_UsersRegistrySync`) wywoływany po każdej mutacji Registry (`AppendUserToRegistry`, `UpdateLastLoginInRegistry`).
 
 ---
 

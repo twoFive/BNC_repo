@@ -427,14 +427,23 @@ Oczekiwane: ~76 asercji PASS (bez zmiany liczby, bo Fields test usunięty ale no
 - `mod_Tests.bas` — nowa asercja w `Test_MultiUser` (xlsx exists check)
 - `ThisWorkbook` — dodane `EnsureRegistryCacheFileExists` w `Workbook_Open`
 
-### ☐ R1. Re-import 4 zmienionych modułów
+### ☐ R1. Re-import 4 modułów + NEW `mod_UsersRegistrySync`
+
+**Uwaga: sekcja R zaktualizowana po refactorze extract `mod_UsersRegistrySync` (2026-07-26 iteracja 2).** Registry code wyekstrahowany z `mod_UserCacheSync` do osobnego modułu — symetria "sheet ↔ module" per ADR-001. **Musisz zaimportować nowy moduł + ponownie zaimportować odchudzony `mod_UserCacheSync`**.
 
 VBE → Remove → No → Import File dla:
-- `Source/Modules/mod_UserCacheSync.bas`
-- `Source/Modules/mod_Diagnostic.bas`
-- `Source/Modules/mod_Tests.bas`
+- `Source/Modules/mod_UserCacheSync.bas` — **ponowny re-import** (odchudzony do 8 procedur, bez Registry API)
+- `Source/Modules/mod_UsersRegistrySync.bas` — **NOWY moduł** (7 procedur Registry API)
+- `Source/Modules/mod_Diagnostic.bas` — ExpectedModules 8→9, ExpectedPublicProcs restructure
+- `Source/Modules/mod_Tests.bas` — call sites zaktualizowane na `mod_UsersRegistrySync`
 
-`ThisWorkbook` — dwuklik w Project Explorer → wklej code z `Source/ThisWorkbook/ThisWorkbook.code.txt` (nadpisz current).
+`ThisWorkbook` — dwuklik w Project Explorer → wklej code z `Source/ThisWorkbook/ThisWorkbook.code.txt` (nadpisz current — call sites zaktualizowane).
+
+**Formularze — code-behind również dotknięty**:
+- `frm_UserPicker` — call sites `SwitchUser`, `PrepareForNewUser`, `GetAllUsers` teraz przez `mod_UsersRegistrySync`
+- `frm_Setup` — call site `AddNewUser` teraz przez `mod_UsersRegistrySync`
+
+W VBE → dwuklik formularz → View Code → Ctrl+A → Delete → wklej nowy code-behind z odpowiedniego pliku.
 
 ### ☐ R2. Ctrl+S + Debug → Compile VBAProject
 
@@ -453,7 +462,7 @@ I sprawdź czy powstał plik:
 ```
 → **`True`** (nowy plik utworzony automatycznie przy pierwszym `Workbook_Open` po deploy)
 
-### ☐ R4. AuditFullProject — expected 14/14 API dla UserCacheSync
+### ☐ R4. AuditFullProject — expected 9/9 modułów, nowe API counts
 
 ```
 mod_Diagnostic.AuditFullProject
@@ -461,10 +470,13 @@ mod_Diagnostic.AuditFullProject
 
 Oczekiwane:
 ```
-[OK]  mod_UserCacheSync   XXX lin.  API: 14/14
+[OK]  mod_UserCacheSync      ~230 lin.  API: 8/8    ← było 14, teraz 8 (schudł po ekstrakcji)
+[OK]  mod_UsersRegistrySync  ~330 lin.  API: 7/7    ← NOWY modul
+--> 9/9 modulow obecnych                             ← było 8, teraz 9
 ```
 
-Jeśli `13/14 (brak: EnsureRegistryCacheFileExists)` — re-import nie zadziałał, patrz R1.
+Jeśli `[MISSING] mod_UsersRegistrySync` — nie zaimportowałeś nowego modułu (patrz R1).
+Jeśli `mod_UserCacheSync API: 14/14 (brak: ClearUserCache)` — masz starą wersję modułu (poprzedni etap Registry sync), nie ponowny re-import po refactor. Wróć do R1 i re-importuj mod_UserCacheSync.
 
 ### ☐ R5. `Test_MultiUser` — nowa asercja
 

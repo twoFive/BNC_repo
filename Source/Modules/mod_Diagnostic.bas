@@ -40,6 +40,7 @@ Private Function ExpectedModules() As Variant
         "mod_Utils", _
         "mod_Validation", _
         "mod_UserCacheSync", _
+        "mod_UsersRegistrySync", _
         "mod_DataCacheSync", _
         "mod_MailSender", _
         "mod_Export", _
@@ -79,12 +80,17 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
                 "ValidateLength", "ValidateMonthYear", "ValidateFolderPath", _
                 "ValidateSetupData", "ValidateReportData")
         Case "mod_UserCacheSync"
+            ' Post-refactor 2026-07-26: Registry API wyekstrahowany do
+            ' mod_UsersRegistrySync. Tutaj tylko UserCache-owned API + nowe
+            ' ClearUserCache (Public helper dla PrepareForNewUser).
             ExpectedPublicProcs = Array( _
                 "GetUserField", "GetUserData", "SetUserField", "SaveUserData", _
-                "IsSetupCompleted", "IsUserManager", "EnsureCacheFileExists", _
-                "EnsureRegistryCacheFileExists", _
+                "ClearUserCache", _
+                "IsSetupCompleted", "IsUserManager", "EnsureCacheFileExists")
+        Case "mod_UsersRegistrySync"
+            ExpectedPublicProcs = Array( _
                 "GetUsersCount", "CurrentUserID", "GetAllUsers", "SwitchUser", _
-                "AddNewUser", "PrepareForNewUser")
+                "AddNewUser", "PrepareForNewUser", "EnsureRegistryCacheFileExists")
         Case "mod_DataCacheSync"
             ExpectedPublicProcs = Array( _
                 "AppendRecord", "GetPendingRecords", "GetAllRecords", _

@@ -33,7 +33,7 @@ Private Sub btn_SelectUser_Click()
     selectedUserId = m_UserIDs(cmb_Users.ListIndex)
 
     On Error GoTo SwitchError
-    mod_UserCacheSync.SwitchUser selectedUserId
+    mod_UsersRegistrySync.SwitchUser selectedUserId
     On Error GoTo 0
 
     Me.Hide
@@ -51,7 +51,7 @@ End Sub
 ' w Registry z autogen UserID.
 Private Sub btn_AddNew_Click()
     On Error GoTo PrepError
-    mod_UserCacheSync.PrepareForNewUser
+    mod_UsersRegistrySync.PrepareForNewUser
     On Error GoTo 0
 
     Me.Hide
@@ -86,7 +86,7 @@ End Sub
 ' do SwitchUser bo ComboBox pokazuje tylko display string, nie UserID).
 Private Sub PopulateUserList()
     Dim users As Collection
-    Set users = mod_UserCacheSync.GetAllUsers()
+    Set users = mod_UsersRegistrySync.GetAllUsers()
 
     cmb_Users.Clear
 

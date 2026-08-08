@@ -430,8 +430,8 @@ Public Sub Test_MultiUser()
     ' --- Backup aktualnego stanu ---
     Dim origUserId As String
     Dim origUserCount As Long
-    origUserId = mod_UserCacheSync.CurrentUserID()
-    origUserCount = mod_UserCacheSync.GetUsersCount()
+    origUserId = mod_UsersRegistrySync.CurrentUserID()
+    origUserCount = mod_UsersRegistrySync.GetUsersCount()
     Debug.Print "  [info] Stan wejsciowy: " & origUserCount & " userow, current=" & origUserId
 
     ' --- AddNewUser: dodaje testowego usera ---
@@ -450,15 +450,15 @@ Public Sub Test_MultiUser()
     testData("DontShowSetupAgain") = False
 
     Dim newUserId As String
-    newUserId = mod_UserCacheSync.AddNewUser(testData)
+    newUserId = mod_UsersRegistrySync.AddNewUser(testData)
     Debug.Print "  AddNewUser -> " & newUserId
 
     ' --- Assertions ---
     AssertEqual "AddNewUser returns non-empty", True, (Len(newUserId) > 0)
     AssertEqual "UserID format UZYTKOWNIK_*_CNA999999", True, _
                 (InStr(newUserId, "UZYTKOWNIK_") = 1 And InStr(newUserId, "_CNA999999") > 0)
-    AssertEqual "GetUsersCount incremented", origUserCount + 1, mod_UserCacheSync.GetUsersCount()
-    AssertEqual "CurrentUserID = newUserId (auto-switch)", newUserId, mod_UserCacheSync.CurrentUserID()
+    AssertEqual "GetUsersCount incremented", origUserCount + 1, mod_UsersRegistrySync.GetUsersCount()
+    AssertEqual "CurrentUserID = newUserId (auto-switch)", newUserId, mod_UsersRegistrySync.CurrentUserID()
 
     ' --- UserCache ma nowego usera ---
     AssertEqual "UserCache.Imie = _TEST_", "_TEST_", CStr(mod_UserCacheSync.GetUserField("Imie"))
@@ -467,7 +467,7 @@ Public Sub Test_MultiUser()
 
     ' --- GetAllUsers zawiera nowego ---
     Dim users As Collection
-    Set users = mod_UserCacheSync.GetAllUsers()
+    Set users = mod_UsersRegistrySync.GetAllUsers()
     Dim found As Boolean
     Dim u As Object
     For Each u In users
@@ -490,8 +490,8 @@ Public Sub Test_MultiUser()
 
     ' --- SwitchUser back do poprzedniego (jesli byl) ---
     If Len(origUserId) > 0 Then
-        mod_UserCacheSync.SwitchUser origUserId
-        AssertEqual "SwitchUser back: CurrentUserID", origUserId, mod_UserCacheSync.CurrentUserID()
+        mod_UsersRegistrySync.SwitchUser origUserId
+        AssertEqual "SwitchUser back: CurrentUserID", origUserId, mod_UsersRegistrySync.CurrentUserID()
     Else
         Debug.Print "  [info] SKIP SwitchUser back - brak previousUserId (Test w pustym Registry)"
     End If

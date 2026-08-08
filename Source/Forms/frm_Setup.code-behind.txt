@@ -1,9 +1,3 @@
-' ============================================================================
-'  frm_Setup - code-behind (wklej do okna kodu UserForm w VBE)
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.2)
-'         Notatki/DECISIONS.md (ADR-003: hardcoded EmailBNC + CacheFolderPath)
-' ============================================================================
-
 Option Explicit
 
 ' ----- Hardcoded constants (polityka projektowa, ADR-003) ------------------
@@ -115,7 +109,7 @@ Private Sub btn_Save_Click()
     '    LUB z frm_UserPicker.btn_AddNew). Edycja istniejacego usera
     '    to inny scenariusz, poza zakresem M3.3.
     Dim newUserId As String
-    newUserId = mod_UserCacheSync.AddNewUser(userData)
+    newUserId = mod_UsersRegistrySync.AddNewUser(userData)
 
     ' 5. Auto-recreate plikow cache (DataCache jeszcze nie istnieje przy pierwszym setupie)
     mod_DataCacheSync.EnsureCacheFileExists
