@@ -46,22 +46,14 @@ SwitchError:
            vbExclamation, "Blad"
 End Sub
 
-' Przygotowanie do dodania nowego usera: czysci UserCache, otwiera frm_Setup.
-' frm_Setup.btn_Save wywola AddNewUser (a nie SaveUserData) - nowy wiersz
-' w Registry z autogen UserID.
+' Otwiera frm_Setup dla dodania nowego usera.
+' Post-ADR-009: PrepareForNewUser (clear UserCache) usuniete - UserCache
+' juz nie istnieje, frm_Setup.UserForm_Initialize nie prefilluje niczego
+' (dead code prefill z pre-M3.3 usuniete), wiec po prostu Show.
+' frm_Setup.btn_Save wywola AddNewUser -> nowy wiersz w Registry.
 Private Sub btn_AddNew_Click()
-    On Error GoTo PrepError
-    mod_UsersRegistrySync.PrepareForNewUser
-    On Error GoTo 0
-
     Me.Hide
     frm_Setup.Show
-    Exit Sub
-
-PrepError:
-    mod_Utils.LogError "frm_UserPicker.btn_AddNew_Click", Err.Number, Err.Description
-    MsgBox "Nie udalo sie przygotowac formularza dla nowego uzytkownika.", _
-           vbExclamation, "Blad"
 End Sub
 
 ' Anuluj: zamyka plik xlsm (nie caly Excel). Bez wybranego usera aplikacja
