@@ -106,7 +106,7 @@ Private Sub btn_Save_Click()
     mod_Utils.LogInfo "Setup zakonczony - user=" & CStr(userData("EmailHandlowca")) & _
                      " · UserID=" & newUserId
 
-    ' 6. Zamknij setup - return do sh_Dashboard (Sheet1, hub-and-spoke M6).
+    ' 6. Zamknij setup - return do sh_LandingPage (Sheet1, hub-and-spoke M6).
     '    Wczesniej otwieralismy frm_Main - teraz Sheet1 jest landing page,
     '    user klika 'Nowe zgloszenie' zeby otworzyc frm_Main.
     Me.Hide

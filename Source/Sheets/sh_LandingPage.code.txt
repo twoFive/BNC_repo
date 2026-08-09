@@ -1,12 +1,12 @@
 ' ============================================================================
-'  sh_Dashboard - code module (wklej do Sheet1 code module w VBE)
+'  sh_LandingPage - code module (wklej do Sheet1 code module w VBE)
 '  Pulpit (hub) aplikacji. Zamiast frm_Main jako main screen, mamy Sheet1
 '  z 5 button-launcherami do wszystkich formularzy (hub-and-spoke pattern).
 '
 '  UWAGA: to jest code module SHEET, nie standalone module. W VBE Project
-'  Explorer -> Microsoft Excel Objects -> sh_Dashboard (Sheet1) -> View Code.
+'  Explorer -> Microsoft Excel Objects -> sh_LandingPage (Sheet1) -> View Code.
 '
-'  Patrz: sh_Dashboard.LAYOUT.md
+'  Patrz: sh_LandingPage.LAYOUT.md
 '         Notatki/DECISIONS.md (hub-and-spoke pattern decision)
 ' ============================================================================
 
@@ -103,5 +103,5 @@ Cleanup:
     ' Best-effort refresh - jesli cos padnie (np. registry pusty), po prostu
     ' zostawiamy stare wartosci i logujemy blad. Nie chcemy zeby dashboard
     ' padnal przy niekompletnym setupie.
-    mod_Utils.LogError "sh_Dashboard.RefreshDashboard", Err.Number, Err.Description
+    mod_Utils.LogError "sh_LandingPage.RefreshDashboard", Err.Number, Err.Description
 End Sub

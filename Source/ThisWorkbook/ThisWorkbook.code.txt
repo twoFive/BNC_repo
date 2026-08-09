@@ -8,13 +8,13 @@
 '  Routing (M3.3 multi-user + M6 hub pattern):
 '  - GetUsersCount = 0 -> pierwszy raz -> frm_Setup (bez pickera)
 '  - GetUsersCount >= 1 -> frm_UserPicker (wybor / dodanie nowego)
-'  - Po zamknieciu picker/setup -> sh_Dashboard aktywny (landing page)
+'  - Po zamknieciu picker/setup -> sh_LandingPage aktywny (landing page)
 '
 '  App-like UI (M6): DisplayFullScreen = True przy Open, restore przy Close.
 '
 '  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.3, M3.3)
 '         Notatki/DECISIONS.md (ADR-008 multi-user, ADR-009 sole source)
-'         Source/Sheets/sh_Dashboard.LAYOUT.md (hub design)
+'         Source/Sheets/sh_LandingPage.LAYOUT.md (hub design)
 ' ============================================================================
 
 Option Explicit
@@ -53,9 +53,9 @@ Private Sub Workbook_Open()
         frm_UserPicker.Show vbModal
     End If
 
-    ' 5. Landing na sh_Dashboard (Sheet1) - hub for all navigation.
+    ' 5. Landing na sh_LandingPage (Sheet1) - hub for all navigation.
     '    Worksheet_Activate triggeruje RefreshDashboard automatycznie.
-    sh_Dashboard.Activate
+    sh_LandingPage.Activate
     Exit Sub
 
 ErrorHandler:

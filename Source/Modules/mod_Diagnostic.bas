@@ -61,7 +61,7 @@ End Function
 
 Private Function ExpectedSheets() As Variant
     ExpectedSheets = Array( _
-        "sh_Dashboard", _
+        "sh_LandingPage", _
         "ws_AppState", _
         "ws_DataCache", _
         "ws_UsersRegistry" _
@@ -356,8 +356,8 @@ Public Sub AuditSheets()
                 autoNote = "  (auto-created przy pierwszym GetUsersCount/AddNewUser)"
             ElseIf sheetName = "ws_AppState" Then
                 autoNote = "  (auto-created przy Workbook_Open - EnsureAppStateSheet)"
-            ElseIf sheetName = "sh_Dashboard" Then
-                autoNote = "  (utworz recznie w VBE: rename Sheet1 CodeName + dodaj kontrolki per sh_Dashboard.LAYOUT.md)"
+            ElseIf sheetName = "sh_LandingPage" Then
+                autoNote = "  (utworz recznie w VBE: rename Sheet1 CodeName + dodaj kontrolki per sh_LandingPage.LAYOUT.md)"
             ElseIf sheetName = "ws_DataCache" Then
                 autoNote = "  (utworzyc recznie w Excelu, tab-name = klucz)"
             End If

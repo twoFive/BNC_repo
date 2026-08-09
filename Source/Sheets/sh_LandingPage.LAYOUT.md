@@ -1,4 +1,4 @@
-# sh_Dashboard - specyfikacja layoutu (Sheet1)
+# sh_LandingPage - specyfikacja layoutu (Sheet1)
 
 > **Cel**: Pulpit (hub) aplikacji. Landing page po Workbook_Open + user picker. Zamiast frm_Main jako main screen, mamy Sheet1 z 5 button-launcher'ami do wszystkich formularzy (hub-and-spoke pattern).
 >
@@ -6,7 +6,7 @@
 >
 > **Trigger show**: automatycznie po `frm_UserPicker.btn_SelectUser_Click → Me.Hide` LUB po `frm_Setup.btn_Save_Click → Me.Hide` (Sheet1 juz aktywny, formularz modal się chowa).
 >
-> **Code module**: `Source/Sheets/sh_Dashboard.code.txt` (wklej do code module tego arkusza).
+> **Code module**: `Source/Sheets/sh_LandingPage.code.txt` (wklej do code module tego arkusza).
 >
 > **Plan**: M6/M7
 
@@ -18,13 +18,13 @@ Sheet1 jest domyślny w każdym nowym xlsm. Rename:
 
 W VBE Project Explorer:
 1. Klik na `Sheet1 (Sheet1)` → F4 (Properties)
-2. `(Name)` (CodeName w VBA) = **`sh_Dashboard`**
+2. `(Name)` (CodeName w VBA) = **`sh_LandingPage`**
 3. `Name` (tab caption) = **`BNC_Sender - Pulpit`**
 4. `Visible` = **`-1 - xlSheetVisible`**
 
 **Konwencja naming**:
 - Prefix `sh_` = visible sheet (odróżnia od `ws_` = very hidden data sheets)
-- `sh_Dashboard` jest **jedyny** sh_* w projekcie na razie
+- `sh_LandingPage` jest **jedyny** sh_* w projekcie na razie
 
 ---
 
@@ -130,7 +130,7 @@ W View tab (Ribbon Excel):
 
 Alternatywnie w VBA (przy pierwszym Workbook_Open):
 ```vba
-sh_Dashboard.Activate
+sh_LandingPage.Activate
 ActiveWindow.DisplayGridlines = False
 ActiveWindow.DisplayHeadings = False
 ```
@@ -139,7 +139,7 @@ ActiveWindow.DisplayHeadings = False
 
 ## Krok 5 - code-behind
 
-Pełny code w [`sh_Dashboard.code.txt`](sh_Dashboard.code.txt). Struktura:
+Pełny code w [`sh_LandingPage.code.txt`](sh_LandingPage.code.txt). Struktura:
 
 - **`Worksheet_Activate`** — refresh user info + stats (called when Sheet1 becomes active, e.g., after form close)
 - **`RefreshDashboard`** (private) — pisze do cells B3, B4, B5, B20, E20
@@ -152,7 +152,7 @@ Pełny code w [`sh_Dashboard.code.txt`](sh_Dashboard.code.txt). Struktura:
 
 Workbook_Open (patrz `Source/ThisWorkbook/ThisWorkbook.code.txt`):
 - `Application.DisplayFullScreen = True` (app-like feel per user's decision)
-- `sh_Dashboard.Activate` (na koniec, żeby user widział Sheet1 po zamknięciu picker/setup)
+- `sh_LandingPage.Activate` (na koniec, żeby user widział Sheet1 po zamknięciu picker/setup)
 
 Workbook_BeforeClose:
 - `Application.DisplayFullScreen = False` (restore dla innych plików Excel otwartych rownolegle)
@@ -199,8 +199,8 @@ Przy ~1600×900 monitorze:
 
 ## Diagnostic integration
 
-`mod_Diagnostic.ExpectedSheets` — 3 → **4** (dodać `sh_Dashboard`).
-`ExpectedSheetHeaders("sh_Dashboard")` — brak (nie tabela, tylko labels/buttons — skip check).
-`AuditSheets` autoNote dla missing case: `"tworzone recznie w VBE - patrz sh_Dashboard.LAYOUT.md"`.
+`mod_Diagnostic.ExpectedSheets` — 3 → **4** (dodać `sh_LandingPage`).
+`ExpectedSheetHeaders("sh_LandingPage")` — brak (nie tabela, tylko labels/buttons — skip check).
+`AuditSheets` autoNote dla missing case: `"tworzone recznie w VBE - patrz sh_LandingPage.LAYOUT.md"`.
 
 Opcjonalnie w przyszłości: audyt kontrolek ActiveX na Sheet1 (analogicznie do `AuditFormControls`). Skip dla M6/M7.
