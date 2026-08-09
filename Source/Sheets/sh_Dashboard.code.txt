@@ -25,24 +25,33 @@ End Sub
 ' Kazdy handler otwiera formularz modalnie (vbModal). Zamkniecie formy ->
 ' return kontroli do Sheet1 -> Worksheet_Activate re-renderuje user info +
 ' stats (moglo sie cos zmienic: nowy zgloszenie, sent, switch usera, itd.)
+'
+' Single-instance guard (mod_Utils.IsFormOpen): defensywny check zeby nie
+' otworzyc drugiej instancji tego samego formularza. vbModal zwykle wystarczy,
+' ale guard chroni przy cascade otwarciach z innych miejsc.
 
 Private Sub btn_OpenMain_Click()
+    If mod_Utils.IsFormOpen("frm_Main") Then Exit Sub
     frm_Main.Show vbModal
 End Sub
 
 Private Sub btn_OpenLog_Click()
+    If mod_Utils.IsFormOpen("frm_Log") Then Exit Sub
     frm_Log.Show vbModal
 End Sub
 
 Private Sub btn_OpenPicker_Click()
+    If mod_Utils.IsFormOpen("frm_UserPicker") Then Exit Sub
     frm_UserPicker.Show vbModal
 End Sub
 
 Private Sub btn_OpenSetup_Click()
+    If mod_Utils.IsFormOpen("frm_Setup") Then Exit Sub
     frm_Setup.Show vbModal
 End Sub
 
 Private Sub btn_OpenTutorial_Click()
+    If mod_Utils.IsFormOpen("frm_Tutorial") Then Exit Sub
     frm_Tutorial.Show vbModal
 End Sub
 

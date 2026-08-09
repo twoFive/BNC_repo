@@ -106,3 +106,29 @@ Public Function IsValidLong(text As String) As Boolean
 ErrorHandler:
     IsValidLong = False
 End Function
+
+' ----- UI helpers ----------------------------------------------------------
+
+' Single-instance guard dla formularzy VBA UserForm.
+' Sprawdza czy formularz o podanej nazwie jest juz otwarty (loaded + shown)
+' iterujac UserForms collection.
+' Returns True gdy juz istnieje instance, False jesli mozna Show'owac.
+'
+' Uzycie w button handler:
+'   If mod_Utils.IsFormOpen("frm_Main") Then Exit Sub
+'   frm_Main.Show vbModal
+'
+' Motywacja: zapobiec podwojnym instancjom formularzy przy cascade otwarciach
+' (np. frm_UserPicker.btn_AddNew -> frm_Setup, kiedy frm_Setup juz otwarty
+' z Sheet1 button). vbModal zwykle wystarczy, ale guard jest defensywny.
+Public Function IsFormOpen(formName As String) As Boolean
+    On Error Resume Next
+    Dim i As Long
+    For i = 0 To UserForms.Count - 1
+        If UserForms(i).Name = formName Then
+            IsFormOpen = True
+            Exit Function
+        End If
+    Next i
+    IsFormOpen = False
+End Function

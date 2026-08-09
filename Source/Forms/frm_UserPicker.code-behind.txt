@@ -53,8 +53,9 @@ End Sub
 ' (dead code prefill z pre-M3.3 usuniete), wiec po prostu Show.
 ' frm_Setup.btn_Save wywola AddNewUser -> nowy wiersz w Registry.
 Private Sub btn_AddNew_Click()
+    If mod_Utils.IsFormOpen("frm_Setup") Then Exit Sub
     Me.Hide
-    frm_Setup.Show
+    frm_Setup.Show vbModal
 End Sub
 
 ' Anuluj: zamyka plik xlsm (nie caly Excel). Bez wybranego usera aplikacja

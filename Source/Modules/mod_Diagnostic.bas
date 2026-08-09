@@ -75,7 +75,7 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
             ExpectedPublicProcs = Array( _
                 "LogInfo", "LogError", "FormatTimestampISO", "GetCurrentMonthYear", _
                 "FileExists", "FolderExists", "EnsureFolderExists", "JoinPath", _
-                "IsValidEmail", "IsValidLong")
+                "IsValidEmail", "IsValidLong", "IsFormOpen")
         Case "mod_Validation"
             ExpectedPublicProcs = Array( _
                 "ValidateEmail", "ValidateClientFK", "ValidateNonEmpty", _

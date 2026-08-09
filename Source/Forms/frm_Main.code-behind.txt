@@ -111,8 +111,9 @@ Private Sub btn_SendBatch_Click()
 End Sub
 
 Private Sub btn_ShowLog_Click()
+    If mod_Utils.IsFormOpen("frm_Log") Then Exit Sub
     Me.Hide
-    frm_Log.Show
+    frm_Log.Show vbModal
 End Sub
 
 ' Hard delete zaznaczonego pending recordu (ADR-006).

@@ -28,6 +28,7 @@ End Sub
 ' tutoriala - user nie zgubi kontekstu setupu.
 ' Patrz: frm_Tutorial.LAYOUT.md + frm_Tutorial.TEXT.md
 Private Sub btn_ShowTutorial_Click()
+    If mod_Utils.IsFormOpen("frm_Tutorial") Then Exit Sub
     frm_Tutorial.Show vbModal
 End Sub
 
