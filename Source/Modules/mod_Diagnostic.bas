@@ -44,6 +44,7 @@ Private Function ExpectedModules() As Variant
         "mod_DataCacheSync", _
         "mod_MailSender", _
         "mod_Export", _
+        "mod_LandingPage", _
         "mod_Tests", _
         "mod_Diagnostic" _
     )
@@ -104,6 +105,11 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
             ExpectedPublicProcs = Array("SendBatch", "DetermineRecipient")
         Case "mod_Export"
             ExpectedPublicProcs = Array("ExportDataCache", "GetSuggestedExportFileName")
+        Case "mod_LandingPage"
+            ' Form Controls handlery dla sh_LandingPage buttonow (Excel
+            ' Assign Macro dialog widzi tylko Public Subs z standalone modules).
+            ExpectedPublicProcs = Array( _
+                "OpenMain", "OpenLog", "OpenPicker", "OpenSetup", "OpenTutorial")
         Case "mod_Tests"
             ExpectedPublicProcs = Array( _
                 "RunAllTests", "Test_mod_Utils", "Test_mod_AppStateSync", _

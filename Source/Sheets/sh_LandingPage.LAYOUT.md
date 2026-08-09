@@ -12,7 +12,7 @@
 
 ---
 
-## Krok 1 - utwórz + rename Sheet1
+## Krok 1 - utwórz + rename Sheet1 |x
 
 Sheet1 jest domyślny w każdym nowym xlsm. Rename:
 
@@ -28,42 +28,56 @@ W VBE Project Explorer:
 
 ---
 
-## Krok 2 - komórki (statyczne)
+## Krok 2 - komórki (statyczne) |x
 
 ### Sekcja A: Header (row 1-5)
 
 | Cell | Zawartość | Formatowanie |
 |---|---|---|
-| `A1` | `BNC_Sender - Pulpit` | Font Segoe UI 20 Bold, ForeColor `&H00804000&` (ciemnoniebieski) |
-| `A3` | `Zalogowany:` | Font Segoe UI 10 Bold |
-| `B3` | *(dynamic, wypełnia `RefreshDashboard`)* | Font Segoe UI 10 |
-| `A4` | `CNA:` | Font Segoe UI 10 Bold |
-| `B4` | *(dynamic — CNA · Oddział)* | Font Segoe UI 10 |
-| `A5` | `Rola:` | Font Segoe UI 10 Bold |
-| `B5` | *(dynamic — HANDLOWIEC / KIEROWNIK + kontekst)* | Font Segoe UI 10, ForeColor per rola (opcjonalne) |
+| `A1` | `BNC_Sender - Pulpit` | Font Segoe UI 20 Bold, ForeColor `&H00804000&` (ciemnoniebieski) |x
+| `A3` | `Zalogowany:` | Font Segoe UI 10 Bold |x
+| `B3` | *(dynamic, wypełnia `RefreshDashboard`)* | Font Segoe UI 10 |x
+| `A4` | `CNA:` | Font Segoe UI 10 Bold |x
+| `B4` | *(dynamic — CNA · Oddział)* | Font Segoe UI 10 |x
+| `A5` | `Rola:` | Font Segoe UI 10 Bold |x
+| `B5` | *(dynamic — HANDLOWIEC / KIEROWNIK + kontekst)* | Font Segoe UI 10, ForeColor per rola (opcjonalne) |x
 
-**Merge cells**: `A1:H1` (title spans across), pozostałe unmerged.
+**Merge cells**: `A1:H1` (title spans across), pozostałe unmerged. |x
 
-### Sekcja B: Buttons (row 7-13)
+### Sekcja B: Buttons (row 7-13) - Form Controls (nie ActiveX)
 
-5 ActiveX **CommandButton** kontrolek. Layout: 2×2 grid + 1 pod spodem.
+5 **Form Controls Button** kontrolek. Layout: 2×2 grid + 1 pod spodem.
 
-W Developer tab → Insert → **ActiveX** → **Command Button**:
+**Dlaczego Form Controls (nie ActiveX)**: production robustness. ActiveX moze byc zablokowany przez Trust Center IT policies (typowe w korporacjach), nie dziala na Mac/Web. Form Controls dzialaja wszedzie - Windows/Mac/Web, kazda polityka bezpieczenstwa. 20+ handlowcow = 20+ potencjalnych IT policies = ryzyko deployment blockers ActiveX. Form Controls = zero risk. Trade-off: wygladaja starzej, mniej style properties - akceptowalne dla launcher pattern.
 
-| # | Button Name (Properties) | Caption | Pozycja przybliżona (Excel row/col) | Wywoluje |
-|---|---|---|---|---|
-| 1 | `btn_OpenMain` | `Nowe zgloszenie` | Range B7:C9 | `frm_Main.Show vbModal` |
-| 2 | `btn_OpenLog` | `Historia + Log` | Range E7:F9 | `frm_Log.Show vbModal` |
-| 3 | `btn_OpenPicker` | `Przelacz usera` | Range B11:C13 | `frm_UserPicker.Show vbModal` |
-| 4 | `btn_OpenSetup` | `Ustawienia setup` | Range E11:F13 | `frm_Setup.Show vbModal` |
-| 5 | `btn_OpenTutorial` | `Samouczek` | Range D15:E17 (centered below grid) | `frm_Tutorial.Show vbModal` |
+W Developer tab → Insert → **Form Controls** (pierwsza sekcja dropdown, NIE ActiveX Controls) → **Button** (pierwsza ikona):
 
-**Properties dla wszystkich** (jednolicie):
-- Font: Segoe UI 11 Bold
-- BackColor: `&H00E0E0E0&` (jasnoszare) lub domyślne
-- Approx. size: Width=140, Height=40 (dwukrotność wysokości pojedynczej komórki)
+| # | Caption | Pozycja (Excel row/col) | Assigned Macro (Public Sub w mod_LandingPage) |
+|---|---|---|---|
+| 1 | `Nowe zgloszenie` | Range B7:C9 | `OpenMain` |
+| 2 | `Historia + Log` | Range E7:F9 | `OpenLog` |
+| 3 | `Przelacz usera` | Range B11:C13 | `OpenPicker` |
+| 4 | `Ustawienia setup` | Range E11:F13 | `OpenSetup` |
+| 5 | `Samouczek` | Range D15:E17 (centered below grid) | `OpenTutorial` |
 
-**Instrukcja**: kliknij ActiveX button na tabbie → drag na miejsce → Design Mode (Developer tab → Design Mode) → prawy klik button → View Code → automatycznie tworzy handler w Sheet1 module.
+**Instrukcja krok-po-kroku**:
+
+1. Developer tab → Insert → **Form Controls** dropdown (**NIE** ActiveX)
+2. Kliknij ikonę **Button** (pierwsza z lewej)
+3. Drag na Sheet1 w wybranym miejscu (np. Range B7:C9)
+4. **Excel otworzy dialog "Assign Macro"** → z listy wybierz **`OpenMain`** → OK
+5. Right-click na button → **Edit Text** → wpisz `Nowe zgloszenie` → Enter
+6. Powtórz dla 4 pozostałych buttonów (pozycje + macro per tabela wyżej)
+
+**Assigned Macro** = macro wywolywane po klikni. Excel pokazuje w Assign Macro dialog wszystkie Public Subs z standalone modules (nie z Sheet code modules - stad handlery w mod_LandingPage.bas). Wybierz z listy `OpenMain` / `OpenLog` / `OpenPicker` / `OpenSetup` / `OpenTutorial`.
+
+**Zmiana macro po utworzeniu**: right-click button → **Assign Macro...** → wybierz inny → OK.
+
+**Formatowanie tekstu (opcjonalne)**: right-click button → **Format Control...** → tab **Font**. Ustaw Font Size 11, Bold. Form Controls maja ograniczone styling - w praktyce tekst caption wyglada OK domyslnie.
+
+**Rozmiar**: Form Controls skaluja sie z komorkami. Drag krawedzie po utworzeniu zeby dopasowac do siatki 2×2 grid.
+
+**Design Mode dla Form Controls**: NIE potrzebne (w przeciwienstwie do ActiveX). Klikanie w button od razu wolulje macro. Do edycji buttonu (move/resize/re-assign macro) - prawy klik na button.
 
 ### Sekcja C: Statystyki (row 15-17 alternatywnie 19-21 zaleznie od tutorial button)
 

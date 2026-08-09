@@ -1,13 +1,16 @@
 ' ============================================================================
 '  sh_LandingPage - code module (wklej do Sheet1 code module w VBE)
-'  Pulpit (hub) aplikacji. Zamiast frm_Main jako main screen, mamy Sheet1
-'  z 5 button-launcherami do wszystkich formularzy (hub-and-spoke pattern).
+'  Landing page (hub) aplikacji.
 '
 '  UWAGA: to jest code module SHEET, nie standalone module. W VBE Project
 '  Explorer -> Microsoft Excel Objects -> sh_LandingPage (Sheet1) -> View Code.
 '
+'  Refactor 2026-08-09: Form Controls buttons (nie ActiveX) - handlery
+'  przeniesione do mod_LandingPage.bas (standalone). Sheet trzyma tylko
+'  Worksheet_Activate + RefreshDashboard (public, ale nie wolane cross-module).
+'
 '  Patrz: sh_LandingPage.LAYOUT.md
-'         Notatki/DECISIONS.md (hub-and-spoke pattern decision)
+'         Source/Modules/mod_LandingPage.bas (button handlers OpenMain/Log/...)
 ' ============================================================================
 
 Option Explicit
@@ -20,46 +23,11 @@ Private Sub Worksheet_Activate()
     RefreshDashboard
 End Sub
 
-' ----- Button handlers (5 launcherow do formularzy) -----------------------
-'
-' Kazdy handler otwiera formularz modalnie (vbModal). Zamkniecie formy ->
-' return kontroli do Sheet1 -> Worksheet_Activate re-renderuje user info +
-' stats (moglo sie cos zmienic: nowy zgloszenie, sent, switch usera, itd.)
-'
-' Single-instance guard (mod_Utils.IsFormOpen): defensywny check zeby nie
-' otworzyc drugiej instancji tego samego formularza. vbModal zwykle wystarczy,
-' ale guard chroni przy cascade otwarciach z innych miejsc.
-
-Private Sub btn_OpenMain_Click()
-    If mod_Utils.IsFormOpen("frm_Main") Then Exit Sub
-    frm_Main.Show vbModal
-End Sub
-
-Private Sub btn_OpenLog_Click()
-    If mod_Utils.IsFormOpen("frm_Log") Then Exit Sub
-    frm_Log.Show vbModal
-End Sub
-
-Private Sub btn_OpenPicker_Click()
-    If mod_Utils.IsFormOpen("frm_UserPicker") Then Exit Sub
-    frm_UserPicker.Show vbModal
-End Sub
-
-Private Sub btn_OpenSetup_Click()
-    If mod_Utils.IsFormOpen("frm_Setup") Then Exit Sub
-    frm_Setup.Show vbModal
-End Sub
-
-Private Sub btn_OpenTutorial_Click()
-    If mod_Utils.IsFormOpen("frm_Tutorial") Then Exit Sub
-    frm_Tutorial.Show vbModal
-End Sub
-
 ' ----- Rendering -----------------------------------------------------------
 
 ' Aktualizuje dynamic cells: user info (B3, B4, B5) + statystyki (B20, E20).
-' Wolane z Worksheet_Activate + potencjalnie z zewnatrz (np. po AddNewUser).
-' Public zeby inne moduly mogly wywolac po zmianie stanu.
+' Wolane z Worksheet_Activate. Public zeby inne moduly mogly wywolac po
+' zmianie stanu (np. mod_LandingPage handlery gdyby chcialy force refresh).
 Public Sub RefreshDashboard()
     On Error GoTo Cleanup
 
