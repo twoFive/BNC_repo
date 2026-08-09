@@ -61,6 +61,7 @@ End Function
 
 Private Function ExpectedSheets() As Variant
     ExpectedSheets = Array( _
+        "sh_Dashboard", _
         "ws_AppState", _
         "ws_DataCache", _
         "ws_UsersRegistry" _
@@ -197,9 +198,12 @@ Private Function ExpectedFormControls(formName As String) As Variant
             ExpectedFormControls = Array( _
                 "cmb_Users", "btn_SelectUser", "btn_AddNew", "btn_Cancel")
         Case "frm_Tutorial"
+            ' v3.2: dodano img_ScreenshotMain + img_ScreenshotLog (2 Image controls
+            ' na tej samej pozycji, visible per page przez RenderPage).
             ExpectedFormControls = Array( _
                 "lbl_TutorialHeader", "lbl_PageIndicator", "lbl_PageTitle", _
-                "txt_PageBody", "btn_Prev", "btn_Next", "btn_Skip")
+                "txt_PageBody", "img_ScreenshotMain", "img_ScreenshotLog", _
+                "btn_Prev", "btn_Next", "btn_Skip")
         Case Else
             ExpectedFormControls = Array()
     End Select
@@ -352,6 +356,8 @@ Public Sub AuditSheets()
                 autoNote = "  (auto-created przy pierwszym GetUsersCount/AddNewUser)"
             ElseIf sheetName = "ws_AppState" Then
                 autoNote = "  (auto-created przy Workbook_Open - EnsureAppStateSheet)"
+            ElseIf sheetName = "sh_Dashboard" Then
+                autoNote = "  (utworz recznie w VBE: rename Sheet1 CodeName + dodaj kontrolki per sh_Dashboard.LAYOUT.md)"
             ElseIf sheetName = "ws_DataCache" Then
                 autoNote = "  (utworzyc recznie w Excelu, tab-name = klucz)"
             End If

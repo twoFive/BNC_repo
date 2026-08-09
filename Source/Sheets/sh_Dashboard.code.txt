@@ -1,0 +1,98 @@
+' ============================================================================
+'  sh_Dashboard - code module (wklej do Sheet1 code module w VBE)
+'  Pulpit (hub) aplikacji. Zamiast frm_Main jako main screen, mamy Sheet1
+'  z 5 button-launcherami do wszystkich formularzy (hub-and-spoke pattern).
+'
+'  UWAGA: to jest code module SHEET, nie standalone module. W VBE Project
+'  Explorer -> Microsoft Excel Objects -> sh_Dashboard (Sheet1) -> View Code.
+'
+'  Patrz: sh_Dashboard.LAYOUT.md
+'         Notatki/DECISIONS.md (hub-and-spoke pattern decision)
+' ============================================================================
+
+Option Explicit
+
+' ----- Lifecycle -----------------------------------------------------------
+
+' Wolane przy KAZDEJ aktywacji sheeta (po zamknieciu formularza, po Workbook_Open,
+' po klikni w tab). Refresh user info + stats zeby zawsze aktualne.
+Private Sub Worksheet_Activate()
+    RefreshDashboard
+End Sub
+
+' ----- Button handlers (5 launcherow do formularzy) -----------------------
+'
+' Kazdy handler otwiera formularz modalnie (vbModal). Zamkniecie formy ->
+' return kontroli do Sheet1 -> Worksheet_Activate re-renderuje user info +
+' stats (moglo sie cos zmienic: nowy zgloszenie, sent, switch usera, itd.)
+
+Private Sub btn_OpenMain_Click()
+    frm_Main.Show vbModal
+End Sub
+
+Private Sub btn_OpenLog_Click()
+    frm_Log.Show vbModal
+End Sub
+
+Private Sub btn_OpenPicker_Click()
+    frm_UserPicker.Show vbModal
+End Sub
+
+Private Sub btn_OpenSetup_Click()
+    frm_Setup.Show vbModal
+End Sub
+
+Private Sub btn_OpenTutorial_Click()
+    frm_Tutorial.Show vbModal
+End Sub
+
+' ----- Rendering -----------------------------------------------------------
+
+' Aktualizuje dynamic cells: user info (B3, B4, B5) + statystyki (B20, E20).
+' Wolane z Worksheet_Activate + potencjalnie z zewnatrz (np. po AddNewUser).
+' Public zeby inne moduly mogly wywolac po zmianie stanu.
+Public Sub RefreshDashboard()
+    On Error GoTo Cleanup
+
+    ' User info z Registry (przez current user API)
+    Dim imie As String, nazwisko As String
+    Dim cna As String, oddzial As String
+
+    imie = CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie"))
+    nazwisko = CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko"))
+    cna = CStr(mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID"))
+    oddzial = CStr(mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu"))
+
+    If Len(imie) = 0 Then
+        ' Brak aktywnego usera (edge case - _CurrentUserID puste)
+        Range("B3").Value = "(brak aktywnego uzytkownika)"
+        Range("B4").Value = ""
+        Range("B5").Value = "Wybierz uzytkownika przez 'Przelacz usera'"
+    Else
+        Range("B3").Value = imie & " " & nazwisko
+        Range("B4").Value = cna & " · Oddzial: " & oddzial
+
+        If mod_UsersRegistrySync.IsUserManager() Then
+            Range("B5").Value = "KIEROWNIK (mail leci wprost do BNC)"
+        Else
+            Range("B5").Value = "HANDLOWIEC (mail leci do kierownika: " & _
+                CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika")) & ")"
+        End If
+    End If
+
+    ' Statystyki z DataCache
+    Dim pending As Collection, allRecs As Collection
+    Set pending = mod_DataCacheSync.GetPendingRecords()
+    Set allRecs = mod_DataCacheSync.GetAllRecords()
+
+    Range("B20").Value = pending.Count
+    Range("E20").Value = allRecs.Count - pending.Count  ' sent = all - pending
+
+    Exit Sub
+
+Cleanup:
+    ' Best-effort refresh - jesli cos padnie (np. registry pusty), po prostu
+    ' zostawiamy stare wartosci i logujemy blad. Nie chcemy zeby dashboard
+    ' padnal przy niekompletnym setupie.
+    mod_Utils.LogError "sh_Dashboard.RefreshDashboard", Err.Number, Err.Description
+End Sub

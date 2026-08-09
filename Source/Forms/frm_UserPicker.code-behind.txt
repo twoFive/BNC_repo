@@ -36,8 +36,9 @@ Private Sub btn_SelectUser_Click()
     mod_UsersRegistrySync.SwitchUser selectedUserId
     On Error GoTo 0
 
+    ' Hub-and-spoke (M6): return do sh_Dashboard (Sheet1) zamiast frm_Main.
+    ' Worksheet_Activate na Sheet1 automatycznie odswiezy user info + stats.
     Me.Hide
-    frm_Main.Show
     Exit Sub
 
 SwitchError:

@@ -5,12 +5,16 @@
 '  Microsoft Excel Objects -> ThisWorkbook (dwuklik), wklej PONIZSZY kod
 '  zastepujac ewentualnie istniejacy.
 '
-'  Routing (M3.3 multi-user):
+'  Routing (M3.3 multi-user + M6 hub pattern):
 '  - GetUsersCount = 0 -> pierwszy raz -> frm_Setup (bez pickera)
 '  - GetUsersCount >= 1 -> frm_UserPicker (wybor / dodanie nowego)
+'  - Po zamknieciu picker/setup -> sh_Dashboard aktywny (landing page)
+'
+'  App-like UI (M6): DisplayFullScreen = True przy Open, restore przy Close.
 '
 '  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.3, M3.3)
-'         Notatki/DECISIONS.md (ADR-008 - multi-user Registry)
+'         Notatki/DECISIONS.md (ADR-008 multi-user, ADR-009 sole source)
+'         Source/Sheets/sh_Dashboard.LAYOUT.md (hub design)
 ' ============================================================================
 
 Option Explicit
@@ -28,22 +32,43 @@ Private Sub Workbook_Open()
     mod_DataCacheSync.EnsureCacheFileExists              ' BNC_DataCache.xlsx
     mod_UsersRegistrySync.EnsureRegistryCacheFileExists  ' BNC_UsersRegistry.xlsx
 
-    ' 3. Routing multi-user (M3.3):
+    ' 3. App-like UI (M6 hub pattern): ukryj Excel chrome (ribbon, formula bar,
+    '    tabs sheets) zeby Sheet1 wygladal jak dedykowana aplikacja.
+    Application.DisplayFullScreen = True
+    Application.DisplayFormulaBar = False
+    ActiveWindow.DisplayHeadings = False
+    ActiveWindow.DisplayGridlines = False
+
+    ' 4. Routing multi-user (M3.3):
     '    - 0 userow -> pierwszy raz -> setup nowego usera
     '    - 1+ userow -> picker (nawet dla 1 usera - Q4 decyzja: swiadome
     '      dzialanie, user musi kliknac zeby "wejsc")
+    '    Po zamknieciu picker/setup, control wraca tu - Sheet1 aktywny.
     If mod_UsersRegistrySync.GetUsersCount() = 0 Then
         mod_Utils.LogInfo "Workbook_Open: pierwszy raz (Registry pusty), pokazuje frm_Setup"
-        frm_Setup.Show
+        frm_Setup.Show vbModal
     Else
         mod_Utils.LogInfo "Workbook_Open: " & mod_UsersRegistrySync.GetUsersCount() & _
                          " uzytkownikow w Registry, pokazuje frm_UserPicker"
-        frm_UserPicker.Show
+        frm_UserPicker.Show vbModal
     End If
+
+    ' 5. Landing na sh_Dashboard (Sheet1) - hub for all navigation.
+    '    Worksheet_Activate triggeruje RefreshDashboard automatycznie.
+    sh_Dashboard.Activate
     Exit Sub
 
 ErrorHandler:
     mod_Utils.LogError "ThisWorkbook.Workbook_Open", Err.Number, Err.Description
     MsgBox "Blad podczas startu aplikacji: " & Err.Description, _
            vbExclamation, "BNC_Sender"
+End Sub
+
+' Restore Excel chrome przy zamkniecu, zeby inne pliki Excel otwarte
+' rownolegle (albo nastepne otwarcie) nie dziedziczyly DisplayFullScreen.
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    On Error Resume Next
+    Application.DisplayFullScreen = False
+    Application.DisplayFormulaBar = True
+    ' Headings + Gridlines - nie restore, sa per-window (zamykajac plik zniknie okno)
 End Sub

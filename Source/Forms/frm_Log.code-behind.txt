@@ -42,9 +42,10 @@ Private Sub btn_Export_Click()
     End If
 End Sub
 
+' Hub-and-spoke pattern (M6): zamkniecie formy = return do sh_Dashboard
+' (Sheet1). Wczesniej wracalo do frm_Main - teraz Sheet1 jest hubem.
 Private Sub btn_Back_Click()
     Me.Hide
-    frm_Main.Show
 End Sub
 
 ' ----- Helpers -------------------------------------------------------------
