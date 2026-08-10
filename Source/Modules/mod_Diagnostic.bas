@@ -133,9 +133,12 @@ Private Function ExpectedSheetHeaders(sheetName As String) As Variant
             ExpectedSheetHeaders = Array()  ' skip check
         Case "ws_DataCache"
             ' Schema v2: 10 kolumn (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
+            ' Post-2026-08-09: header col 5 rename CNA_HandlowcaID -> CNA (consistency
+            ' z mail attachment). Dict key internal (w kodzie) nadal CNA_HandlowcaID
+            ' dla backward compat.
             ExpectedSheetHeaders = Array( _
                 "ReportID", "KlientFK", "NazwaKlienta", "MiesiacObrotu", _
-                "CNA_HandlowcaID", "NrOddzialu", "CreatedTimestamp", _
+                "CNA", "NrOddzialu", "CreatedTimestamp", _
                 "Status", "EmailRecipient", "BatchSentTimestamp")
         Case "ws_UsersRegistry"
             ExpectedSheetHeaders = Array( _
@@ -189,11 +192,11 @@ Private Function ExpectedFormControls(formName As String) As Variant
                 "btn_Save", "btn_Cancel", "btn_CreateCacheFolder", "btn_ShowTutorial")
         Case "frm_Main"
             ' Schema v2: bez txt_Fields, txt_MiesiacObrotu zamiast txt_MiesiacZgloszenia.
-            ' Post-smoke-test: dodane 4 fake header labels (lbl_Hdr*) nad lst_PendingBatch
-            ' bo ColumnHeads=True w VBA nie dziala z .List = arr.
+            ' Post-2026-08-09: dodane 5 fake header labels (lbl_Hdr*) nad lst_PendingBatch
+            ' (5 kolumn - z CNA dla multi-user visibility).
             ExpectedFormControls = Array( _
                 "lbl_UserInfo", "lbl_RoleInfo", "lbl_BatchCount", _
-                "lbl_HdrID", "lbl_HdrFK", "lbl_HdrNazwa", "lbl_HdrMiesiac", _
+                "lbl_HdrID", "lbl_HdrFK", "lbl_HdrNazwa", "lbl_HdrMiesiac", "lbl_HdrCNA", _
                 "txt_KlientFK", "txt_NazwaKlienta", "txt_MiesiacObrotu", _
                 "btn_AddToList", "btn_Clear", "btn_SendBatch", "btn_ShowLog", _
                 "btn_DeleteSelected", "lst_PendingBatch")

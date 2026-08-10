@@ -160,7 +160,7 @@ Private Function GenerateTempFile(records As Collection) As String
     ws.Cells(1, 1).Value = "ReportID"
     ws.Cells(1, 2).Value = "KlientFK"
     ws.Cells(1, 3).Value = "NazwaKlienta"
-    ws.Cells(1, 4).Value = "CNA_HandlowcaID"
+    ws.Cells(1, 4).Value = "CNA"
     ws.Cells(1, 5).Value = "NrOddzialu"
     ws.Cells(1, 6).Value = "MiesiacObrotu"
     ws.Cells(1, 7).Value = "CreatedTimestamp"

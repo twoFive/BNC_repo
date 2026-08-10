@@ -176,6 +176,7 @@ Private Sub SetListBoxHeaders()
     lbl_HdrFK.Caption = "Klient FK"
     lbl_HdrNazwa.Caption = "Nazwa klienta"
     lbl_HdrMiesiac.Caption = "Miesiąc obrotu"
+    lbl_HdrCNA.Caption = "CNA"
 End Sub
 
 ' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List
@@ -197,9 +198,10 @@ Private Sub RefreshPendingList()
     lst_PendingBatch.Clear
     If pending.Count = 0 Then Exit Sub
 
-    ' Schema v2: 4 kolumny (ID, KlientFK, Nazwa, MiesiacObrotu) - bez Fields.
+    ' 5 kolumn (ID, KlientFK, Nazwa, MiesiacObrotu, CNA) - CNA dodane
+    ' dla multi-user visibility (autor zgloszenia, 2026-08-09).
     Dim arr() As Variant
-    ReDim arr(0 To pending.Count - 1, 0 To 3)
+    ReDim arr(0 To pending.Count - 1, 0 To 4)
 
     ' Newest first: fill od konca array do poczatku.
     Dim i As Long
@@ -210,6 +212,7 @@ Private Sub RefreshPendingList()
         arr(i, 1) = record("KlientFK")
         arr(i, 2) = record("NazwaKlienta")
         arr(i, 3) = record("MiesiacObrotu")
+        arr(i, 4) = record("CNA_HandlowcaID")  ' dict key internal zostaje _HandlowcaID
         i = i - 1
     Next record
 

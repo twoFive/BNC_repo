@@ -205,7 +205,7 @@ Private Sub EnsureHeader(ws As Worksheet)
     ws.Cells(1, COL_KLIENT_FK).Value = "KlientFK"
     ws.Cells(1, COL_NAZWA_KLIENTA).Value = "NazwaKlienta"
     ws.Cells(1, COL_MIESIAC_OBROTU).Value = "MiesiacObrotu"
-    ws.Cells(1, COL_CNA).Value = "CNA_HandlowcaID"
+    ws.Cells(1, COL_CNA).Value = "CNA"
     ws.Cells(1, COL_NR_ODDZIALU).Value = "NrOddzialu"
     ws.Cells(1, COL_CREATED).Value = "CreatedTimestamp"
     ws.Cells(1, COL_STATUS).Value = "Status"

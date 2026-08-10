@@ -56,8 +56,9 @@ W VBE: **Insert → UserForm**. W oknie Properties (`F4`):
 | Label | `lbl_HdrID` | `Caption = "ID"` — **fake header** nad `lst_PendingBatch`, szerokość ~30pt, wyrównanie do 1. kolumny (`Font.Bold = True` opcjonalnie) |
 | Label | `lbl_HdrFK` | `Caption = "Klient FK"` — szerokość ~60pt, 2. kolumna |
 | Label | `lbl_HdrNazwa` | `Caption = "Nazwa klienta"` — szerokość ~220pt, 3. kolumna |
-| Label | `lbl_HdrMiesiac` | `Caption = "Miesiąc obrotu"` — szerokość ~80pt, 4. kolumna |
-| ListBox | `lst_PendingBatch` | `ColumnCount = 4`, **`ColumnHeads = False`**, `ColumnWidths = "30;60;220;80"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) — **Schema v2: 5→4 kolumn** (usunięto Fields). Nagłówki przez **fake header bar** (4 labels wyżej) bo `ColumnHeads = True` w VBA UserForm nie działa z `.List = arr` (tylko z RowSource) |
+| Label | `lbl_HdrMiesiac` | `Caption = "Miesiąc obrotu"` — szerokość ~70pt, 4. kolumna |
+| Label | `lbl_HdrCNA` | `Caption = "CNA"` — szerokość ~60pt, 5. kolumna (autor zgłoszenia dla multi-user visibility) |
+| ListBox | `lst_PendingBatch` | `ColumnCount = 5`, **`ColumnHeads = False`**, `ColumnWidths = "30;60;180;70;60"`, `Height = 200`, `MultiSelect = 0 - fmMultiSelectSingle` (default) — **5 kolumn** (post-2026-08-09: dodane CNA dla multi-user visibility). Nagłówki przez **fake header bar** (5 labels wyżej). |
 | CommandButton | `btn_DeleteSelected` | `Caption = "Usuń zaznaczone"` — pozycja: pod ListBox po lewej |x
 
 > **Zachowanie**:

@@ -637,3 +637,66 @@ git checkout <commit-hash> -- Source/  # restore Source/ from before
 
 Musisz też przywrócić xlsm ze snapshot w `Working/` z odpowiedniego commita. Ale to nuclear — prawdopodobnie łatwiej naprawić bug w bieżącym stanie.
 
+---
+
+## 🆕 CNA visibility + header rename (2026-08-09)
+
+**Kontekst**: dodano kolumnę CNA (autor zgłoszenia) do pending list (frm_Main) + history (frm_Log). Multi-user visibility - user widzi kto dodał zgłoszenie. Także rename header `CNA_HandlowcaID` → `CNA` w ws_DataCache (kaskaduje na BNC_DataCache.xlsx + Export xlsx + mail attachment).
+
+**Dict key internal** (w kodzie VBA) nadal `CNA_HandlowcaID` - **zero refactor** wszystkich `record("CNA_HandlowcaID")` w kodzie. Rename tylko presentation (header row w xlsx + column label w ListBox).
+
+### ☐ C1. Re-import 4 zmienionych modułów
+
+VBE Remove + Import:
+- `mod_MailSender.bas` (rename col 4 header)
+- `mod_DataCacheSync.bas` (rename col 5 header w EnsureHeader)
+- `mod_Diagnostic.bas` (ExpectedFormControls('frm_Main') 16→17, ExpectedSheetHeaders CNA)
+
+Re-paste code-behind:
+- `frm_Main` (SetListBoxHeaders + RefreshPendingList array 5 kol)
+- `frm_Log` (LoadRecords array 7 kol)
+
+### ☐ C2. Designer frm_Main - dodać `lbl_HdrCNA` label
+
+Toolbox → Label → drag nad 5. kolumnę lst_PendingBatch. Properties (F4):
+- `(Name)` = `lbl_HdrCNA`
+- `Caption` = `CNA` (nadpisze się w SetListBoxHeaders)
+
+Update też ColumnWidths lst_PendingBatch: `"30;60;180;70;60"` (było `"30;60;220;80"`).
+
+### ☐ C3. Designer frm_Log - update ColumnCount lst_AllRecords
+
+Properties (F4):
+- `ColumnCount` = **7** (było 6)
+- `ColumnWidths` = `"30;60;140;50;50;180;80"` (było `"30;60;180;50;180;80"`)
+
+### ☐ C4. Manual header update w ws_DataCache
+
+**Ważne**: EnsureHeader ma idempotent guard (skip gdy row 1 col 1 niepusty). Twój istniejący ws_DataCache nadal ma `CNA_HandlowcaID` w E1.
+
+Force update:
+1. VBE → `ws_DataCache` → Properties → Visible = `-1 - xlSheetVisible`
+2. Excel → tab ws_DataCache → cell **E1**: zmień `CNA_HandlowcaID` → `CNA`
+3. VBE → Visible = `2 - xlSheetVeryHidden`
+4. Immediate: `Kill "C:\BNC_CacheFolder\BNC_DataCache.xlsx"` → force regen z nowym headerem
+5. Immediate: `mod_DataCacheSync.EnsureCacheFileExists`
+6. Verify: `? mod_Utils.FileExists("...\BNC_DataCache.xlsx")` = True + otwórz Explorer + open xlsx = widzisz `CNA` w col E1
+
+### ☐ C5. Verify
+
+```
+mod_Diagnostic.AuditFullProject
+```
+
+Oczekiwane:
+- `frm_Main Kontrolki: 17/17` (dodane lbl_HdrCNA)
+- `ws_DataCache Naglowki: 10/10` (CNA na pos 5)
+
+### ☐ C6. Smoke test
+
+1. Otwórz xlsm → sh_LandingPage → Nowe zgloszenie
+2. Dodaj 2 zgłoszenia → verify pending list ma **5 kolumn** ostatnia = Twoje CNA
+3. Wyślij batch → open xlsx attachment z Sent → header col D = **`CNA`** (bez `_HandlowcaID`)
+4. Historia → verify 7 kolumn, CNA po Nazwa
+5. Export do pliku → open xlsx → header col E = **`CNA`**
+
