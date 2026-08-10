@@ -354,10 +354,12 @@ Public Sub AuditSheets()
         Dim sheetName As String
         sheetName = CStr(expected(i))
 
+        ' Lookup po CodeName (stable programmer-defined), NIE po tab name
+        ' (user-facing/UX moze byc dowolna, np. "BNC_Sender - Pulpit").
+        ' ws_* accidentally dziala po tab name bo tam Tab == CodeName, ale
+        ' sh_* moze miec inna tab name - CodeName jest jedynym reliable ID.
         Dim ws As Worksheet
-        On Error Resume Next
-        Set ws = ThisWorkbook.Worksheets(sheetName)
-        On Error GoTo 0
+        Set ws = FindSheetByCodeName(sheetName)
 
         If ws Is Nothing Then
             Dim autoNote As String
@@ -428,6 +430,21 @@ Private Function FindVBComponent(compName As String) As Object
     Exit Function
 NotFound:
     Set FindVBComponent = Nothing
+End Function
+
+' Znajduje worksheet po CodeName (VBA identifier, stable programmer-defined).
+' NIE po Name (tab caption, user-facing, moze byc dowolna). Uzywane w AuditSheets
+' zeby lookup dzialal niezaleznie od tab captions - np. sh_LandingPage.CodeName
+' vs Tab = "BNC_Sender - Pulpit". Zwraca Nothing gdy brak.
+Private Function FindSheetByCodeName(codeName As String) As Worksheet
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.CodeName = codeName Then
+            Set FindSheetByCodeName = ws
+            Exit Function
+        End If
+    Next ws
+    Set FindSheetByCodeName = Nothing
 End Function
 
 ' Sprawdza czy modul zawiera wszystkie oczekiwane Public procedury.
