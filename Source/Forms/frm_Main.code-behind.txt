@@ -31,7 +31,8 @@ Private Sub UserForm_Initialize()
     End If
 
     txt_MiesiacObrotu.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
-    SetListBoxHeaders
+    ' fake header labels (lbl_HdrID/FK/Nazwa/MiesiacObrotu/CNA) maja Captions
+    ' ustawione statycznie w Designerze - zero kodu na runtime rewrite.
 End Sub
 
 ' Activate - dynamic refresh (przy kazdym Show, takze po powrocie z frm_Log).
@@ -162,21 +163,6 @@ Private Sub ClearFormFields()
     On Error Resume Next
     txt_KlientFK.SetFocus
     On Error GoTo 0
-End Sub
-
-' Ustawia captions fake header bar (4 labels nad lst_PendingBatch).
-' VBA UserForm ColumnHeads = True dziala tylko z RowSource (Range), NIE z
-' .List = arr (my uzywamy array-assign bo ~10x szybsze). Standard workaround:
-' 4 statyczne Labels (lbl_Hdr*) w designerze na wysokosci nad ListBox,
-' szerokosci matching ColumnWidths="30;60;220;80".
-' Captions ustawiamy w kodzie (nie w designerze) zeby: (a) wszystko w jednym
-' miejscu maintenance, (b) wsparcie i18n w przyszlosci.
-Private Sub SetListBoxHeaders()
-    lbl_HdrID.Caption = "ID"
-    lbl_HdrFK.Caption = "Klient FK"
-    lbl_HdrNazwa.Caption = "Nazwa klienta"
-    lbl_HdrMiesiac.Caption = "Miesiąc obrotu"
-    lbl_HdrCNA.Caption = "CNA"
 End Sub
 
 ' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List
