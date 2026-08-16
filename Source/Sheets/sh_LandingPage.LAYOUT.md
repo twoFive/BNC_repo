@@ -183,6 +183,8 @@ Landing page zajmuje `A1:H23`. Wszystko poza tym obszarem = "puste" wizualnie (s
 
 **Save workbook** (persistent). Landing area teraz widoczna, reszta zniknięta.
 
+> ⚠ **UWAGA: sam `Hide` NIE wystarcza** - klasyczny bug Excela: user Ctrl+Right / Ctrl+End / scroll wheel może "przejechać" do ukrytego obszaru mimo Hide. Ochronę przed tym daje `ScrollArea` + `EnableSelection = xlNoSelection` z warstwy 3 poniżej. Hide + ScrollArea + xlNoSelection = trzy niezależne warstwy blokady.
+
 ### 3. Cell lock + no selection (kod, automatycznie w `Workbook_Open`)
 
 `ThisWorkbook.LockLandingPage()` uruchamiane po `sh_LandingPage.Activate`:
@@ -197,11 +199,12 @@ With sh_LandingPage
 End With
 ```
 
-**Klucz**: `UserInterfaceOnly:=True` pozwala VBA (`RefreshDashboard`) pisać do B3/B4/B5/B20/E20 mimo protekcji. User nie może.
-
-**Form Controls buttony działają pod protekcją** - macro odpalają się na klik, `DrawingObjects:=True` blokuje tylko move/resize/delete.
-
-**Uwaga**: protekcja `UserInterfaceOnly` NIE persistuje między sesjami - dlatego `LockLandingPage` musi być wywołane w każdym `Workbook_Open`.
+**Rola każdej właściwości**:
+- `ScrollArea = "A1:H23"` → **hard block scrolla** poza landing area (fix na "hide + Ctrl+End przejeżdża do ukrytych"). NIE persistuje między sesjami - stąd ustawiany w każdym `Workbook_Open`
+- `EnableSelection = xlNoSelection` → user w ogóle nie może zaznaczyć cell, więc nawigacja Ctrl+arrow/Tab też nie działa
+- `Cells.Locked + Protect` → nawet gdyby jakoś doszedł, edycja zablokowana
+- `UserInterfaceOnly:=True` → VBA (`RefreshDashboard`) pisze do B3/B4/B5/B20/E20 mimo protekcji. User nie może
+- `DrawingObjects:=True` → **blokuje tylko move/resize/delete buttonów**, macro klik przechodzi (Form Controls dalej działają)
 
 ### Rezultat
 
