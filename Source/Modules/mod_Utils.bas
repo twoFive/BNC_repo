@@ -110,24 +110,30 @@ End Function
 ' ----- UI helpers ----------------------------------------------------------
 
 ' Single-instance guard dla formularzy VBA UserForm.
-' Sprawdza czy formularz o podanej nazwie jest juz otwarty (loaded + shown)
-' iterujac UserForms collection.
-' Returns True gdy juz istnieje instance, False jesli mozna Show'owac.
+' Sprawdza czy formularz o podanej nazwie jest AKTUALNIE WIDOCZNY.
+' NIE sprawdza samego istnienia w UserForms - zombie hidden forms (po Me.Hide)
+' powinny byc re-showable, bo user chce je znowu zobaczyc.
+' Returns True gdy visible (nie showuj ponownie), False gdy mozna Show.
 '
 ' Uzycie w button handler:
 '   If mod_Utils.IsFormOpen("frm_Main") Then Exit Sub
 '   frm_Main.Show vbModal
 '
-' Motywacja: zapobiec podwojnym instancjom formularzy przy cascade otwarciach
-' (np. frm_UserPicker.btn_AddNew -> frm_Setup, kiedy frm_Setup juz otwarty
-' z Sheet1 button). vbModal zwykle wystarczy, ale guard jest defensywny.
+' Motywacja: zapobiec podwojnym WIDOCZNYM instancjom (rzadkie z vbModal,
+' ale defensywne). Hidden forms w UserForms collection - OK dla re-show.
+'
+' Bug fix 2026-08-10: wczesniej sprawdzalo tylko istnienie w UserForms,
+' co blokowalo re-Show po Me.Hide (user pickal, potem klikal btn_OpenPicker
+' i nic sie nie dzialo bo picker byl w kolekcji jako hidden).
 Public Function IsFormOpen(formName As String) As Boolean
     On Error Resume Next
     Dim i As Long
     For i = 0 To UserForms.Count - 1
         If UserForms(i).Name = formName Then
-            IsFormOpen = True
-            Exit Function
+            If UserForms(i).Visible Then
+                IsFormOpen = True
+                Exit Function
+            End If
         End If
     Next i
     IsFormOpen = False
