@@ -42,17 +42,17 @@ Public Sub RefreshDashboard()
 
     If Len(imie) = 0 Then
         ' Brak aktywnego usera (edge case - _CurrentUserID puste)
-        Range("B3").Value = "(brak aktywnego uzytkownika)"
-        Range("B4").Value = ""
-        Range("B5").Value = "Wybierz uzytkownika przez 'Przelacz usera'"
+        Me.Range("B3").Value = "(brak aktywnego uzytkownika)"
+        Me.Range("B4").Value = ""
+        Me.Range("B5").Value = "Wybierz uzytkownika przez 'Przelacz usera'"
     Else
-        Range("B3").Value = imie & " " & nazwisko
-        Range("B4").Value = cna & " · Oddzial: " & oddzial
+        Me.Range("B3").Value = imie & " " & nazwisko
+        Me.Range("B4").Value = cna & " · Oddzial: " & oddzial
 
         If mod_UsersRegistrySync.IsUserManager() Then
-            Range("B5").Value = "KIEROWNIK (mail leci wprost do BNC)"
+            Me.Range("B5").Value = "KIEROWNIK (mail leci wprost do BNC)"
         Else
-            Range("B5").Value = "HANDLOWIEC (mail leci do kierownika: " & _
+            Me.Range("B5").Value = "HANDLOWIEC (mail leci do kierownika: " & _
                 CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika")) & ")"
         End If
     End If
@@ -62,8 +62,8 @@ Public Sub RefreshDashboard()
     Set pending = mod_DataCacheSync.GetPendingRecords()
     Set allRecs = mod_DataCacheSync.GetAllRecords()
 
-    Range("B20").Value = pending.Count
-    Range("E20").Value = allRecs.Count - pending.Count  ' sent = all - pending
+    Me.Range("B20").Value = pending.Count
+    Me.Range("E20").Value = allRecs.Count - pending.Count  ' sent = all - pending
 
     Exit Sub
 
