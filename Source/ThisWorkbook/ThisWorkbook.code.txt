@@ -22,11 +22,15 @@ Private Sub Workbook_Open()
     mod_DataCacheSync.EnsureCacheFileExists              ' BNC_DataCache.xlsx
     mod_UsersRegistrySync.EnsureRegistryCacheFileExists  ' BNC_UsersRegistry.xlsx
 
-    ' 3. App-like UI (M6): ukryj Excel chrome
+    ' 3. App-like UI: ukryj Excel chrome (ribbon, formula bar, headings, tabs)
     Application.DisplayFullScreen = True
     Application.DisplayFormulaBar = False
     ActiveWindow.DisplayHeadings = False
     ActiveWindow.DisplayGridlines = False
+    ActiveWindow.DisplayWorkbookTabs = False
+    ' Ribbon całkowicie hidden (nie tylko zminimalizowany) - Excel 4 macro
+    ' bo brak natywnej Application property. Restore w BeforeClose.
+    Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",False)"
 
     ' 4. Routing multi-user
     If mod_UsersRegistrySync.GetUsersCount() = 0 Then
@@ -40,6 +44,11 @@ Private Sub Workbook_Open()
 
     ' 5. Landing na hub. Worksheet_Activate triggeruje RefreshDashboard.
     sh_LandingPage.Activate
+
+    ' 6. Sheet lock: user nie może edytować komórek ani ich zaznaczać.
+    '    UserInterfaceOnly:=True pozwala VBA (RefreshDashboard) pisać do
+    '    komórek mimo protekcji. ScrollArea ogranicza scroll do landing area.
+    LockLandingPage
     Exit Sub
 
 ErrorHandler:
@@ -49,9 +58,24 @@ ErrorHandler:
 End Sub
 
 ' Restore Excel chrome przy zamknięciu żeby inne pliki Excel otwarte
-' równolegle nie dziedziczyły DisplayFullScreen.
+' równolegle nie dziedziczyły DisplayFullScreen + hidden ribbon.
 Private Sub Workbook_BeforeClose(Cancel As Boolean)
     On Error Resume Next
     Application.DisplayFullScreen = False
     Application.DisplayFormulaBar = True
+    Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",True)"
+End Sub
+
+' Cell protection dla landing page. Wywoływane raz w Workbook_Open po
+' aktywacji sheeta. UserInterfaceOnly=True: VBA pisze do komórek, user nie.
+Private Sub LockLandingPage()
+    On Error Resume Next
+    With sh_LandingPage
+        .Unprotect  ' na wypadek istniejącej protekcji (bez hasła)
+        .Cells.Locked = True
+        .EnableSelection = xlNoSelection
+        .ScrollArea = "A1:H23"
+        .Protect Password:="", UserInterfaceOnly:=True, _
+                 DrawingObjects:=True, Contents:=True, Scenarios:=True
+    End With
 End Sub

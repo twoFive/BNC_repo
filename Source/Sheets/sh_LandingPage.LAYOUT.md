@@ -54,8 +54,8 @@ W Developer tab → Insert → **Form Controls** (pierwsza sekcja dropdown, NIE 
 
 | # | Caption | Pozycja (Excel row/col) | Assigned Macro (Public Sub w mod_LandingPage) |
 |---|---|---|---|
-| 1 | `Nowe zgloszenie` | Range B7:C9 | `OpenMain` |
-| 2 | `Historia + Log` | Range E7:F9 | `OpenLog` |
+| 1 | `Nowe zgloszenie` | Range B7:C9 | `OpenMain` |x
+| 2 | `Historia + Log` | Range E7:F9 | `OpenLog` |x
 | 3 | `Przelacz usera` | Range B11:C13 | `OpenPicker` |
 | 4 | `Ustawienia setup` | Range E11:F13 | `OpenSetup` |
 | 5 | `Samouczek` | Range D15:E17 (centered below grid) | `OpenTutorial` |
@@ -148,6 +148,70 @@ sh_LandingPage.Activate
 ActiveWindow.DisplayGridlines = False
 ActiveWindow.DisplayHeadings = False
 ```
+
+---
+
+## Krok 4b - App-like mode (hide ribbon + lock cells + hide obszaru poza landing) |NEW
+
+Cel: wygląd dedykowanej aplikacji zamiast Excela. Trzy warstwy:
+
+### 1. Ribbon + Excel chrome (kod, automatycznie w `Workbook_Open`)
+
+Nic ręcznie - `ThisWorkbook.Workbook_Open` już to robi:
+- `Application.DisplayFullScreen = True` (fullscreen mode)
+- `Application.DisplayFormulaBar = False`
+- `ActiveWindow.DisplayHeadings = False` (bez A/B/C i 1/2/3)
+- `ActiveWindow.DisplayGridlines = False`
+- `ActiveWindow.DisplayWorkbookTabs = False` (bez tab bar u dołu)
+- `SHOW.TOOLBAR("Ribbon", False)` (ribbon całkowicie hidden, nie tylko zminimalizowany)
+
+Restore w `Workbook_BeforeClose` żeby inne pliki Excel otwarte równolegle nie dziedziczyły.
+
+### 2. Ukryj kolumny i wiersze poza landing page (RĘCZNIE, raz)
+
+Landing page zajmuje `A1:H23`. Wszystko poza tym obszarem = "puste" wizualnie (szare tło Excela).
+
+**Kolumny I:XFD**:
+1. Klik na nagłówek kolumny **I**
+2. Ctrl+Shift+End (rozszerza selekcję do ostatniej kolumny)
+3. Right-click → **Hide**
+
+**Wiersze 24:1048576**:
+1. Klik na nagłówek wiersza **24**
+2. Ctrl+Shift+End
+3. Right-click → **Hide**
+
+**Save workbook** (persistent). Landing area teraz widoczna, reszta zniknięta.
+
+### 3. Cell lock + no selection (kod, automatycznie w `Workbook_Open`)
+
+`ThisWorkbook.LockLandingPage()` uruchamiane po `sh_LandingPage.Activate`:
+```vba
+With sh_LandingPage
+    .Unprotect  ' na wypadek istniejącej protekcji
+    .Cells.Locked = True
+    .EnableSelection = xlNoSelection     ' user w ogóle nie może kliknąć w cell
+    .ScrollArea = "A1:H23"               ' scroll ograniczony do landing area
+    .Protect Password:="", UserInterfaceOnly:=True, _
+             DrawingObjects:=True, Contents:=True, Scenarios:=True
+End With
+```
+
+**Klucz**: `UserInterfaceOnly:=True` pozwala VBA (`RefreshDashboard`) pisać do B3/B4/B5/B20/E20 mimo protekcji. User nie może.
+
+**Form Controls buttony działają pod protekcją** - macro odpalają się na klik, `DrawingObjects:=True` blokuje tylko move/resize/delete.
+
+**Uwaga**: protekcja `UserInterfaceOnly` NIE persistuje między sesjami - dlatego `LockLandingPage` musi być wywołane w każdym `Workbook_Open`.
+
+### Rezultat
+
+Wygląd aplikacji "single-window":
+- Górna belka: tylko title bar Windows (bez ribbon)
+- Landing area: widoczna, wycentrowana, nieklikanie w komórki
+- Wszystko poza: szare tło Excela (schowane kolumny/wiersze)
+- User może kliknąć tylko przyciski Form Controls
+
+Restore normalnego Excela: zamknięcie xlsm → `Workbook_BeforeClose` przywraca ribbon + chrome.
 
 ---
 
