@@ -112,9 +112,10 @@ Private Function ExpectedPublicProcs(moduleName As String) As Variant
                 "OpenMain", "OpenLog", "OpenPicker", "OpenSetup", "OpenTutorial")
         Case "mod_Tests"
             ExpectedPublicProcs = Array( _
-                "RunAllTests", "Test_mod_Utils", "Test_mod_AppStateSync", _
-                "Test_mod_DataCacheSync", "Test_mod_Validation", _
-                "Test_mod_MailSender", "Test_mod_Export", "Test_MultiUser")
+                "RunAllTests", "Test_mod_Utils", "Test_IsFormOpen", _
+                "Test_mod_AppStateSync", "Test_mod_DataCacheSync", _
+                "Test_mod_Validation", "Test_mod_MailSender", _
+                "Test_mod_Export", "Test_MultiUser")
         Case "mod_Diagnostic"
             ExpectedPublicProcs = Array( _
                 "AuditFullProject", "AuditModules", "AuditForms", "AuditFormControls", _

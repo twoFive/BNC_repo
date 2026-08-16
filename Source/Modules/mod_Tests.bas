@@ -12,6 +12,7 @@ Option Explicit
 Public Sub RunAllTests()
     Debug.Print "==================== RunAllTests START ===================="
     Test_mod_Utils
+    Test_IsFormOpen
     Test_mod_AppStateSync
     Test_mod_DataCacheSync
     Test_mod_Validation
@@ -72,6 +73,39 @@ Public Sub Test_mod_Utils()
     On Error GoTo 0
 
     Debug.Print "----- Test_mod_Utils DONE -----"
+End Sub
+
+' ----- IsFormOpen (regression guard: zombie hidden forms) ------------------
+
+' Regression test dla bugfix 2026-08-10: IsFormOpen sprawdza .Visible, nie
+' tylko istnienie w UserForms collection. Bez tego testu, przyszly refactor
+' (np. cofniecie do "For Each f In UserForms: If f.Name = ...: True") wprowadzi
+' bug ktory zablokuje re-Show po Me.Hide (zombie forms).
+'
+' UWAGA: NIE testujemy visible=True case bo wymagaloby to Show vbModal ktory
+' blokuje wykonanie tego suba (modal loop). Manual testing dla visible case.
+' Testujemy tylko sciezki bez modal: nieistniejacy form + loaded-but-hidden.
+Public Sub Test_IsFormOpen()
+    Debug.Print "----- Test_IsFormOpen -----"
+
+    ' Nieistniejacy form -> False
+    AssertEqual "IsFormOpen nonexistent", False, _
+        mod_Utils.IsFormOpen("frm_NoSuchForm_XYZ")
+
+    ' Loaded (w UserForms collection) ale niewidoczny -> False (zombie check).
+    ' To glowna sciezka regresji - Load bez Show emuluje stan po Me.Hide.
+    Load frm_Setup
+    AssertEqual "IsFormOpen loaded-but-hidden (zombie)", False, _
+        mod_Utils.IsFormOpen("frm_Setup")
+
+    ' Cleanup - usun z UserForms
+    Unload frm_Setup
+
+    ' Po Unload -> ponownie False (bo forma znikla z kolekcji)
+    AssertEqual "IsFormOpen after Unload", False, _
+        mod_Utils.IsFormOpen("frm_Setup")
+
+    Debug.Print "----- Test_IsFormOpen DONE -----"
 End Sub
 
 ' ----- mod_AppStateSync (post-ADR-009 replaces Test_mod_UserCacheSync) -----
