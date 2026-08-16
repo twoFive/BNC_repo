@@ -1,42 +1,36 @@
 ' ============================================================================
-'  frm_Main - code-behind (wklej do okna kodu UserForm w VBE)
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M3)
-'         doc_v2/extracted/03_data_flow.md (Flow A: dodawanie zgloszenia)
+'  frm_Main
+'  Główny formularz: dodawanie zgłoszeń + wysyłka batcha.
 '
-'  UWAGA: refresh listy ListBox wykonujemy przez wlasciwosc List (2D array)
-'  zamiast AddItem + List(i, j) - to znacznie szybsze przy duzych batchach
-'  i nie powoduje migotania.
+'  ListBox refresh przez wlaściwość List (2D array) - ~10x szybsze niż
+'  AddItem + List(i, j) w pętli, bez migotania.
 ' ============================================================================
 
 Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' Initialize - static setup (raz na instance formularza):
-' - identity caption (Imie/Nazwisko/CNA/Oddzial sa stale w sesji),
-' - role detection (kierownik/handlowiec - stale w sesji),
-' - default miesiac zgloszenia,
-' - headers ListBox.
+' Initialize - static setup (raz na instancję):
+' identity caption, role detection, default miesiąc obrotu.
 Private Sub UserForm_Initialize()
     lbl_UserInfo.Caption = "Zalogowany: " & _
         CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
         CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko")) & _
         " (CNA: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")) & _
-        ", oddzial: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")) & ")"
+        ", oddział: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")) & ")"
 
     If mod_UsersRegistrySync.IsUserManager() Then
-        lbl_RoleInfo.Caption = "Tryb: KIEROWNIK (wnioski wysylane wprost do BNC)"
+        lbl_RoleInfo.Caption = "Tryb: KIEROWNIK (wnioski wysyłane wprost do BNC)"
     Else
-        lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysylane do kierownika)"
+        lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysyłane do kierownika)"
     End If
 
     txt_MiesiacObrotu.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
-    ' fake header labels (lbl_HdrID/FK/Nazwa/MiesiacObrotu/CNA) maja Captions
-    ' ustawione statycznie w Designerze - zero kodu na runtime rewrite.
+    ' Fake header labels (lbl_HdrID/FK/Nazwa/MiesiacObrotu/CNA) mają Captions
+    ' ustawione statycznie w Designerze - zero kodu runtime.
 End Sub
 
-' Activate - dynamic refresh (przy kazdym Show, takze po powrocie z frm_Log).
-' RefreshPendingList tu zamiast w Initialize - patrz ADR-007.
+' Activate - dynamic refresh (przy każdym Show, także po powrocie z frm_Log).
 Private Sub UserForm_Activate()
     RefreshPendingList
 End Sub
@@ -44,27 +38,23 @@ End Sub
 ' ----- Buttons -------------------------------------------------------------
 
 Private Sub btn_AddToList_Click()
-    ' 1. Zbierz dane z pol (Schema v2: bez Fields, MiesiacObrotu).
     Dim reportData As Object
     Set reportData = CreateObject("Scripting.Dictionary")
     reportData("KlientFK") = Trim$(txt_KlientFK.Text)
     reportData("NazwaKlienta") = Trim$(txt_NazwaKlienta.Text)
     reportData("MiesiacObrotu") = Trim$(txt_MiesiacObrotu.Text)
 
-    ' 2. Walidacja.
     Dim errMsg As String
     errMsg = mod_Validation.ValidateReportData(reportData)
     If Len(errMsg) > 0 Then
-        MsgBox errMsg, vbExclamation, "Blad walidacji"
+        MsgBox errMsg, vbExclamation, "Błąd walidacji"
         Exit Sub
     End If
 
-    ' 3. INSERT do ws_DataCache.
     Dim newID As Long
     newID = mod_DataCacheSync.AppendRecord(reportData)
     mod_Utils.LogInfo "Dodano zgloszenie ID=" & newID
 
-    ' 4. Wyczysc formularz, odswiez liste.
     ClearFormFields
     RefreshPendingList
 End Sub
@@ -78,21 +68,20 @@ Private Sub btn_SendBatch_Click()
     Set pending = mod_DataCacheSync.GetPendingRecords()
 
     If pending.Count = 0 Then
-        MsgBox "Brak zgloszen do wyslania.", vbInformation, "BNC_Sender"
+        MsgBox "Brak zgłoszeń do wysłania.", vbInformation, "BNC_Sender"
         Exit Sub
     End If
 
-    ' Potwierdzenie z info o trybie.
     Dim msg As String
     If mod_UsersRegistrySync.IsUserManager() Then
-        msg = "Wyslac " & pending.Count & " zgloszen wprost do BNC?"
+        msg = "Wysłać " & pending.Count & " zgłoszeń wprost do BNC?"
     Else
-        msg = "Wyslac " & pending.Count & " zgloszen do kierownika " & _
+        msg = "Wysłać " & pending.Count & " zgłoszeń do kierownika " & _
               "(" & CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika")) & ")?"
     End If
-    If MsgBox(msg, vbYesNo + vbQuestion, "Potwierdzenie wysylki") <> vbYes Then Exit Sub
+    If MsgBox(msg, vbYesNo + vbQuestion, "Potwierdzenie wysyłki") <> vbYes Then Exit Sub
 
-    ' Disable przyciski podczas wysylki - prevent double-click.
+    ' Disable przyciski podczas wysyłki - prevent double-click.
     DisableActionButtons True
     Application.Cursor = xlWait
 
@@ -103,11 +92,11 @@ Private Sub btn_SendBatch_Click()
     DisableActionButtons False
 
     If success Then
-        MsgBox "Batch wyslany pomyslnie.", vbInformation, "BNC_Sender"
+        MsgBox "Batch wysłany pomyślnie.", vbInformation, "BNC_Sender"
         RefreshPendingList
     Else
-        MsgBox "Blad wysylki. Sprawdz Immediate Window (Ctrl+G) dla szczegolow.", _
-               vbExclamation, "Blad wysylki"
+        MsgBox "Błąd wysyłki. Sprawdź Immediate Window (Ctrl+G) dla szczegółów.", _
+               vbExclamation, "Błąd wysyłki"
     End If
 End Sub
 
@@ -117,12 +106,11 @@ Private Sub btn_ShowLog_Click()
     frm_Log.Show vbModal
 End Sub
 
-' Hard delete zaznaczonego pending recordu (ADR-006).
-' Przed wywolaniem mod_DataCacheSync.DeleteRecord pokazujemy potwierdzenie
-' z ID + nazwa klienta zeby user mial szanse zatrzymac sie przed pomylka.
+' Hard delete pending recordu (ADR-006). Potwierdzenie z ID + nazwą klienta
+' żeby user miał szansę zatrzymać się przed pomyłką.
 Private Sub btn_DeleteSelected_Click()
     If lst_PendingBatch.ListIndex < 0 Then
-        MsgBox "Najpierw zaznacz zgloszenie do usuniecia z listy.", _
+        MsgBox "Najpierw zaznacz zgłoszenie do usunięcia z listy.", _
                vbInformation, "Brak zaznaczenia"
         Exit Sub
     End If
@@ -136,10 +124,10 @@ Private Sub btn_DeleteSelected_Click()
     nazwa = CStr(lst_PendingBatch.List(idx, 2))
 
     Dim msg As String
-    msg = "Potwierdzenie usuniecia zgloszenia BNC" & vbCrLf & vbCrLf & _
+    msg = "Potwierdzenie usunięcia zgłoszenia BNC" & vbCrLf & vbCrLf & _
           "ID: " & reportID & vbCrLf & _
           "Klient: " & nazwa & vbCrLf & vbCrLf & _
-          "Operacja nieodwracalna. Kontynuowac?"
+          "Operacja nieodwracalna. Kontynuować?"
 
     Dim answer As VbMsgBoxResult
     answer = MsgBox(msg, vbYesNo + vbQuestion + vbDefaultButton2, "Potwierdzenie")
@@ -149,8 +137,8 @@ Private Sub btn_DeleteSelected_Click()
         mod_Utils.LogInfo "Usunieto zgloszenie ID=" & reportID
         RefreshPendingList
     Else
-        MsgBox "Nie udalo sie usunac zgloszenia. Sprawdz Immediate Window (Ctrl+G).", _
-               vbExclamation, "Blad usuwania"
+        MsgBox "Nie udało się usunąć zgłoszenia. Sprawdź Immediate Window (Ctrl+G).", _
+               vbExclamation, "Błąd usuwania"
     End If
 End Sub
 
@@ -159,37 +147,31 @@ End Sub
 Private Sub ClearFormFields()
     txt_KlientFK.Text = ""
     txt_NazwaKlienta.Text = ""
-    ' MiesiacObrotu zostaje (user moze dodac kilka zgloszen na ten sam miesiac).
+    ' MiesiacObrotu zostaje (user może dodać kilka zgłoszeń na ten sam miesiąc).
     On Error Resume Next
     txt_KlientFK.SetFocus
     On Error GoTo 0
 End Sub
 
-' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List
-' jednym ruchem - to ~10x szybsze niz AddItem + List(i, j) w petli.
+' Odświeżenie listy pending. Buduje 2D array i przypisuje do ListBox.List
+' jednym ruchem - ~10x szybsze niż AddItem w pętli.
 '
-' Kolejnosc: newest first - rekordy z wyzszym ReportID (nowsze) na gorze listy.
-' Iterujemy "od konca do poczatku" (i = count-1 -> 0), bo GetPendingRecords
-' zwraca rekordy w naturalnej kolejnosci arkusza (najstarsze pierwsze).
-'
-' Auto-selekcja: NIE - user musi sam kliknac row zeby zaznaczyc.
-' btn_DeleteSelected.Enabled steruje sie liczba rekordow (Q9:B).
+' Newest first - iterujemy od końca do początku, bo GetPendingRecords zwraca
+' rekordy w kolejności arkusza (najstarsze pierwsze).
 Private Sub RefreshPendingList()
     Dim pending As Collection
     Set pending = mod_DataCacheSync.GetPendingRecords()
 
-    lbl_BatchCount.Caption = "Lista zgloszen do wyslania (" & pending.Count & ")"
+    lbl_BatchCount.Caption = "Lista zgłoszeń do wysłania (" & pending.Count & ")"
     btn_DeleteSelected.Enabled = (pending.Count > 0)
 
     lst_PendingBatch.Clear
     If pending.Count = 0 Then Exit Sub
 
-    ' 5 kolumn (ID, KlientFK, Nazwa, MiesiacObrotu, CNA) - CNA dodane
-    ' dla multi-user visibility (autor zgloszenia, 2026-08-09).
+    ' 5 kolumn: ID, KlientFK, Nazwa, MiesiacObrotu, CNA
     Dim arr() As Variant
     ReDim arr(0 To pending.Count - 1, 0 To 4)
 
-    ' Newest first: fill od konca array do poczatku.
     Dim i As Long
     Dim record As Object
     i = pending.Count - 1
@@ -198,16 +180,15 @@ Private Sub RefreshPendingList()
         arr(i, 1) = record("KlientFK")
         arr(i, 2) = record("NazwaKlienta")
         arr(i, 3) = record("MiesiacObrotu")
-        arr(i, 4) = record("CNA_HandlowcaID")  ' dict key internal zostaje _HandlowcaID
+        arr(i, 4) = record("CNA_HandlowcaID")
         i = i - 1
     Next record
 
     lst_PendingBatch.List = arr
 End Sub
 
-' Disable Add/Send/Delete podczas wysylki, zeby user nie kliknal dwa razy.
-' Po Disable=False (koniec wysylki) - btn_DeleteSelected dostaje stan z
-' RefreshPendingList (pending.Count > 0), nie z parametru tej funkcji.
+' Disable Add/Send/Delete podczas wysyłki. Po Disable=False stan
+' btn_DeleteSelected dostaje z RefreshPendingList (pending.Count > 0).
 Private Sub DisableActionButtons(disabled As Boolean)
     btn_AddToList.Enabled = Not disabled
     btn_SendBatch.Enabled = Not disabled

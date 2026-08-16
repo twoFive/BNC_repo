@@ -2,11 +2,11 @@ Attribute VB_Name = "mod_Utils"
 Option Explicit
 
 ' ============================================================================
-'  mod_Utils - helpery dostepne z calej aplikacji.
-'  Logowanie do Immediate Window, formatowanie dat, operacje na plikach,
-'  walidacja typow, JoinPath. Nizej niz wszystkie warstwy - nie wola innych
-'  modulow aplikacji.
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M1.1)
+'  mod_Utils
+'  Helpery dostępne z całej aplikacji: log, daty, pliki, walidacja typów,
+'  UI single-instance guard.
+'
+'  Warstwa niska - nie woła innych modułów aplikacji.
 ' ============================================================================
 
 ' ----- Logowanie -----------------------------------------------------------
@@ -26,7 +26,7 @@ Public Function FormatTimestampISO(dt As Date) As String
     FormatTimestampISO = Format(dt, "yyyy-mm-dd") & "T" & Format(dt, "hh:nn:ss")
 End Function
 
-' Pierwszy dzien biezacego miesiaca (np. dla MiesiacZgloszenia).
+' Pierwszy dzień bieżącego miesiąca (np. dla MiesiacObrotu).
 Public Function GetCurrentMonthYear() As Date
     GetCurrentMonthYear = DateSerial(Year(Now()), Month(Now()), 1)
 End Function
@@ -45,7 +45,7 @@ Public Function FolderExists(folderPath As String) As Boolean
     FolderExists = fso.FolderExists(folderPath)
 End Function
 
-' Tworzy folder rekursywnie - przechodzi w gore drzewa az do istniejacego rodzica.
+' Tworzy folder rekursywnie - przechodzi w górę drzewa aż do istniejącego rodzica.
 Public Sub EnsureFolderExists(folderPath As String)
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -60,7 +60,7 @@ Public Sub EnsureFolderExists(folderPath As String)
     fso.CreateFolder folderPath
 End Sub
 
-' Buduje sciezke folderPath\fileName niezaleznie od separatora na koncu folderu.
+' Buduje ścieżkę folderPath\fileName niezależnie od separatora na końcu folderu.
 Public Function JoinPath(folderPath As String, fileName As String) As String
     If Len(folderPath) = 0 Then
         JoinPath = fileName
@@ -71,9 +71,9 @@ Public Function JoinPath(folderPath As String, fileName As String) As String
     End If
 End Function
 
-' ----- Walidacja typow -----------------------------------------------------
+' ----- Walidacja typów -----------------------------------------------------
 
-' Prosty test: cos@cos.cos - bez pelnej regex RFC 5322, wystarczy dla UI.
+' Prosty test: cos@cos.cos - bez pełnej regex RFC 5322, wystarczy dla UI.
 Public Function IsValidEmail(text As String) As Boolean
     Dim t As String
     t = Trim$(text)
@@ -87,7 +87,6 @@ Public Function IsValidEmail(text As String) As Boolean
     If dotPos < atPos + 2 Then Exit Function
     If dotPos = Len(t) Then Exit Function
 
-    ' Brak bialych znakow wewnatrz
     If InStr(t, " ") > 0 Then Exit Function
 
     IsValidEmail = True
@@ -109,22 +108,11 @@ End Function
 
 ' ----- UI helpers ----------------------------------------------------------
 
-' Single-instance guard dla formularzy VBA UserForm.
-' Sprawdza czy formularz o podanej nazwie jest AKTUALNIE WIDOCZNY.
-' NIE sprawdza samego istnienia w UserForms - zombie hidden forms (po Me.Hide)
-' powinny byc re-showable, bo user chce je znowu zobaczyc.
-' Returns True gdy visible (nie showuj ponownie), False gdy mozna Show.
+' Single-instance guard dla UserForm. Sprawdza czy forma jest AKTUALNIE
+' widoczna, nie tylko czy istnieje w UserForms collection.
 '
-' Uzycie w button handler:
-'   If mod_Utils.IsFormOpen("frm_Main") Then Exit Sub
-'   frm_Main.Show vbModal
-'
-' Motywacja: zapobiec podwojnym WIDOCZNYM instancjom (rzadkie z vbModal,
-' ale defensywne). Hidden forms w UserForms collection - OK dla re-show.
-'
-' Bug fix 2026-08-10: wczesniej sprawdzalo tylko istnienie w UserForms,
-' co blokowalo re-Show po Me.Hide (user pickal, potem klikal btn_OpenPicker
-' i nic sie nie dzialo bo picker byl w kolekcji jako hidden).
+' Zombie hidden forms (po Me.Hide zostają w kolekcji) muszą być re-showable -
+' guard po samym istnieniu blokował re-Show po Me.Hide (fix 2026-08-10).
 Public Function IsFormOpen(formName As String) As Boolean
     On Error Resume Next
     Dim i As Long

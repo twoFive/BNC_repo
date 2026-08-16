@@ -2,27 +2,13 @@ Attribute VB_Name = "mod_AppStateSync"
 Option Explicit
 
 ' ============================================================================
-'  mod_AppStateSync - Repository Pattern dla ws_AppState.
-'  Wprowadzony 2026-08-08 (ADR-009 refactor) - swiadome usuniecie ws_UserCache
-'  jako materialized view current usera. Registry stalo sie sole source of
-'  truth dla user data, ale nadal trzeba gdzies trzymac 'ktory user aktywny'.
-'  ws_AppState pelni te role - key-value store dla app-level session state.
+'  mod_AppStateSync
+'  Repository Pattern dla ws_AppState - key-value store dla session state
+'  aplikacji (ADR-009). NIE trzyma user data, tylko meta-stan.
 '
-'  Format: key-value (kolumna A = klucz, kolumna B = wartosc). Analogicznie do
-'  starego ws_UserCache, ale semantycznie osobny - **NIE** trzyma user data,
-'  tylko meta-stan aplikacji.
-'
-'  Obecne klucze:
-'    _CurrentUserID  - UserID aktywnego usera (lookup w Registry)
-'
-'  Potencjalne przyszle klucze (extensibility):
-'    _LastVersion, _InstallDate, _FeatureFlags, itp.
-'
-'  BRAK xlsx sync (YAGNI - marker sesji nie jest critical data, w razie utraty
-'  user przejdzie przez picker). Sheet very hidden w xlsm - persistence przez
-'  standard Excel save.
-'
-'  Patrz: DECISIONS.md (ADR-009 - Registry as sole source of truth)
+'  Obecne klucze: _CurrentUserID (UserID aktywnego usera).
+'  Brak xlsx sync - marker sesji nie jest krytyczny, w razie utraty user
+'  przechodzi przez picker.
 ' ============================================================================
 
 Private Const SHEET_NAME As String = "ws_AppState"
@@ -31,7 +17,7 @@ Private Const SHEET_NAME As String = "ws_AppState"
 '  Public API
 ' ============================================================================
 
-' Czyta wartosc dla podanego klucza. Zwraca "" jesli klucza nie ma.
+' Czyta wartość dla podanego klucza. Zwraca "" jeśli klucza nie ma.
 Public Function GetAppValue(fieldKey As String) As Variant
     Dim ws As Worksheet
     Set ws = EnsureAppStateSheet()
@@ -49,8 +35,8 @@ Public Function GetAppValue(fieldKey As String) As Variant
     GetAppValue = ws.Cells(r, 2).Value
 End Function
 
-' Zapisuje wartosc dla podanego klucza (create-or-update) + ThisWorkbook.Save.
-' Brak xlsx sync (per ADR-009 - AppState nie ma persistence layer).
+' Zapisuje wartość dla podanego klucza (create-or-update) + ThisWorkbook.Save.
+' Bez xlsx sync (per ADR-009 - AppState nie ma persistence layer).
 Public Sub SetAppValue(fieldKey As String, value As Variant)
     Dim ws As Worksheet
     Set ws = EnsureAppStateSheet()
@@ -66,8 +52,8 @@ Public Sub SetAppValue(fieldKey As String, value As Variant)
     ThisWorkbook.Save
 End Sub
 
-' Zwraca ws_AppState, tworzac go jesli nie istnieje. Sheet very hidden.
-' Idempotentne. Wywolywane z Workbook_Open dla auto-create przy pierwszym
+' Zwraca ws_AppState, tworząc go jeśli nie istnieje. Sheet very hidden.
+' Idempotentne. Wywoływane z Workbook_Open dla auto-create przy pierwszym
 ' uruchomieniu nowej wersji xlsm.
 Public Function EnsureAppStateSheet() As Worksheet
     On Error Resume Next

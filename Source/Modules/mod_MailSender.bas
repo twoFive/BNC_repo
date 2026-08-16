@@ -2,31 +2,19 @@ Attribute VB_Name = "mod_MailSender"
 Option Explicit
 
 ' ============================================================================
-'  mod_MailSender - serce logiki "kierownik vs handlowiec" (ADR-005).
-'  Jedyny modul, ktory:
-'  - decyduje o adresacie wysylki (decision diamond)
-'  - generuje plik tymczasowy xlsx w %TEMP% z aktualnym batchem (ADR-004)
-'  - wysyla mail przez Outlook COM
-'  - zapisuje rzeczywistego adresata do EmailRecipient (audit trail)
-'
-'  Public API:
-'    SendBatch()           -> Boolean   (glowna funkcja, wywolana z frm_Main)
-'    DetermineRecipient()  -> Object    (Dictionary z To/Subject/Body, public
-'                                        dla testow + przegladnosci)
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M4.1)
-'         doc_v2/extracted/03_data_flow.md (Flow B z decision diamond)
+'  mod_MailSender
+'  Serce logiki "kierownik vs handlowiec" (ADR-005). Decyduje o adresacie,
+'  generuje plik tymczasowy xlsx w %TEMP% (ADR-004), wysyła mail przez
+'  Outlook COM, zapisuje adresata do EmailRecipient (audit trail).
 ' ============================================================================
 
-' Olxxx constanty - definiowane lokalnie (nie wymaga referencji Outlook).
+' Ol* constanty - definiowane lokalnie (nie wymaga referencji Outlook).
 Private Const olMailItem As Long = 0
 
-' ============================================================================
-'  Public API
-' ============================================================================
+' ----- Public API ---------------------------------------------------------
 
-' Glowna funkcja: czyta pending z DataCache, generuje plik tymczasowy,
-' decyduje adresata, wysyla, oznacza jako sent, sprzata plik tymczasowy.
-' Returns: True jesli pelny pipeline OK, False jesli error (z log + cleanup).
+' Główna funkcja: czyta pending z DataCache, generuje plik tymczasowy,
+' decyduje adresata, wysyła, oznacza jako sent, sprząta plik tymczasowy.
 Public Function SendBatch() As Boolean
     Dim tempFilePath As String
     Dim recipientInfo As Object
@@ -36,7 +24,6 @@ Public Function SendBatch() As Boolean
 
     On Error GoTo ErrorHandler
 
-    ' 1. Pobierz pending
     Set pending = mod_DataCacheSync.GetPendingRecords()
     If pending.Count = 0 Then
         mod_Utils.LogInfo "SendBatch: brak pending zgloszen, exit."
@@ -44,29 +31,24 @@ Public Function SendBatch() As Boolean
         Exit Function
     End If
 
-    ' 2. Plik tymczasowy w %TEMP%
     tempFilePath = GenerateTempFile(pending)
     mod_Utils.LogInfo "SendBatch: wygenerowany plik tymczasowy: " & tempFilePath
 
-    ' 3. Decision diamond - kierownik vs handlowiec
     Set recipientInfo = DetermineRecipient()
     mod_Utils.LogInfo "SendBatch: adresat = " & CStr(recipientInfo("To"))
 
-    ' 4. Wyslij mail przez Outlook COM
     SendMailWithAttachment _
         recipient:=CStr(recipientInfo("To")), _
         subject:=CStr(recipientInfo("Subject")), _
         body:=CStr(recipientInfo("Body")), _
         attachmentPath:=tempFilePath
 
-    ' 5. UPDATE statusu w ws_DataCache
     Set sentIDs = New Collection
     For Each record In pending
         sentIDs.Add record("ReportID")
     Next record
     mod_DataCacheSync.MarkAsSent sentIDs, CStr(recipientInfo("To"))
 
-    ' 6. Cleanup plik tymczasowy
     CleanupTempFile tempFilePath
 
     mod_Utils.LogInfo "SendBatch: pipeline OK, wyslano " & pending.Count & " zgloszen."
@@ -75,18 +57,15 @@ Public Function SendBatch() As Boolean
 
 ErrorHandler:
     mod_Utils.LogError "mod_MailSender.SendBatch", Err.Number, Err.Description
-    ' Cleanup nawet po bledzie - plik nie powinien zostac na dysku.
     If Len(tempFilePath) > 0 Then CleanupTempFile tempFilePath
     SendBatch = False
 End Function
 
-' Decision diamond - centralna logika kierownik vs handlowiec.
-' Public dla testowalnosci - to czysta funkcja bez side effects.
-' Returns Scripting.Dictionary z polami: To, Subject, Body.
+' Decision diamond - kierownik vs handlowiec. Public dla testowalności
+' (czysta funkcja bez side effects).
 '
-' Convention over configuration: jezeli EmailKierownika == EmailHandlowca,
-' user jest kierownikiem -> mail wprost do BNC.
-' W przeciwnym razie -> mail do kierownika z prosba o przekazanie.
+' Convention over configuration: jeżeli EmailKierownika == EmailHandlowca,
+' user jest kierownikiem -> mail wprost do BNC. W p.p. -> mail do kierownika.
 Public Function DetermineRecipient() As Object
     Dim result As Object
     Set result = CreateObject("Scripting.Dictionary")
@@ -105,17 +84,17 @@ Public Function DetermineRecipient() As Object
         ' KIEROWNIK - wprost do BNC.
         result("To") = emailBNC
         result("Subject") = "Wniosek BNC - " & dateTag
-        result("Body") = "Dzien dobry," & vbCrLf & vbCrLf & _
-            "W zalaczeniu wniosek BNC. Prosze o weryfikacje." & vbCrLf & vbCrLf & _
+        result("Body") = "Dzień dobry," & vbCrLf & vbCrLf & _
+            "W załączeniu wniosek BNC. Proszę o weryfikację." & vbCrLf & vbCrLf & _
             "Pozdrawiam," & vbCrLf & _
             CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
             CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko"))
     Else
-        ' HANDLOWIEC - do kierownika z prosba o przekazanie do BNC.
+        ' HANDLOWIEC - do kierownika z prośbą o przekazanie do BNC.
         result("To") = emailKierownika
         result("Subject") = "Wniosek BNC do akceptacji - " & dateTag
-        result("Body") = "Dzien dobry," & vbCrLf & vbCrLf & _
-            "W zalaczeniu wniosek BNC. Prosze o weryfikacje i przekazanie do " & _
+        result("Body") = "Dzień dobry," & vbCrLf & vbCrLf & _
+            "W załączeniu wniosek BNC. Proszę o weryfikację i przekazanie do " & _
             emailBNC & "." & vbCrLf & vbCrLf & _
             "Pozdrawiam," & vbCrLf & _
             CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
@@ -125,12 +104,10 @@ Public Function DetermineRecipient() As Object
     Set DetermineRecipient = result
 End Function
 
-' ============================================================================
-'  Private - plik tymczasowy + Outlook COM
-' ============================================================================
+' ----- Private - plik tymczasowy + Outlook COM ----------------------------
 
 ' Tworzy plik xlsx w %TEMP% z aktualnym batchem (ADR-004).
-' Returns: pelna sciezka do utworzonego pliku.
+' Returns: pełna ścieżka do utworzonego pliku.
 Private Function GenerateTempFile(records As Collection) As String
     Dim tempFolder As String
     Dim fileName As String
@@ -154,9 +131,7 @@ Private Function GenerateTempFile(records As Collection) As String
     Set ws = wb.Worksheets(1)
     ws.Name = "BNC_Wniosek"
 
-    ' Naglowki wlasciwe dla wniosku (subset z DataCache, bez Status/Recipient
-    ' bo to sa pola wewnetrzne aplikacji - BNC dostaje tylko dane biznesowe).
-    ' Schema v2: 7 kolumn (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
+    ' Nagłówki wniosku - subset z DataCache (bez pól wewnętrznych typu Status).
     ws.Cells(1, 1).Value = "ReportID"
     ws.Cells(1, 2).Value = "KlientFK"
     ws.Cells(1, 3).Value = "NazwaKlienta"
@@ -179,7 +154,6 @@ Private Function GenerateTempFile(records As Collection) As String
         r = r + 1
     Next record
 
-    ' Auto-fit dla czytelnosci.
     ws.Columns.AutoFit
 
     wb.SaveAs Filename:=fullPath, FileFormat:=xlOpenXMLWorkbook
@@ -192,7 +166,7 @@ Private Function GenerateTempFile(records As Collection) As String
     GenerateTempFile = fullPath
 End Function
 
-' Wysylka maila przez Outlook COM. Wymaga zaufanego dostepu do Outlook
+' Wysyłka maila przez Outlook COM. Wymaga zaufanego dostępu do Outlook
 ' (Trust Center -> "Trust access to the Outlook object model" lub polityka IT).
 Private Sub SendMailWithAttachment(recipient As String, _
                                     subject As String, _
@@ -216,7 +190,7 @@ Private Sub SendMailWithAttachment(recipient As String, _
     Set outlookApp = Nothing
 End Sub
 
-' Bezpieczne usuwanie pliku tymczasowego. Best-effort - bledy zignorowane.
+' Best-effort delete pliku tymczasowego - błędy ignorowane.
 Private Sub CleanupTempFile(filePath As String)
     On Error Resume Next
     If Len(filePath) = 0 Then Exit Sub

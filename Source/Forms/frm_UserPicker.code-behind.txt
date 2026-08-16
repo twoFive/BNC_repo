@@ -1,15 +1,13 @@
 ' ============================================================================
-'  frm_UserPicker - code-behind (wklej do okna kodu UserForm w VBE)
-'  Wybor aktywnego usera z listy zarejestrowanych + opcja dodania nowego.
-'  Pokazywany przez ThisWorkbook.Workbook_Open gdy GetUsersCount() > 0.
-'  Patrz: Notatki/DECISIONS.md (ADR-008 - multi-user Registry pattern)
+'  frm_UserPicker
+'  Wybór aktywnego usera z listy zarejestrowanych + opcja dodania nowego.
+'  Pokazywany przez Workbook_Open gdy GetUsersCount() > 0.
 ' ============================================================================
 
 Option Explicit
 
-' UserID kazdego item'u w cmb_Users - potrzebne do SwitchUser po kliknieciu
-' btn_SelectUser (ComboBox pokazuje concat "Imie Nazwisko · CNA:num", nie UserID).
-' Storage: rownolegly array indexed jak cmb_Users.ListIndex.
+' UserID każdego item'u w cmb_Users - potrzebne do SwitchUser po kliknięciu
+' btn_SelectUser (ComboBox pokazuje "Imie Nazwisko · CNA:num", nie UserID).
 Private m_UserIDs() As String
 Private m_UserCount As Long
 
@@ -21,11 +19,11 @@ End Sub
 
 ' ----- Buttons -------------------------------------------------------------
 
-' Wybor zaznaczonego usera z listy. Wywoluje SwitchUser -> laduje UserCache
-' z Registry, ustawia jako aktywnego, aktualizuje LastLogin.
+' Wybór zaznaczonego usera. SwitchUser -> update _CurrentUserID + LastLogin.
 Private Sub btn_SelectUser_Click()
     If cmb_Users.ListIndex < 0 Then
-        MsgBox "Najpierw wybierz uzytkownika z listy rozwijanej.", vbInformation, "Brak wyboru"
+        MsgBox "Najpierw wybierz użytkownika z listy rozwijanej.", _
+               vbInformation, "Brak wyboru"
         Exit Sub
     End If
 
@@ -36,36 +34,31 @@ Private Sub btn_SelectUser_Click()
     mod_UsersRegistrySync.SwitchUser selectedUserId
     On Error GoTo 0
 
-    ' Hub-and-spoke (M6): return do sh_LandingPage (Sheet1) zamiast frm_Main.
-    ' Worksheet_Activate na Sheet1 automatycznie odswiezy user info + stats.
+    ' Hub-and-spoke: return do sh_LandingPage (Sheet1).
     Me.Hide
     Exit Sub
 
 SwitchError:
     mod_Utils.LogError "frm_UserPicker.btn_SelectUser_Click", Err.Number, Err.Description
-    MsgBox "Nie udalo sie zaladowac uzytkownika. Sprawdz Immediate Window.", _
-           vbExclamation, "Blad"
+    MsgBox "Nie udało się załadować użytkownika. Sprawdź Immediate Window.", _
+           vbExclamation, "Błąd"
 End Sub
 
 ' Otwiera frm_Setup dla dodania nowego usera.
-' Post-ADR-009: PrepareForNewUser (clear UserCache) usuniete - UserCache
-' juz nie istnieje, frm_Setup.UserForm_Initialize nie prefilluje niczego
-' (dead code prefill z pre-M3.3 usuniete), wiec po prostu Show.
-' frm_Setup.btn_Save wywola AddNewUser -> nowy wiersz w Registry.
 Private Sub btn_AddNew_Click()
     If mod_Utils.IsFormOpen("frm_Setup") Then Exit Sub
     Me.Hide
     frm_Setup.Show vbModal
 End Sub
 
-' Anuluj: zamyka plik xlsm (nie caly Excel). Bez wybranego usera aplikacja
-' nie ma sensu, ale user moze miec inne pliki otwarte - zamykamy tylko nasz.
+' Anuluj: zamyka plik xlsm (nie Excel). Bez wybranego usera aplikacja
+' nie ma sensu, ale user może mieć inne pliki - zamykamy tylko nasz.
 Private Sub btn_Cancel_Click()
     Dim answer As VbMsgBoxResult
     answer = MsgBox( _
-        "Aplikacja BNC_Sender wymaga wyboru uzytkownika." & vbCrLf & vbCrLf & _
-        "Czy na pewno zamknac aplikacje?", _
-        vbYesNo + vbQuestion, "Potwierdzenie zamkniecia")
+        "Aplikacja BNC_Sender wymaga wyboru użytkownika." & vbCrLf & vbCrLf & _
+        "Czy na pewno zamknąć aplikację?", _
+        vbYesNo + vbQuestion, "Potwierdzenie zamknięcia")
 
     If answer = vbYes Then
         Me.Hide
@@ -75,9 +68,9 @@ End Sub
 
 ' ----- Helpers -------------------------------------------------------------
 
-' Ladowanie listy userow z Registry do ComboBox jako concat "Imie Nazwisko · CNA:num".
-' Rownolegly array m_UserIDs pamieta UserID kazdej pozycji (potrzebne
-' do SwitchUser bo ComboBox pokazuje tylko display string, nie UserID).
+' Ładuje listę userów z Registry do ComboBox jako "Imie Nazwisko · CNA:num".
+' Równoległy array m_UserIDs pamięta UserID każdej pozycji (ComboBox pokazuje
+' tylko display string, nie UserID).
 Private Sub PopulateUserList()
     Dim users As Collection
     Set users = mod_UsersRegistrySync.GetAllUsers()
@@ -100,7 +93,6 @@ Private Sub PopulateUserList()
     Dim displayText As String
     i = 0
     For Each u In users
-        ' Format: "Imie Nazwisko · CNA:num"  (M3.3 update)
         displayText = CStr(u("Imie")) & " " & _
                       CStr(u("Nazwisko")) & " · CNA:" & _
                       CStr(u("CNA_HandlowcaID"))
@@ -109,18 +101,18 @@ Private Sub PopulateUserList()
         i = i + 1
     Next u
 
-    ' Domyslnie zaznaczony ostatnio zalogowany (LastLogin max) - konwencja UX
+    ' Domyślnie zaznaczony ostatnio zalogowany (LastLogin max) - konwencja UX
     Dim defaultIdx As Long
     defaultIdx = FindLastLoggedInIndex(users)
     If defaultIdx >= 0 Then
         cmb_Users.ListIndex = defaultIdx
     Else
-        cmb_Users.ListIndex = 0  ' fallback: pierwszy user na liscie
+        cmb_Users.ListIndex = 0  ' fallback: pierwszy user
     End If
 End Sub
 
-' Znajduje index usera z najnowszym LastLogin (dla domyslnej selekcji).
-' Returns -1 gdy wszyscy maja empty LastLogin.
+' Index usera z najnowszym LastLogin (dla domyślnej selekcji). -1 gdy wszyscy
+' mają puste LastLogin.
 Private Function FindLastLoggedInIndex(users As Collection) As Long
     Dim maxDate As Date
     Dim maxIdx As Long

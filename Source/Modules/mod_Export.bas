@@ -2,22 +2,18 @@ Attribute VB_Name = "mod_Export"
 Option Explicit
 
 ' ============================================================================
-'  mod_Export - literal copy BNC_DataCache.xlsx do wybranej lokalizacji.
-'  "Literal copy" znaczy: dokladnie ten sam plik xlsx co w cache - nie
-'  generujemy nic specjalnego, kopiujemy bit-perfect. Plik backupu w
-'  CacheFolderPath jest jedynym zrodlem prawdy o historii.
-'
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M5.1)
+'  mod_Export
+'  Literal copy BNC_DataCache.xlsx do wybranej lokalizacji - bit-perfect,
+'  bez transformacji. Plik backupu w CacheFolderPath jest jedynym źródłem
+'  prawdy o historii.
 ' ============================================================================
 
 Private Const SOURCE_FILE_NAME As String = "BNC_DataCache.xlsx"
 
-' ============================================================================
-'  Public API
-' ============================================================================
+' ----- Public API ---------------------------------------------------------
 
 ' Kopiuje BNC_DataCache.xlsx z CacheFolderPath do targetPath (overwrite=True).
-' Returns: True jesli sukces, False jesli zrodlo nie istnieje albo bald I/O.
+' Returns: True jeśli sukces, False jeśli źródło nie istnieje albo błąd I/O.
 Public Function ExportDataCache(targetPath As String) As Boolean
     Dim sourcePath As String
     sourcePath = GetSourcePath()
@@ -55,9 +51,7 @@ Public Function GetSuggestedExportFileName() As String
                                  Format(Now(), "yyyy-mm-dd") & ".xlsx"
 End Function
 
-' ============================================================================
-'  Private
-' ============================================================================
+' ----- Private ------------------------------------------------------------
 
 Private Function GetSourcePath() As String
     Dim folderPath As String
@@ -65,7 +59,7 @@ Private Function GetSourcePath() As String
     GetSourcePath = mod_Utils.JoinPath(folderPath, SOURCE_FILE_NAME)
 End Function
 
-' Zamienia wszystkie znaki niedozwolone w nazwach plikow Windows na "_".
+' Zamienia wszystkie znaki niedozwolone w nazwach plików Windows na "_".
 Private Function SanitizeFileName(s As String) As String
     Dim invalid As String
     invalid = "\/:*?""<>| "

@@ -1,21 +1,20 @@
+' ============================================================================
+'  frm_Setup
+'  Konfiguracja nowego usera. Post-ADR-009: zawsze tworzy NOWEGO usera
+'  (nigdy nie edytuje). Edycja profilu = future feature (poza Fazą A).
+' ============================================================================
+
 Option Explicit
 
-' ----- Hardcoded constants (polityka projektowa, ADR-003) ------------------
-' EmailBNC i CacheFolderPath sa staloymi, niedostepnymi userowi do edycji.
-' Ustawiane w Initialize jako bezpiecznik na wypadek gdyby ktos zmienil
-' Locked=False w designerze.
-Private Const HARDCODED_EMAIL_BNC As String = "gitara101warszawa@gmail.com
-"
+' EmailBNC i CacheFolderPath = stałe polityki projektowej (ADR-003), zabronione
+' do edycji przez usera. Ustawiane w Initialize jako bezpiecznik gdyby ktoś
+' zmienił Locked=False w Designerze.
+Private Const HARDCODED_EMAIL_BNC As String = "gitara101warszawa@gmail.com"
 Private Const HARDCODED_CACHE_FOLDER As String = "C:\BNC_CacheFolder\"
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' Post-ADR-009 refactor: frm_Setup zawsze tworzy NOWEGO usera (nigdy nie
-' edytuje istniejacego). Dawny prefill code dla 'edit mode' usuniety -
-' byl dead code od M3.3 (AddNewUser wymusza pusty formularz).
-' Edycja profilu = future feature (poza zakresem Fazy A) - patrz ADR-008.
 Private Sub UserForm_Initialize()
-    ' Pola hardcoded - polityka projektowa (ADR-003).
     txt_EmailBNC.Text = HARDCODED_EMAIL_BNC
     txt_EmailBNC.Locked = True
     txt_CacheFolderPath.Text = HARDCODED_CACHE_FOLDER
@@ -24,17 +23,14 @@ End Sub
 
 ' ----- Buttons -------------------------------------------------------------
 
-' Samouczek - 5-page wizard (M6/M7). Modal blokuje frm_Setup do zamkniecia
-' tutoriala - user nie zgubi kontekstu setupu.
-' Patrz: frm_Tutorial.LAYOUT.md + frm_Tutorial.TEXT.md
+' Samouczek - 5-page wizard. Modal blokuje frm_Setup do zamknięcia tutoriala.
 Private Sub btn_ShowTutorial_Click()
     If mod_Utils.IsFormOpen("frm_Tutorial") Then Exit Sub
     frm_Tutorial.Show vbModal
 End Sub
 
-' Tworzy folder cache na dysku zgodnie z polityka projektowa.
-' Wywolanie EnsureFolderExists jest idempotentne - jesli folder juz istnieje,
-' nic sie nie dzieje (i to jest OK, user dostaje neutralne potwierdzenie).
+' Tworzy folder cache na dysku. EnsureFolderExists jest idempotentne -
+' jeśli folder już istnieje, user dostaje neutralne potwierdzenie.
 Private Sub btn_CreateCacheFolder_Click()
     Dim path As String
     path = Trim$(txt_CacheFolderPath.Text)
@@ -47,7 +43,7 @@ Private Sub btn_CreateCacheFolder_Click()
     mod_Utils.EnsureFolderExists path
 
     If alreadyExisted Then
-        MsgBox "Folder cache juz istnial:" & vbCrLf & path, _
+        MsgBox "Folder cache już istniał:" & vbCrLf & path, _
                vbInformation, "Folder cache"
     Else
         MsgBox "Folder cache utworzony:" & vbCrLf & path, _
@@ -58,12 +54,12 @@ Private Sub btn_CreateCacheFolder_Click()
 CreateError:
     mod_Utils.LogError "frm_Setup.btn_CreateCacheFolder_Click", _
                        Err.Number, Err.Description
-    MsgBox "Nie udalo sie utworzyc folderu cache:" & vbCrLf & path & vbCrLf & vbCrLf & _
-           "Blad: " & Err.Description, vbExclamation, "Blad folderu cache"
+    MsgBox "Nie udało się utworzyć folderu cache:" & vbCrLf & path & vbCrLf & vbCrLf & _
+           "Błąd: " & Err.Description, vbExclamation, "Błąd folderu cache"
 End Sub
 
 Private Sub btn_Save_Click()
-    ' 1. Zbierz dane z pol (EmailBNC i CacheFolderPath sa hardcoded).
+    ' 1. Zbierz dane (EmailBNC i CacheFolderPath hardcoded)
     Dim userData As Object
     Set userData = CreateObject("Scripting.Dictionary")
     userData("Imie") = Trim$(txt_Imie.Text)
@@ -82,48 +78,38 @@ Private Sub btn_Save_Click()
     Dim errMsg As String
     errMsg = mod_Validation.ValidateSetupData(userData)
     If Len(errMsg) > 0 Then
-        MsgBox errMsg, vbExclamation, "Blad walidacji"
+        MsgBox errMsg, vbExclamation, "Błąd walidacji"
         Exit Sub
     End If
 
-    ' 3. Folder cache - jesli nie istnieje, utworz (defensywnie, gdyby user
-    '    zapomnial kliknac btn_CreateCacheFolder).
+    ' 3. Folder cache - defensywnie (gdyby user zapomniał kliknąć btn_Create...)
     On Error GoTo FolderError
     mod_Utils.EnsureFolderExists CStr(userData("CacheFolderPath"))
     On Error GoTo 0
 
-    ' 4. Dodaj nowego usera do Registry (M3.3) + zapis do UserCache jako
-    '    aktywnego + auto-sync do xlsx. AddNewUser wywolywane zawsze -
-    '    frm_Setup jest tylko flow "dodania nowego usera" (pierwszy raz
-    '    LUB z frm_UserPicker.btn_AddNew). Edycja istniejacego usera
-    '    to inny scenariusz, poza zakresem M3.3.
+    ' 4. AddNewUser: nowy wiersz w Registry + switch + LastLogin + sync xlsx
     Dim newUserId As String
     newUserId = mod_UsersRegistrySync.AddNewUser(userData)
 
-    ' 5. Auto-recreate plikow cache (DataCache jeszcze nie istnieje przy pierwszym setupie)
+    ' 5. Auto-recreate cache DataCache (nie istnieje przy pierwszym setupie)
     mod_DataCacheSync.EnsureCacheFileExists
 
     mod_Utils.LogInfo "Setup zakonczony - user=" & CStr(userData("EmailHandlowca")) & _
                      " · UserID=" & newUserId
 
-    ' 6. Zamknij setup - return do sh_LandingPage (Sheet1, hub-and-spoke M6).
-    '    Wczesniej otwieralismy frm_Main - teraz Sheet1 jest landing page,
-    '    user klika 'Nowe zgloszenie' zeby otworzyc frm_Main.
+    ' 6. Return do sh_LandingPage (hub-and-spoke)
     Me.Hide
     Exit Sub
 
 FolderError:
-    MsgBox "Nie udalo sie utworzyc folderu cache:" & vbCrLf & _
+    MsgBox "Nie udało się utworzyć folderu cache:" & vbCrLf & _
            CStr(userData("CacheFolderPath")) & vbCrLf & vbCrLf & _
-           "Blad: " & Err.Description, vbExclamation, "Blad folderu cache"
+           "Błąd: " & Err.Description, vbExclamation, "Błąd folderu cache"
 End Sub
 
 Private Sub btn_Cancel_Click()
-    If MsgBox("Czy na pewno przerwac konfiguracje? Aplikacja nie uruchomi sie poprawnie.", _
+    If MsgBox("Czy na pewno przerwać konfigurację? Aplikacja nie uruchomi się poprawnie.", _
               vbYesNo + vbQuestion, "Potwierdzenie") = vbYes Then
         Me.Hide
     End If
 End Sub
-
-' Helper GetTutorialText() zostal usuniety w M2.2 - tresc samouczka bedzie
-' w code-behind frm_Tutorial po jego implementacji (M6/M7).

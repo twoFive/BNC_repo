@@ -1,27 +1,20 @@
 ' ============================================================================
-'  frm_Tutorial - code-behind (wklej do okna kodu UserForm w VBE)
-'  5-page wizard z ~360 slow tresci. Zero persistencji - user zawsze
-'  swiadomie wywoluje przez frm_Setup.btn_ShowTutorial (bez auto-show).
+'  frm_Tutorial
+'  5-page wizard z ~360 słów treści. Zero persistencji - user zawsze
+'  świadomie wywołuje przez frm_Setup.btn_ShowTutorial lub Sheet1 button.
 '
 '  Content source of truth: Source/Forms/frm_Tutorial.TEXT.md
-'  Kazda edycja tresci = update TEXT.md najpierw, potem re-paste tego kodu.
-'
-'  ASCII-ONLY VERSION (v3.1) - emoji z TEXT.md zastapione ASCII bo VBA
-'  UserForm renderer nie wyswietla znakow non-ANSI w domyslnych fontach
-'  (Segoe UI Symbol wymaga per-control font, uszkadza polskie diakrytyki).
-'  Substitutions:
-'    - Titles: usuniete 👋 ⚙ 🛟 (pure decoration)
-'    - Body ✉ 📈 usuniete
-'    - Buttons: ▶ -> "->", ◀ -> "<-", ✓ -> ""
-'    - Body: → -> "->", • -> "-", · -> " - "
-'
-'  Patrz: frm_Tutorial.LAYOUT.md
+'  ASCII-safe emoji: Titles bez emoji, → -> "->", • -> "-", · -> " - ".
 ' ============================================================================
 
 Option Explicit
 
 Private Const TOTAL_PAGES As Long = 5
 Private m_currentPage As Long  ' 1..TOTAL_PAGES
+
+' Screenshot area toggle - strony 3, 4 mają image, 1/2/5 text-only.
+Private Const BODY_HEIGHT_WITH_IMAGE As Long = 190
+Private Const BODY_HEIGHT_TEXT_ONLY As Long = 430
 
 ' ----- Lifecycle -----------------------------------------------------------
 
@@ -37,7 +30,7 @@ Private Sub btn_Next_Click()
         m_currentPage = m_currentPage + 1
         RenderPage
     Else
-        Me.Hide  ' na ostatniej stronie: Next == Zakoncz
+        Me.Hide  ' ostatnia strona: Next == Zakończ
     End If
 End Sub
 
@@ -54,19 +47,30 @@ End Sub
 
 ' ----- Rendering -----------------------------------------------------------
 
-' Dispatcher - wolany po kazdej zmianie strony. Aktualizuje:
-'   - lbl_PageIndicator (numer strony)
-'   - btn_Prev.Enabled (wylaczony na 1. stronie)
-'   - btn_Next.Caption (zmiana na "Zakoncz" na ostatniej stronie)
-'   - lbl_PageTitle + txt_PageBody (per-page renderer wybrany przez Select Case)
+' Dispatcher wołany po każdej zmianie strony.
 Private Sub RenderPage()
     lbl_PageIndicator.Caption = "Strona " & m_currentPage & " z " & TOTAL_PAGES
     btn_Prev.Enabled = (m_currentPage > 1)
 
     If m_currentPage = TOTAL_PAGES Then
-        btn_Next.Caption = "Zakoncz"
+        btn_Next.Caption = "Zakończ"
     Else
         btn_Next.Caption = "Dalej ->"
+    End If
+
+    Dim hasImage As Boolean
+    hasImage = (m_currentPage = 3 Or m_currentPage = 4)
+
+    HideAllScreenshots  ' zawsze zaczynaj od hide
+
+    If hasImage Then
+        txt_PageBody.Height = BODY_HEIGHT_WITH_IMAGE
+        Select Case m_currentPage
+            Case 3: img_ScreenshotMain.Visible = True
+            Case 4: img_ScreenshotLog.Visible = True
+        End Select
+    Else
+        txt_PageBody.Height = BODY_HEIGHT_TEXT_ONLY
     End If
 
     Select Case m_currentPage
@@ -78,7 +82,12 @@ Private Sub RenderPage()
     End Select
 End Sub
 
-' ----- Per-page renderers (content z frm_Tutorial.TEXT.md, ASCII-only) -----
+Private Sub HideAllScreenshots()
+    img_ScreenshotMain.Visible = False
+    img_ScreenshotLog.Visible = False
+End Sub
+
+' ----- Per-page renderers (content z frm_Tutorial.TEXT.md) ----------------
 
 Private Sub RenderPage1_Welcome()
     lbl_PageTitle.Caption = "Witaj w BNC_Sender"
@@ -168,7 +177,7 @@ Private Sub RenderPage5_Help()
     s = s & "Inne problemy / Sugestie:" & vbCrLf
     s = s & "tomasz.pirszel@inter-team.com.pl" & vbCrLf & vbCrLf
     s = s & "Powodzenia!" & vbCrLf
-    s = s & "Kliknij " & Chr(34) & "Zakoncz" & Chr(34) & " żeby zamknąć."
+    s = s & "Kliknij " & Chr(34) & "Zakończ" & Chr(34) & " żeby zamknąć."
 
     txt_PageBody.Text = s
 End Sub

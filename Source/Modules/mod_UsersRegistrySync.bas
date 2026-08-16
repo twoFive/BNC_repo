@@ -2,20 +2,16 @@ Attribute VB_Name = "mod_UsersRegistrySync"
 Option Explicit
 
 ' ============================================================================
-'  mod_UsersRegistrySync - Repository Pattern dla ws_UsersRegistry.
-'  Post-ADR-009 refactor (2026-08-08): Registry to SOLE source of truth dla
-'  user data. UserCache usuniete (bylo materialized view, duplikacja).
+'  mod_UsersRegistrySync
+'  Repository Pattern dla ws_UsersRegistry. Post-ADR-009: Registry to SOLE
+'  source of truth dla user data.
+'
 '  Current user access przez GetCurrentUserField/SetCurrentUserField -
-'  bezposredni odczyt/zapis do wiersza Registry dla aktualnego usera
-'  (identyfikowanego przez _CurrentUserID w ws_AppState).
+'  bezpośredni odczyt/zapis wiersza aktualnego usera identyfikowanego przez
+'  _CurrentUserID w ws_AppState.
 '
-'  Cross-module dependencies:
-'  - mod_AppStateSync (marker aktywnego usera: _CurrentUserID)
-'  - Zero zaleznosci od mod_UserCacheSync (moduł usuniety)
-'
-'  Format UserID: UZYTKOWNIK_<autoinc>_CNA<cna> (ADR-008, Q2 decyzja).
-'  Patrz: DECISIONS.md (ADR-001, ADR-008, ADR-009)
-'         doc_v2/diagrams/04_data_model.md
+'  Format UserID: UZYTKOWNIK_<autoinc>_CNA<cna> (ADR-008).
+'  Write-through sync do BNC_UsersRegistry.xlsx.
 ' ============================================================================
 
 Private Const REGISTRY_SHEET As String = "ws_UsersRegistry"
@@ -36,14 +32,12 @@ Private Const REG_DONT_SHOW_SETUP As Long = 12
 Private Const REG_LAST_LOGIN As Long = 13
 Private Const REG_TOTAL_COLS As Long = 13
 
-' Klucz w ws_AppState przechowujacy UserID aktualnie zalogowanego usera.
+' Klucz w ws_AppState przechowujący UserID aktualnie zalogowanego usera.
 Private Const CURRENT_USER_KEY As String = "_CurrentUserID"
 
-' ============================================================================
-'  Public API - Registry (users list)
-' ============================================================================
+' ----- Public API - Registry (users list) ---------------------------------
 
-' Liczba zarejestrowanych userow. 0 = pierwsze uruchomienie.
+' Liczba zarejestrowanych userów. 0 = pierwsze uruchomienie.
 Public Function GetUsersCount() As Long
     Dim ws As Worksheet
     Set ws = EnsureRegistrySheet()
@@ -57,18 +51,18 @@ Public Function GetUsersCount() As Long
     If lastRow < 2 Then
         GetUsersCount = 0
     Else
-        GetUsersCount = lastRow - 1  ' wiersz 1 = naglowek
+        GetUsersCount = lastRow - 1  ' wiersz 1 = nagłówek
     End If
 End Function
 
-' UserID aktualnie zalogowanego usera. Pusty gdy nikt nie wybrany.
-' Cross-module: _CurrentUserID mieszka w ws_AppState (session marker).
+' UserID aktualnego usera. Pusty gdy nikt niewybrany. _CurrentUserID mieszka
+' w ws_AppState (session marker, cross-module).
 Public Function CurrentUserID() As String
     CurrentUserID = CStr(mod_AppStateSync.GetAppValue(CURRENT_USER_KEY))
 End Function
 
-' Wszystkie zarejestrowani userzy jako Collection of Scripting.Dictionary.
-' Uzywane przez frm_UserPicker do budowy listy wyboru.
+' Wszyscy zarejestrowani userzy jako Collection of Scripting.Dictionary.
+' Używane przez frm_UserPicker.
 Public Function GetAllUsers() As Collection
     Set GetAllUsers = New Collection
 
@@ -86,18 +80,16 @@ Public Function GetAllUsers() As Collection
     Next r
 End Function
 
-' Przelacza aktywnego usera (trivial - ADR-009 uproszczenie).
-' Rejestr sam jest source of truth, wystarczy zmienic marker.
+' Przełącza aktywnego usera. Trivial (ADR-009): Registry jest source of truth,
+' wystarczy zmienić marker + update LastLogin.
 Public Sub SwitchUser(userId As String)
     mod_AppStateSync.SetAppValue CURRENT_USER_KEY, userId
     UpdateLastLoginInRegistry userId
     mod_Utils.LogInfo "SwitchUser: aktywny user = " & userId
 End Sub
 
-' Dodaje nowego usera do Registry i przelacza na niego. Wywolywane z
-' frm_Setup.btn_Save gdy pierwszy uzytkownik (Registry pusty) lub gdy
-' user przyszedl z frm_UserPicker.btn_AddNew.
-' Format UserID: UZYTKOWNIK_<autoinc>_CNA<cna>  (ADR-008 Q2)
+' Dodaje nowego usera do Registry i przełącza na niego.
+' Wywoływane z frm_Setup.btn_Save.
 ' Returns: wygenerowany UserID.
 Public Function AddNewUser(userData As Object) As String
     Dim newUserId As String
@@ -112,12 +104,12 @@ Public Function AddNewUser(userData As Object) As String
     AddNewUser = newUserId
 End Function
 
-' Auto-recreate: jesli BNC_UsersRegistry.xlsx nie istnieje przy starcie
-' aplikacji, tworzy go z aktualnej zawartosci ws_UsersRegistry.
+' Auto-recreate: jeśli BNC_UsersRegistry.xlsx nie istnieje przy starcie,
+' tworzy go z aktualnej zawartości ws_UsersRegistry.
 Public Sub EnsureRegistryCacheFileExists()
     Dim folderPath As String
     folderPath = CStr(GetCurrentUserField("CacheFolderPath"))
-    If Len(folderPath) = 0 Then Exit Sub  ' setup jeszcze nieukonczony
+    If Len(folderPath) = 0 Then Exit Sub  ' setup jeszcze nieukończony
 
     mod_Utils.EnsureFolderExists folderPath
 
@@ -127,15 +119,10 @@ Public Sub EnsureRegistryCacheFileExists()
     If Not mod_Utils.FileExists(fullPath) Then SyncRegistryToFile
 End Sub
 
-' ============================================================================
-'  Public API - Current user access (post-ADR-009 replaces UserCache API)
-' ============================================================================
+' ----- Public API - Current user access (post-ADR-009) --------------------
 
-' Czyta pole aktualnego usera z jego wiersza w Registry. Zwraca "" gdy:
-' - brak aktywnego usera (_CurrentUserID puste)
-' - user nie znaleziony w Registry
-' - unknown fieldName
-' Zastapienie starego mod_UserCacheSync.GetUserField.
+' Czyta pole aktualnego usera z Registry. Zwraca "" gdy: brak aktywnego usera,
+' user nie znaleziony w Registry, albo unknown fieldName.
 Public Function GetCurrentUserField(fieldName As String) As Variant
     Dim userId As String
     userId = CurrentUserID()
@@ -168,8 +155,7 @@ Public Function GetCurrentUserField(fieldName As String) As Variant
     GetCurrentUserField = ws.Cells(r, col).Value
 End Function
 
-' Zapisuje pojedyncze pole aktualnego usera w Registry + save + sync xlsx.
-' Zastapienie starego mod_UserCacheSync.SetUserField.
+' Zapisuje pojedyncze pole aktualnego usera + save + sync xlsx.
 ' No-op gdy brak aktywnego usera lub unknown fieldName.
 Public Sub SetCurrentUserField(fieldName As String, value As Variant)
     Dim userId As String
@@ -194,7 +180,6 @@ Public Sub SetCurrentUserField(fieldName As String, value As Variant)
 End Sub
 
 ' Zwraca Scripting.Dictionary z wszystkimi polami aktualnego usera.
-' Zastapienie starego mod_UserCacheSync.GetUserData.
 Public Function GetCurrentUserData() As Object
     Set GetCurrentUserData = CreateObject("Scripting.Dictionary")
 
@@ -213,9 +198,7 @@ Public Function GetCurrentUserData() As Object
     Set GetCurrentUserData = RowToUserDict(ws, r)
 End Function
 
-' Batch update - zapisuje wiele pol aktualnego usera w Registry jednym save+sync.
-' Uzywane po scenariuszach gdzie kilka pol zmienia sie naraz (np. profile edit).
-' Zastapienie starego mod_UserCacheSync.SaveUserData (dla current user context).
+' Batch update - kilka pól aktualnego usera jednym save+sync.
 Public Sub UpdateCurrentUserFields(fieldsDict As Object)
     Dim userId As String
     userId = CurrentUserID()
@@ -244,8 +227,7 @@ Public Sub UpdateCurrentUserFields(fieldsDict As Object)
 End Sub
 
 ' Convention over configuration (ADR-005): user jest kierownikiem gdy sam
-' siebie wpisal jako EmailKierownika. Zastapienie starego
-' mod_UserCacheSync.IsUserManager - teraz czyta bezposrednio z Registry.
+' siebie wpisał jako EmailKierownika.
 Public Function IsUserManager() As Boolean
     Dim handlowca As String, kierownika As String
     handlowca = LCase$(Trim$(CStr(GetCurrentUserField("EmailHandlowca"))))
@@ -259,12 +241,9 @@ Public Function IsUserManager() As Boolean
     IsUserManager = (handlowca = kierownika)
 End Function
 
-' ============================================================================
-'  Private - Registry helpers
-' ============================================================================
+' ----- Private - Registry helpers -----------------------------------------
 
-' Field name -> column index mapping (dla GetCurrentUserField/SetCurrentUserField).
-' 0 = unknown field name.
+' Field name -> column index. 0 = unknown.
 Private Function FieldNameToColumn(fieldName As String) As Long
     Select Case fieldName
         Case "UserID": FieldNameToColumn = REG_USER_ID
@@ -284,8 +263,8 @@ Private Function FieldNameToColumn(fieldName As String) As Long
     End Select
 End Function
 
-' Buduje Dictionary z wiersza Registry. Uzywane przez GetAllUsers +
-' GetCurrentUserData - zero duplikacji mapping code.
+' Buduje Dictionary z wiersza Registry. Zero duplikacji mapping code
+' między GetAllUsers a GetCurrentUserData.
 Private Function RowToUserDict(ws As Worksheet, r As Long) As Object
     Dim d As Object
     Set d = CreateObject("Scripting.Dictionary")
@@ -305,8 +284,8 @@ Private Function RowToUserDict(ws As Worksheet, r As Long) As Object
     Set RowToUserDict = d
 End Function
 
-' Zwraca ws_UsersRegistry, tworzac go jesli nie istnieje. Sheet very hidden.
-' Ustawia naglowek w wierszu 1. Idempotentne.
+' Zwraca ws_UsersRegistry, tworząc go jeśli nie istnieje. Sheet very hidden.
+' Ustawia nagłówek. Idempotentne.
 Private Function EnsureRegistrySheet() As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
@@ -334,7 +313,6 @@ CreateError:
     Set EnsureRegistrySheet = Nothing
 End Function
 
-' Ustawia naglowek w wierszu 1 Registry. Idempotentne (skip gdy juz jest).
 Private Sub EnsureRegistryHeader(ws As Worksheet)
     If Len(CStr(ws.Cells(1, REG_USER_ID).Value)) > 0 Then Exit Sub
 
@@ -353,7 +331,7 @@ Private Sub EnsureRegistryHeader(ws As Worksheet)
     ws.Cells(1, REG_LAST_LOGIN).Value = "LastLogin"
 End Sub
 
-' Format: UZYTKOWNIK_<N>_CNA<cna>  gdzie N = kolejny autoinc, cna z userData.
+' Format: UZYTKOWNIK_<N>_CNA<cna>
 Private Function GenerateUserID(userData As Object) As String
     Dim nextN As Long
     nextN = GetUsersCount() + 1
@@ -389,7 +367,6 @@ Private Function FindRegistryRow(ws As Worksheet, userId As String) As Long
     FindRegistryRow = 0
 End Function
 
-' Dopisuje nowego usera do Registry + save + sync xlsx.
 Private Sub AppendUserToRegistry(userData As Object)
     Dim ws As Worksheet
     Set ws = EnsureRegistrySheet()
@@ -417,7 +394,6 @@ Private Sub AppendUserToRegistry(userData As Object)
     SyncRegistryToFile
 End Sub
 
-' Update LastLogin dla usera w Registry + save + sync xlsx.
 Private Sub UpdateLastLoginInRegistry(userId As String)
     Dim ws As Worksheet
     Set ws = EnsureRegistrySheet()
@@ -433,7 +409,7 @@ Private Sub UpdateLastLoginInRegistry(userId As String)
 End Sub
 
 ' Best-effort sync ws_UsersRegistry -> BNC_UsersRegistry.xlsx.
-' Bez clipboard (ADR-002). Wywolywany po kazdej mutacji Registry.
+' Bez clipboard (ADR-002). Wołany po każdej mutacji Registry.
 Private Sub SyncRegistryToFile()
     Dim wbOut As Workbook
     Dim restoreScreen As Boolean
@@ -492,7 +468,7 @@ Cleanup:
     If restoreScreen Then Application.ScreenUpdating = True
 End Sub
 
-' Bezpieczny dostep do pol Dictionary - "" jesli klucz nie istnieje.
+' Bezpieczny dostęp do pól Dictionary - "" jeśli klucz nie istnieje.
 Private Function SafeGet(d As Object, key As String) As Variant
     If d Is Nothing Then
         SafeGet = ""

@@ -1,24 +1,18 @@
 ' ============================================================================
-'  sh_LandingPage - code module (wklej do Sheet1 code module w VBE)
+'  sh_LandingPage
 '  Landing page (hub) aplikacji.
 '
-'  UWAGA: to jest code module SHEET, nie standalone module. W VBE Project
-'  Explorer -> Microsoft Excel Objects -> sh_LandingPage (Sheet1) -> View Code.
-'
-'  Refactor 2026-08-09: Form Controls buttons (nie ActiveX) - handlery
-'  przeniesione do mod_LandingPage.bas (standalone). Sheet trzyma tylko
-'  Worksheet_Activate + RefreshDashboard (public, ale nie wolane cross-module).
-'
-'  Patrz: sh_LandingPage.LAYOUT.md
-'         Source/Modules/mod_LandingPage.bas (button handlers OpenMain/Log/...)
+'  Form Controls buttons NIE ActiveX - działa niezależnie od IT policies.
+'  Handlery -> mod_LandingPage.bas. Sheet trzyma Worksheet_Activate +
+'  RefreshDashboard (Public dla wywołania z mod_LandingPage po Show).
 ' ============================================================================
 
 Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' Wolane przy KAZDEJ aktywacji sheeta (po zamknieciu formularza, po Workbook_Open,
-' po klikni w tab). Refresh user info + stats zeby zawsze aktualne.
+' Wołane przy KAŻDEJ aktywacji sheeta (po Workbook_Open, klik w tab).
+' UWAGA: NIE fire'uje po Me.Hide modal formu - patrz mod_LandingPage.
 Private Sub Worksheet_Activate()
     RefreshDashboard
 End Sub
@@ -26,8 +20,7 @@ End Sub
 ' ----- Rendering -----------------------------------------------------------
 
 ' Aktualizuje dynamic cells: user info (B3, B4, B5) + statystyki (B20, E20).
-' Wolane z Worksheet_Activate. Public zeby inne moduly mogly wywolac po
-' zmianie stanu (np. mod_LandingPage handlery gdyby chcialy force refresh).
+' Public żeby mod_LandingPage mógł force refresh po powrocie z modal formu.
 Public Sub RefreshDashboard()
     On Error GoTo Cleanup
 
@@ -68,8 +61,8 @@ Public Sub RefreshDashboard()
     Exit Sub
 
 Cleanup:
-    ' Best-effort refresh - jesli cos padnie (np. registry pusty), po prostu
-    ' zostawiamy stare wartosci i logujemy blad. Nie chcemy zeby dashboard
-    ' padnal przy niekompletnym setupie.
+    ' Best-effort refresh - jeśli coś padnie (np. registry pusty), zostawiamy
+    ' stare wartości i logujemy błąd. Dashboard nie może padnąć przy
+    ' niekompletnym setupie.
     mod_Utils.LogError "sh_LandingPage.RefreshDashboard", Err.Number, Err.Description
 End Sub

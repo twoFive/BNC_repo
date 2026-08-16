@@ -2,37 +2,27 @@ Attribute VB_Name = "mod_Diagnostic"
 Option Explicit
 
 ' ============================================================================
-'  mod_Diagnostic - one-off diagnostyka stanu VB Project.
-'  Do inspekcji po recznej edycji w VBE (co jest, co brakuje, jakie procedury).
+'  mod_Diagnostic
+'  Diagnostyka stanu VB Project - inspekcja po ręcznej edycji w VBE.
 '
-'  WYMAGANE: "Trust access to the VBA project object model" w Excel Trust
-'  Center -> Macro Settings. Bez tego dostep do ThisWorkbook.VBProject rzuca
-'  Run-time error 1004 "Programmatic access to Visual Basic Project is not
-'  trusted".
+'  Wymaga "Trust access to the VBA project object model" w Excel Trust
+'  Center -> Macro Settings.
 '
 '  Uruchamianie z Immediate Window (Ctrl+G):
-'
-'  === TOP-LEVEL (rekomendowane) ===
-'    mod_Diagnostic.AuditFullProject       - pelny audit wszystkiego naraz
-'
-'  === POJEDYNCZE SEKCJE ===
-'    mod_Diagnostic.AuditModules           - moduly + Public API
+'    mod_Diagnostic.AuditFullProject       - pełny audit
+'    mod_Diagnostic.AuditModules           - moduły + Public API
 '    mod_Diagnostic.AuditForms             - formularze (handlery + kontrolki)
-'    mod_Diagnostic.AuditFormControls "frm_Main" - szczegol kontrolek jednego formularza
-'                                            (uzyj gdy compile error "variable not defined")
-'    mod_Diagnostic.AuditSheets            - arkusze + naglowki
+'    mod_Diagnostic.AuditFormControls "frm_Main"  - szczegół kontrolek
+'    mod_Diagnostic.AuditSheets            - arkusze + nagłówki
 '    mod_Diagnostic.AuditThisWorkbook      - klasa ThisWorkbook
-'
-'  === LEGACY (basic listing) ===
-'    mod_Diagnostic.DumpVBComponents       - flat lista modulow
-'    mod_Diagnostic.ListPublicProcedures "mod_Utils"  - proc w module
-'    mod_Diagnostic.DumpModuleContent "mod_Utils"     - pelna tresc modulu
+'    mod_Diagnostic.DumpVBComponents       - flat lista modułów
+'    mod_Diagnostic.ListPublicProcedures "mod_Utils"
+'    mod_Diagnostic.DumpModuleContent "mod_Utils"
 '    mod_Diagnostic.CountLinesTotal        - suma linii kodu
 ' ============================================================================
 
 ' ============================================================================
-'  EXPECTED PROJECT STATE
-'  Edytuj gdy zmienia sie architektura projektu.
+'  EXPECTED PROJECT STATE - edytuj gdy zmienia się architektura projektu.
 ' ============================================================================
 
 Private Function ExpectedModules() As Variant

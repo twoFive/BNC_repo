@@ -1,16 +1,15 @@
 ' ============================================================================
-'  frm_Log - code-behind (wklej do okna kodu UserForm w VBE)
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M5.2)
+'  frm_Log
+'  Historia wszystkich zgłoszeń (pending + sent) + eksport DataCache do xlsx.
 ' ============================================================================
 
 Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' UWAGA: LoadRecords w UserForm_Activate (NIE Initialize), bo Activate fires
-' przy KAZDYM Show, w tym po powrocie z frm_Main. Inaczej dane sa stale gdy
-' user usunie pending w frm_Main, wroci do frm_Log i widzi stary stan.
-' Patrz: ADR-007 (Activate pattern dla widokow ws_DataCache).
+' LoadRecords w Activate (nie Initialize) bo Activate fires przy KAŻDYM Show.
+' Bez tego widok byłby stały gdy user usunie pending w frm_Main i wróci
+' do frm_Log (patrz ADR-007).
 Private Sub UserForm_Activate()
     LoadRecords
 End Sub
@@ -18,16 +17,13 @@ End Sub
 ' ----- Buttons -------------------------------------------------------------
 
 Private Sub btn_Export_Click()
-    ' 1. Sugerowana nazwa pliku.
     Dim suggested As String
     suggested = mod_Export.GetSuggestedExportFileName()
 
-    ' 2. Save As dialog.
     Dim targetPath As String
     targetPath = ShowSaveDialog(suggested)
-    If Len(targetPath) = 0 Then Exit Sub  ' user anulowal
+    If Len(targetPath) = 0 Then Exit Sub  ' user anulował
 
-    ' 3. Eksport.
     Application.Cursor = xlWait
     Dim ok As Boolean
     ok = mod_Export.ExportDataCache(targetPath)
@@ -37,13 +33,12 @@ Private Sub btn_Export_Click()
         MsgBox "Wyeksportowano do:" & vbCrLf & targetPath, _
                vbInformation, "Eksport"
     Else
-        MsgBox "Blad eksportu. Sprawdz Immediate Window (Ctrl+G) dla szczegolow.", _
-               vbExclamation, "Blad eksportu"
+        MsgBox "Błąd eksportu. Sprawdź Immediate Window (Ctrl+G) dla szczegółów.", _
+               vbExclamation, "Błąd eksportu"
     End If
 End Sub
 
-' Hub-and-spoke pattern (M6): zamkniecie formy = return do sh_LandingPage
-' (Sheet1). Wczesniej wracalo do frm_Main - teraz Sheet1 jest hubem.
+' Hub-and-spoke: zamknięcie = return do sh_LandingPage.
 Private Sub btn_Back_Click()
     Me.Hide
 End Sub
@@ -71,9 +66,8 @@ Private Sub LoadRecords()
     lst_AllRecords.Clear
     If allRecords.Count = 0 Then Exit Sub
 
-    ' Buduj 2D array, najnowsze rekordy na gorze (odwracamy kolejnosc).
-    ' 7 kolumn (post-2026-08-09: dodane CNA po Nazwa dla multi-user visibility).
-    ' Kolejnosc: ID | FK | Nazwa | CNA | Status | Wyslany | Data wyslania
+    ' 7 kolumn: ID | FK | Nazwa | CNA | Status | Wysłany | Data wysłania
+    ' Najnowsze na górze (odwracamy kolejność).
     Dim n As Long
     n = allRecords.Count
     Dim arr() As Variant
@@ -82,11 +76,11 @@ Private Sub LoadRecords()
     Dim i As Long, idx As Long
     i = 0
     For Each record In allRecords
-        idx = n - 1 - i  ' odwrotna kolejnosc - najnowsze na gorze
+        idx = n - 1 - i  ' odwrotna kolejność - najnowsze na górze
         arr(idx, 0) = record("ReportID")
         arr(idx, 1) = record("KlientFK")
         arr(idx, 2) = record("NazwaKlienta")
-        arr(idx, 3) = record("CNA_HandlowcaID")  ' NEW - autor zgloszenia (dict key internal _HandlowcaID)
+        arr(idx, 3) = record("CNA_HandlowcaID")
         arr(idx, 4) = record("Status")
         arr(idx, 5) = FormatRecipient(CStr(record("EmailRecipient")))
         arr(idx, 6) = FormatTimestamp(record("BatchSentTimestamp"))
@@ -124,8 +118,7 @@ Private Function ShowSaveDialog(defaultName As String) As String
         Title:="Zapisz eksport jako")
 
     If TypeName(result) = "Boolean" Then
-        ' False znaczy ze user anulowal
-        ShowSaveDialog = ""
+        ShowSaveDialog = ""  ' user anulował
     Else
         ShowSaveDialog = CStr(result)
     End If

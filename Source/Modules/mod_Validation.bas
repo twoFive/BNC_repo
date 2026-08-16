@@ -2,32 +2,29 @@ Attribute VB_Name = "mod_Validation"
 Option Explicit
 
 ' ============================================================================
-'  mod_Validation - reguly walidacji w jednym miejscu (warstwa logiki).
-'  Stateless, nie wola sync ani UserForms. UI pyta "czy te dane sa poprawne",
-'  ten modul odpowiada.
+'  mod_Validation
+'  Reguły walidacji w jednym miejscu (warstwa logiki). Stateless, nie woła
+'  sync ani UserForms.
 '
 '  Konwencja:
-'    Validate*Data(...) As String  -> "" jesli OK, w przeciwnym razie komunikat
+'    Validate*Data(...) As String  -> "" jeśli OK, komunikat błędu w p.p.
 '    Validate*(...)     As Boolean -> True/False (atomowe)
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M2.1)
 ' ============================================================================
 
-' Limity dlugosci
+' Limity długości
 Private Const MIN_NAZWA_KLIENTA As Long = 3
 Private Const MAX_NAZWA_KLIENTA As Long = 200
 Private Const MIN_IMIE_NAZWISKO As Long = 2
 Private Const MAX_IMIE_NAZWISKO As Long = 100
 
-' ============================================================================
-'  Walidacje atomowe
-' ============================================================================
+' ----- Walidacje atomowe ---------------------------------------------------
 
 Public Function ValidateEmail(email As String) As Boolean
     ValidateEmail = mod_Utils.IsValidEmail(email)
 End Function
 
 Public Function ValidateClientFK(fk As String) As Boolean
-    ' KlientFK musi byc liczba calkowita dodatnia (klucz obcy w slowniku klientow).
+    ' KlientFK musi być liczbą całkowitą dodatnią (klucz obcy w słowniku klientów).
     If Not mod_Utils.IsValidLong(fk) Then
         ValidateClientFK = False
         Exit Function
@@ -68,7 +65,7 @@ Public Function ValidateMonthYear(text As String) As Boolean
         End If
     End If
 
-    ' Fallback: probuj sparsowac jako date
+    ' Fallback: próbuj sparsować jako datę
     On Error GoTo NotADate
     Dim d As Date
     d = CDate(t)
@@ -78,7 +75,7 @@ NotADate:
     ValidateMonthYear = False
 End Function
 
-' Sciezka folderu - prosty test syntaktyczny (nie sprawdza istnienia).
+' Ścieżka folderu - prosty test syntaktyczny (nie sprawdza istnienia).
 Public Function ValidateFolderPath(path As String) As Boolean
     Dim t As String
     t = Trim$(path)
@@ -92,9 +89,7 @@ Public Function ValidateFolderPath(path As String) As Boolean
     End If
 End Function
 
-' ============================================================================
-'  Walidacje zlozone (zwracaja komunikat bledu albo "")
-' ============================================================================
+' ----- Walidacje złożone (zwracają komunikat błędu albo "") ---------------
 
 ' Walidacja danych z frm_Setup. userData = Scripting.Dictionary z polami:
 '   Imie, Nazwisko, EmailHandlowca, CNA_HandlowcaID, NrOddzialu,
@@ -105,52 +100,45 @@ Public Function ValidateSetupData(userData As Object) As String
         Exit Function
     End If
 
-    ' Imie / Nazwisko
     If Not ValidateLength(GetField(userData, "Imie"), MIN_IMIE_NAZWISKO, MAX_IMIE_NAZWISKO) Then
-        ValidateSetupData = "Imie musi miec od " & MIN_IMIE_NAZWISKO & _
-                            " do " & MAX_IMIE_NAZWISKO & " znakow."
+        ValidateSetupData = "Imię musi mieć od " & MIN_IMIE_NAZWISKO & _
+                            " do " & MAX_IMIE_NAZWISKO & " znaków."
         Exit Function
     End If
     If Not ValidateLength(GetField(userData, "Nazwisko"), MIN_IMIE_NAZWISKO, MAX_IMIE_NAZWISKO) Then
-        ValidateSetupData = "Nazwisko musi miec od " & MIN_IMIE_NAZWISKO & _
-                            " do " & MAX_IMIE_NAZWISKO & " znakow."
+        ValidateSetupData = "Nazwisko musi mieć od " & MIN_IMIE_NAZWISKO & _
+                            " do " & MAX_IMIE_NAZWISKO & " znaków."
         Exit Function
     End If
 
-    ' Email handlowca - obowiazkowy
     If Not ValidateEmail(GetField(userData, "EmailHandlowca")) Then
-        ValidateSetupData = "Niepoprawny format adresu Email sluzbowy."
+        ValidateSetupData = "Niepoprawny format adresu Email służbowy."
         Exit Function
     End If
 
-    ' CNA - liczba dodatnia
     If Not ValidateClientFK(GetField(userData, "CNA_HandlowcaID")) Then
-        ValidateSetupData = "CNA (numer handlowca) musi byc liczba dodatnia."
+        ValidateSetupData = "CNA (numer handlowca) musi być liczbą dodatnią."
         Exit Function
     End If
 
-    ' Nr oddzialu - niepuste
     If Not ValidateNonEmpty(GetField(userData, "NrOddzialu")) Then
-        ValidateSetupData = "Numer oddzialu nie moze byc pusty."
+        ValidateSetupData = "Numer oddziału nie może być pusty."
         Exit Function
     End If
 
-    ' Email kierownika
     If Not ValidateEmail(GetField(userData, "EmailKierownika")) Then
         ValidateSetupData = "Niepoprawny format adresu Email kierownika." & vbCrLf & _
-                            "Jezeli jestes kierownikiem, wpisz tu swoj wlasny adres sluzbowy."
+                            "Jeżeli jesteś kierownikiem, wpisz tu swój własny adres służbowy."
         Exit Function
     End If
 
-    ' Email BNC
     If Not ValidateEmail(GetField(userData, "EmailBNC")) Then
-        ValidateSetupData = "Niepoprawny format adresu Email zespolu BNC."
+        ValidateSetupData = "Niepoprawny format adresu Email zespołu BNC."
         Exit Function
     End If
 
-    ' Folder cache - format sciezki
     If Not ValidateFolderPath(GetField(userData, "CacheFolderPath")) Then
-        ValidateSetupData = "Niepoprawna sciezka folderu cache." & vbCrLf & _
+        ValidateSetupData = "Niepoprawna ścieżka folderu cache." & vbCrLf & _
                             "Wymagany format: C:\Folder\ lub \\server\share\."
         Exit Function
     End If
@@ -158,7 +146,7 @@ Public Function ValidateSetupData(userData As Object) As String
     ValidateSetupData = ""  ' OK
 End Function
 
-' Walidacja danych z frm_Main (jedno zgloszenie). reportData = Dictionary:
+' Walidacja danych z frm_Main (jedno zgłoszenie). reportData = Dictionary:
 '   KlientFK, NazwaKlienta, MiesiacObrotu
 Public Function ValidateReportData(reportData As Object) As String
     If reportData Is Nothing Then
@@ -166,23 +154,20 @@ Public Function ValidateReportData(reportData As Object) As String
         Exit Function
     End If
 
-    ' KlientFK - liczba dodatnia
     If Not ValidateClientFK(GetField(reportData, "KlientFK")) Then
-        ValidateReportData = "Klient FK musi byc liczba dodatnia."
+        ValidateReportData = "Klient FK musi być liczbą dodatnią."
         Exit Function
     End If
 
-    ' NazwaKlienta - 3-200 znakow
     If Not ValidateLength(GetField(reportData, "NazwaKlienta"), _
                           MIN_NAZWA_KLIENTA, MAX_NAZWA_KLIENTA) Then
-        ValidateReportData = "Nazwa klienta musi miec od " & MIN_NAZWA_KLIENTA & _
-                             " do " & MAX_NAZWA_KLIENTA & " znakow."
+        ValidateReportData = "Nazwa klienta musi mieć od " & MIN_NAZWA_KLIENTA & _
+                             " do " & MAX_NAZWA_KLIENTA & " znaków."
         Exit Function
     End If
 
-    ' MiesiacObrotu - format YYYY-MM lub data (miesiac wykonania obrotu przez klienta)
     If Not ValidateMonthYear(GetField(reportData, "MiesiacObrotu")) Then
-        ValidateReportData = "Miesiac wykonania obrotu przez klienta w niepoprawnym formacie." & vbCrLf & _
+        ValidateReportData = "Miesiąc wykonania obrotu przez klienta w niepoprawnym formacie." & vbCrLf & _
                              "Wymagany format: YYYY-MM (np. 2026-05)."
         Exit Function
     End If
@@ -190,9 +175,7 @@ Public Function ValidateReportData(reportData As Object) As String
     ValidateReportData = ""  ' OK
 End Function
 
-' ============================================================================
-'  Private helper
-' ============================================================================
+' ----- Private helper ------------------------------------------------------
 
 Private Function GetField(d As Object, key As String) As String
     If d Is Nothing Then

@@ -2,22 +2,20 @@ Attribute VB_Name = "mod_DataCacheSync"
 Option Explicit
 
 ' ============================================================================
-'  mod_DataCacheSync - Repository Pattern dla ws_DataCache.
-'  Tabela zgloszen BNC: kazdy wiersz = jedno zgloszenie. ReportID jest
-'  autoincrement (logika w VBA, Excel nie ma natywnego autoincrement).
-'  Pola CNA_HandlowcaID i NrOddzialu sa snapshotami z UserCache w momencie
-'  zapisu - chronia historie przed pozniejszymi zmianami w setupie.
+'  mod_DataCacheSync
+'  Repository Pattern dla ws_DataCache (tabela zgłoszeń BNC). Kazdy wiersz =
+'  jedno zgłoszenie. ReportID autoincrement w VBA.
 '
-'  Synchronizuje stan do BNC_DataCache.xlsx (write-through, jednostronny).
-'  Patrz: BNC_Sender_PlanWdrozenia_FazaA.md (M1.3)
-'         doc_v2/extracted/04_data_model.md
+'  CNA_HandlowcaID i NrOddzialu = snapshot z aktywnego usera w momencie
+'  zapisu (chroni historię przed późniejszymi zmianami w setupie).
+'
+'  Write-through sync do BNC_DataCache.xlsx (jednostronny).
 ' ============================================================================
 
 Private Const SHEET_NAME As String = "ws_DataCache"
 Private Const CACHE_FILE_NAME As String = "BNC_DataCache.xlsx"
 
-' Schemat kolumn (1-indexed). Naglowki w wierszu 1, dane od wiersza 2.
-' Schema v2 (bez Fields, MiesiacObrotu zamiast MiesiacZgloszenia).
+' Schemat kolumn (1-indexed). Nagłówki w wierszu 1, dane od wiersza 2.
 Private Const COL_REPORT_ID As Long = 1
 Private Const COL_KLIENT_FK As Long = 2
 Private Const COL_NAZWA_KLIENTA As Long = 3
@@ -33,13 +31,10 @@ Private Const TOTAL_COLS As Long = 10
 Public Const STATUS_PENDING As String = "pending"
 Public Const STATUS_SENT As String = "sent"
 
-' ============================================================================
-'  Public API
-' ============================================================================
+' ----- Public API ---------------------------------------------------------
 
-' Dodaje nowe zgloszenie ze Status=pending. Aplikacja sama uzupelnia:
-'   ReportID, CNA_HandlowcaID, NrOddzialu (snapshot), CreatedTimestamp,
-'   Status, EmailRecipient="", BatchSentTimestamp="".
+' Dodaje nowe zgłoszenie ze Status=pending. Aplikacja uzupełnia sama:
+' ReportID, CNA/NrOddzialu (snapshot z Registry), timestamp, Status.
 ' Zwraca: ReportID nowego rekordu.
 Public Function AppendRecord(reportData As Object) As Long
     Dim ws As Worksheet
@@ -52,14 +47,14 @@ Public Function AppendRecord(reportData As Object) As Long
 
     Dim r As Long
     r = ws.Cells(ws.Rows.Count, COL_REPORT_ID).End(xlUp).row + 1
-    If r < 2 Then r = 2  ' nigdy nie nadpisuj naglowka
+    If r < 2 Then r = 2  ' nigdy nie nadpisuj nagłówka
 
     ws.Cells(r, COL_REPORT_ID).Value = newID
     ws.Cells(r, COL_KLIENT_FK).Value = SafeGet(reportData, "KlientFK")
     ws.Cells(r, COL_NAZWA_KLIENTA).Value = SafeGet(reportData, "NazwaKlienta")
     ws.Cells(r, COL_MIESIAC_OBROTU).Value = SafeGet(reportData, "MiesiacObrotu")
 
-    ' Snapshot z UserCache - chroni historie przed zmianami w setupie.
+    ' Snapshot z aktywnego usera - chroni historię przed zmianami w setupie.
     ws.Cells(r, COL_CNA).Value = mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")
     ws.Cells(r, COL_NR_ODDZIALU).Value = mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")
 
@@ -74,12 +69,10 @@ Public Function AppendRecord(reportData As Object) As Long
     AppendRecord = newID
 End Function
 
-' Wszystkie wiersze ze Status=pending. Collection of Scripting.Dictionary.
 Public Function GetPendingRecords() As Collection
     Set GetPendingRecords = GetRecordsWhereStatus(STATUS_PENDING)
 End Function
 
-' Wszystkie wiersze (do log_UserForm). Collection of Scripting.Dictionary.
 Public Function GetAllRecords() As Collection
     Set GetAllRecords = GetRecordsWhereStatus("")  ' "" = bez filtra
 End Function
@@ -93,7 +86,7 @@ Public Sub MarkAsSent(reportIDs As Collection, recipient As String)
     lastRow = ws.Cells(ws.Rows.Count, COL_REPORT_ID).End(xlUp).row
     If lastRow < 2 Then Exit Sub
 
-    ' Zbuduj set ID-ow dla O(1) lookup.
+    ' Set ID-ów dla O(1) lookup.
     Dim sentSet As Object
     Set sentSet = CreateObject("Scripting.Dictionary")
     Dim id As Variant
@@ -117,9 +110,9 @@ Public Sub MarkAsSent(reportIDs As Collection, recipient As String)
     SyncToFile
 End Sub
 
-' Hard delete pojedynczego pending recordu (ADR-006).
-' Defensywnie: tylko Status=pending. Sent records sa immutable (audit trail).
-' Returns True jesli usunieto, False jesli ID nieznane LUB Status != pending.
+' Hard delete pending recordu (ADR-006). Defensywnie tylko Status=pending -
+' sent records są immutable (audit trail).
+' Returns True jeśli usunięto, False jeśli ID nieznane LUB Status != pending.
 Public Function DeleteRecord(reportID As Long) As Boolean
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets(SHEET_NAME)
@@ -135,7 +128,6 @@ Public Function DeleteRecord(reportID As Long) As Boolean
     For r = 2 To lastRow
         If IsNumeric(ws.Cells(r, COL_REPORT_ID).Value) Then
             If CLng(ws.Cells(r, COL_REPORT_ID).Value) = reportID Then
-                ' Defensywny check: tylko pending mozna usuwac (ADR-006).
                 Dim status As String
                 status = CStr(ws.Cells(r, COL_STATUS).Value)
                 If status <> STATUS_PENDING Then
@@ -154,11 +146,10 @@ Public Function DeleteRecord(reportID As Long) As Boolean
         End If
     Next r
 
-    ' Nie znaleziono
     DeleteRecord = False
 End Function
 
-' Auto-recreate: tworzy BNC_DataCache.xlsx jesli nie istnieje (Workbook_Open).
+' Auto-recreate: tworzy BNC_DataCache.xlsx jeśli nie istnieje (Workbook_Open).
 Public Sub EnsureCacheFileExists()
     Dim folderPath As String
     folderPath = CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath"))
@@ -175,9 +166,7 @@ Public Sub EnsureCacheFileExists()
     End If
 End Sub
 
-' ============================================================================
-'  Private
-' ============================================================================
+' ----- Private ------------------------------------------------------------
 
 Private Function GetNextReportID(ws As Worksheet) As Long
     Dim lastRow As Long
@@ -197,7 +186,7 @@ Private Function GetNextReportID(ws As Worksheet) As Long
     End If
 End Function
 
-' Tworzy naglowki tylko jesli wiersz 1 jest pusty - idempotentne.
+' Tworzy nagłówki tylko jeśli wiersz 1 jest pusty - idempotentne.
 Private Sub EnsureHeader(ws As Worksheet)
     If Len(CStr(ws.Cells(1, COL_REPORT_ID).Value)) > 0 Then Exit Sub
 
@@ -251,7 +240,7 @@ Private Function GetRecordsWhereStatus(statusFilter As String) As Collection
     Set GetRecordsWhereStatus = result
 End Function
 
-' Bezpieczny dostep do pol Dictionary - "" jesli klucz nie istnieje.
+' Bezpieczny dostęp do pól Dictionary - "" jeśli klucz nie istnieje.
 Private Function SafeGet(d As Object, key As String) As Variant
     If d Is Nothing Then
         SafeGet = ""
