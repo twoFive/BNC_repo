@@ -42,17 +42,17 @@ Public Sub RefreshDashboard()
 
     If Len(imie) = 0 Then
         ' Brak aktywnego usera (edge case - _CurrentUserID puste)
-        Me.Range("B3").Value = "(brak aktywnego uzytkownika)"
+        Me.Range("B3").Value = "(brak aktywnego użytkownika)"
         Me.Range("B4").Value = ""
-        Me.Range("B5").Value = "Wybierz uzytkownika przez 'Przelacz usera'"
+        Me.Range("B5").Value = "Wybierz użytkownika przez 'Przełącz usera'"
     Else
         Me.Range("B3").Value = imie & " " & nazwisko
-        Me.Range("B4").Value = cna & " · Oddzial: " & oddzial
+        Me.Range("B4").Value = cna & " · Oddział: " & oddzial
 
         If mod_UsersRegistrySync.IsUserManager() Then
-            Me.Range("B5").Value = "KIEROWNIK (mail leci wprost do BNC)"
+            Me.Range("B5").Value = "KIEROWNIK (mail wprost do BNC)"
         Else
-            Me.Range("B5").Value = "HANDLOWIEC (mail leci do kierownika: " & _
+            Me.Range("B5").Value = "HANDLOWIEC (mail do Kierownika: " & _
                 CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika")) & ")"
         End If
     End If

@@ -24,6 +24,12 @@ Option Explicit
 '  Guard pattern (mod_Utils.IsFormOpen): defensywny check przeciwko
 '  double-instance przy cascade otwarciach.
 '
+'  Post-form refresh (2026-08-16): kazdy handler po Show vbModal (blocking)
+'  wywoluje sh_LandingPage.RefreshDashboard. Powod: Worksheet_Activate NIE
+'  fire'uje po Me.Hide modal formu, bo sheet byl juz aktywny (form tylko go
+'  przykrywal, nie zmienial aktywnego sheeta). Bez explicit refresh dashboard
+'  pokazuje stary user info po SwitchUser (bug 2026-08-16).
+'
 '  Patrz: Source/Sheets/sh_LandingPage.LAYOUT.md
 '         Source/Sheets/sh_LandingPage.code.txt (Worksheet_Activate + Refresh)
 ' ============================================================================
@@ -33,24 +39,29 @@ Option Explicit
 Public Sub OpenMain()
     If mod_Utils.IsFormOpen("frm_Main") Then Exit Sub
     frm_Main.Show vbModal
+    sh_LandingPage.RefreshDashboard
 End Sub
 
 Public Sub OpenLog()
     If mod_Utils.IsFormOpen("frm_Log") Then Exit Sub
     frm_Log.Show vbModal
+    sh_LandingPage.RefreshDashboard
 End Sub
 
 Public Sub OpenPicker()
     If mod_Utils.IsFormOpen("frm_UserPicker") Then Exit Sub
     frm_UserPicker.Show vbModal
+    sh_LandingPage.RefreshDashboard
 End Sub
 
 Public Sub OpenSetup()
     If mod_Utils.IsFormOpen("frm_Setup") Then Exit Sub
     frm_Setup.Show vbModal
+    sh_LandingPage.RefreshDashboard
 End Sub
 
 Public Sub OpenTutorial()
     If mod_Utils.IsFormOpen("frm_Tutorial") Then Exit Sub
     frm_Tutorial.Show vbModal
+    sh_LandingPage.RefreshDashboard
 End Sub
