@@ -64,6 +64,12 @@ Private Sub Workbook_BeforeClose(Cancel As Boolean)
     Application.DisplayFullScreen = False
     Application.DisplayFormulaBar = True
     Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",True)"
+
+    ' Odkomentuj żeby wyłączyć pytanie "Zapisać zmiany?" przy zamykaniu xlsm.
+    ' Bezpieczne: aplikacja robi auto-save po każdej mutacji (SetAppValue,
+    ' AppendRecord, MarkAsSent, AddNewUser, SetCurrentUserField, itd.),
+    ' więc Saved=True nie gubi danych - tylko suppresses save prompt.
+    ' ThisWorkbook.Saved = True
 End Sub
 
 ' Cell protection dla landing page. Wywoływane raz w Workbook_Open po
