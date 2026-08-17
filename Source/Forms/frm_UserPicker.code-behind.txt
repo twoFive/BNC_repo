@@ -34,7 +34,7 @@ Private Sub btn_SelectUser_Click()
     mod_UsersRegistrySync.SwitchUser selectedUserId
     On Error GoTo 0
 
-    ' Hub-and-spoke: return do sh_LandingPage (Sheet1).
+    ' Hub-and-spoke: return do sh_LandingPage.
     Me.Hide
     Exit Sub
 
@@ -51,19 +51,10 @@ Private Sub btn_AddNew_Click()
     frm_Setup.Show vbModal
 End Sub
 
-' Anuluj: zamyka plik xlsm (nie Excel). Bez wybranego usera aplikacja
-' nie ma sensu, ale user może mieć inne pliki - zamykamy tylko nasz.
+' Anuluj: return do sh_LandingPage (hub-and-spoke). Landing page działa
+' z aktywnym userem (nawet gdy pusto - pokazuje "brak aktywnego").
 Private Sub btn_Cancel_Click()
-    Dim answer As VbMsgBoxResult
-    answer = MsgBox( _
-        "Aplikacja BNC_Sender wymaga wyboru użytkownika." & vbCrLf & vbCrLf & _
-        "Czy na pewno zamknąć aplikację?", _
-        vbYesNo + vbQuestion, "Potwierdzenie zamknięcia")
-
-    If answer = vbYes Then
-        Me.Hide
-        ThisWorkbook.Close SaveChanges:=False
-    End If
+    Me.Hide
 End Sub
 
 ' ----- Helpers -------------------------------------------------------------

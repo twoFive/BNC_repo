@@ -1,10 +1,10 @@
-# sh_LandingPage - specyfikacja layoutu (Sheet1)
+# sh_LandingPage - specyfikacja layoutu (Arkusz1)
 
-> **Cel**: Pulpit (hub) aplikacji. Landing page po Workbook_Open + user picker. Zamiast frm_Main jako main screen, mamy Sheet1 z 5 button-launcher'ami do wszystkich formularzy (hub-and-spoke pattern).
+> **Cel**: Pulpit (hub) aplikacji. Landing page po Workbook_Open + user picker. Zamiast frm_Main jako main screen, mamy Arkusz1 z 5 button-launcher'ami do wszystkich formularzy (hub-and-spoke pattern).
 >
 > **Widoczność**: `xlSheetVisible` (jedyny widoczny sheet w xlsm). Wszystkie inne (`ws_AppState`, `ws_UsersRegistry`, `ws_DataCache`) pozostają `xlSheetVeryHidden`.
 >
-> **Trigger show**: automatycznie po `frm_UserPicker.btn_SelectUser_Click → Me.Hide` LUB po `frm_Setup.btn_Save_Click → Me.Hide` (Sheet1 juz aktywny, formularz modal się chowa).
+> **Trigger show**: automatycznie po `frm_UserPicker.btn_SelectUser_Click → Me.Hide` LUB po `frm_Setup.btn_Save_Click → Me.Hide` (Arkusz1 juz aktywny, formularz modal się chowa).
 >
 > **Code module**: `Source/Sheets/sh_LandingPage.code.txt` (wklej do code module tego arkusza).
 >
@@ -12,15 +12,20 @@
 
 ---
 
-## Krok 1 - utwórz + rename Sheet1 |x
+## Krok 1 - utwórz + rename Arkusz1 |x
 
-Sheet1 jest domyślny w każdym nowym xlsm. Rename:
+Arkusz1 jest domyślny w każdym nowym xlsm (Excel PL). W Excel EN nazwa
+default to `Sheet1` - te same czynności, inna wyświetlana nazwa.
 
 W VBE Project Explorer:
-1. Klik na `Sheet1 (Sheet1)` → F4 (Properties)
-2. `(Name)` (CodeName w VBA) = **`sh_LandingPage`**
+1. Klik na `Arkusz1 (Arkusz1)` → F4 (Properties)
+2. `(Name)` (CodeName w VBA) = **`sh_LandingPage`** (locale-safe identifier)
 3. `Name` (tab caption) = **`BNC_Sender - Pulpit`**
 4. `Visible` = **`-1 - xlSheetVisible`**
+
+> **Ważne**: kod aplikacji odwołuje się do sheeta przez CodeName `sh_LandingPage`,
+> nie przez tab name ani lokalizowaną nazwę Arkusz1/Sheet1. Dzięki temu działa
+> tak samo na Polish/English Excel bez zmian w kodzie.
 
 **Konwencja naming**:
 - Prefix `sh_` = visible sheet (odróżnia od `ws_` = very hidden data sheets)
@@ -64,7 +69,7 @@ W Developer tab → Insert → **Form Controls** (pierwsza sekcja dropdown, NIE 
 
 1. Developer tab → Insert → **Form Controls** dropdown (**NIE** ActiveX)
 2. Kliknij ikonę **Button** (pierwsza z lewej)
-3. Drag na Sheet1 w wybranym miejscu (np. Range B7:C9)
+3. Drag na Arkusz1 w wybranym miejscu (np. Range B7:C9)
 4. **Excel otworzy dialog "Assign Macro"** → z listy wybierz **`OpenMain`** → OK
 5. Right-click na button → **Edit Text** → wpisz `Nowe zgloszenie` → Enter
 6. Powtórz dla 4 pozostałych buttonów (pozycje + macro per tabela wyżej)
@@ -91,7 +96,7 @@ Zakładając Tutorial w row 15-17, statystyki row **19-21**:
 | `D20` | `Wyslane (all-time):` | Font Segoe UI 10 Bold |
 | `E20` | *(dynamic — liczba sent records)* | Font Segoe UI 10 |
 
-**Refresh**: `Worksheet_Activate` w Sheet1 code odczytuje z `mod_DataCacheSync.GetPendingRecords().Count` + `mod_DataCacheSync.GetAllRecords().Count - pending`.
+**Refresh**: `Worksheet_Activate` w Arkusz1 code odczytuje z `mod_DataCacheSync.GetPendingRecords().Count` + `mod_DataCacheSync.GetAllRecords().Count - pending`.
 
 ### Sekcja D: Footer note (opcjonalna, row 23)
 
@@ -222,7 +227,7 @@ Restore normalnego Excela: zamknięcie xlsm → `Workbook_BeforeClose` przywraca
 
 Pełny code w [`sh_LandingPage.code.txt`](sh_LandingPage.code.txt). Struktura:
 
-- **`Worksheet_Activate`** — refresh user info + stats (called when Sheet1 becomes active, e.g., after form close)
+- **`Worksheet_Activate`** — refresh user info + stats (called when Arkusz1 becomes active, e.g., after form close)
 - **`RefreshDashboard`** (private) — pisze do cells B3, B4, B5, B20, E20
 - **5 button click handlers** — każdy `frm_XXX.Show vbModal`
 - **Bez SelectionChange** (nie potrzebujemy trackować gdzie user klika)
@@ -233,7 +238,7 @@ Pełny code w [`sh_LandingPage.code.txt`](sh_LandingPage.code.txt). Struktura:
 
 Workbook_Open (patrz `Source/ThisWorkbook/ThisWorkbook.code.txt`):
 - `Application.DisplayFullScreen = True` (app-like feel per user's decision)
-- `sh_LandingPage.Activate` (na koniec, żeby user widział Sheet1 po zamknięciu picker/setup)
+- `sh_LandingPage.Activate` (na koniec, żeby user widział Arkusz1 po zamknięciu picker/setup)
 
 Workbook_BeforeClose:
 - `Application.DisplayFullScreen = False` (restore dla innych plików Excel otwartych rownolegle)
@@ -273,7 +278,7 @@ Workbook_BeforeClose:
 ## Rozmiar szacowany
 
 Przy ~1600×900 monitorze:
-- Sheet1 wypełnia obszar poniżej ribbon (chyba że DisplayFullScreen=True → wypełnia cały ekran)
+- Arkusz1 wypełnia obszar poniżej ribbon (chyba że DisplayFullScreen=True → wypełnia cały ekran)
 - Ustawienie window size przez `ActiveWindow.WindowState = xlMaximized` przy Workbook_Open zapewnia pełny obszar
 
 ---
@@ -284,4 +289,4 @@ Przy ~1600×900 monitorze:
 `ExpectedSheetHeaders("sh_LandingPage")` — brak (nie tabela, tylko labels/buttons — skip check).
 `AuditSheets` autoNote dla missing case: `"tworzone recznie w VBE - patrz sh_LandingPage.LAYOUT.md"`.
 
-Opcjonalnie w przyszłości: audyt kontrolek ActiveX na Sheet1 (analogicznie do `AuditFormControls`). Skip dla M6/M7.
+Opcjonalnie w przyszłości: audyt kontrolek ActiveX na Arkusz1 (analogicznie do `AuditFormControls`). Skip dla M6/M7.

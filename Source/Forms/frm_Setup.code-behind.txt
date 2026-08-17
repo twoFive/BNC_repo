@@ -107,9 +107,8 @@ FolderError:
            "Błąd: " & Err.Description, vbExclamation, "Błąd folderu cache"
 End Sub
 
+' Anuluj: return do sh_LandingPage (hub-and-spoke). Landing page działa
+' niezależnie od setup completion status.
 Private Sub btn_Cancel_Click()
-    If MsgBox("Czy na pewno przerwać konfigurację? Aplikacja nie uruchomi się poprawnie.", _
-              vbYesNo + vbQuestion, "Potwierdzenie") = vbYes Then
-        Me.Hide
-    End If
+    Me.Hide
 End Sub

@@ -1,7 +1,8 @@
 ' ============================================================================
 '  frm_Tutorial
 '  5-page wizard z ~360 słów treści. Zero persistencji - user zawsze
-'  świadomie wywołuje przez frm_Setup.btn_ShowTutorial lub Sheet1 button.
+'  świadomie wywołuje przez frm_Setup.btn_ShowTutorial lub przycisk na
+'  sh_LandingPage.
 '
 '  Content source of truth: Source/Forms/frm_Tutorial.TEXT.md
 '  ASCII-safe emoji: Titles bez emoji, → -> "->", • -> "-", · -> " - ".

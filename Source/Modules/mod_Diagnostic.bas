@@ -359,7 +359,7 @@ Public Sub AuditSheets()
             ElseIf sheetName = "ws_AppState" Then
                 autoNote = "  (auto-created przy Workbook_Open - EnsureAppStateSheet)"
             ElseIf sheetName = "sh_LandingPage" Then
-                autoNote = "  (utworz recznie w VBE: rename Sheet1 CodeName + dodaj kontrolki per sh_LandingPage.LAYOUT.md)"
+                autoNote = "  (utworz recznie w VBE: rename Arkusz1 CodeName + dodaj kontrolki per sh_LandingPage.LAYOUT.md)"
             ElseIf sheetName = "ws_DataCache" Then
                 autoNote = "  (utworzyc recznie w Excelu, tab-name = klucz)"
             End If
