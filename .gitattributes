@@ -1,0 +1,11 @@
+# VBA form binary resources - MUSI być binary (bez CRLF conversion)
+*.frx binary
+*.frm binary
+
+# Excel binary formats
+*.xlsm binary
+*.xlsx binary
+*.xltx binary
+
+# Zip archives
+*.zip binary
