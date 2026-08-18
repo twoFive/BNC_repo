@@ -17,7 +17,7 @@ Private Const SHEET_NAME As String = "ws_AppState"
 '  Public API
 ' ============================================================================
 
-' Czyta wartoœæ dla podanego klucza. Zwraca "" jeœli klucza nie ma.
+' Czyta wartosc dla podanego klucza. Zwraca "" jesli klucza nie ma.
 Public Function GetAppValue(fieldKey As String) As Variant
     Dim ws As Worksheet
     Set ws = EnsureAppStateSheet()
@@ -35,7 +35,7 @@ Public Function GetAppValue(fieldKey As String) As Variant
     GetAppValue = ws.Cells(r, 2).Value
 End Function
 
-' Zapisuje wartoœæ dla podanego klucza (create-or-update) + ThisWorkbook.Save.
+' Zapisuje wartosc dla podanego klucza (create-or-update) + ThisWorkbook.Save.
 ' Bez xlsx sync (per ADR-009 - AppState nie ma persistence layer).
 Public Sub SetAppValue(fieldKey As String, value As Variant)
     Dim ws As Worksheet
@@ -52,8 +52,8 @@ Public Sub SetAppValue(fieldKey As String, value As Variant)
     ThisWorkbook.Save
 End Sub
 
-' Zwraca ws_AppState, tworz¹c go jeœli nie istnieje. Sheet very hidden.
-' Idempotentne. Wywo³ywane z Workbook_Open dla auto-create przy pierwszym
+' Zwraca ws_AppState, tworzac go jesli nie istnieje. Sheet very hidden.
+' Idempotentne. Wywolywane z Workbook_Open dla auto-create przy pierwszym
 ' uruchomieniu nowej wersji xlsm.
 Public Function EnsureAppStateSheet() As Worksheet
     On Error Resume Next

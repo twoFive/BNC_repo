@@ -1,11 +1,11 @@
 ' ============================================================================
 '  ThisWorkbook
-'  Wklej do klasy ThisWorkbook w VBE (specjalny modu³, nie import).
+'  Wklej do klasy ThisWorkbook w VBE (specjalny modul, nie import).
 '
 '  Routing (M3.3 multi-user + M6 hub pattern):
 '  - GetUsersCount = 0 -> frm_Setup (pierwszy raz)
 '  - GetUsersCount >= 1 -> frm_UserPicker
-'  - Po zamkniêciu picker/setup -> sh_LandingPage (hub)
+'  - Po zamknieciu picker/setup -> sh_LandingPage (hub)
 '
 '  App-like UI: DisplayFullScreen = True przy Open, restore przy Close.
 ' ============================================================================
@@ -28,7 +28,7 @@ Private Sub Workbook_Open()
     ActiveWindow.DisplayHeadings = False
     ActiveWindow.DisplayGridlines = False
     ActiveWindow.DisplayWorkbookTabs = False
-    ' Ribbon ca³kowicie hidden (nie tylko zminimalizowany) - Excel 4 macro
+    ' Ribbon calkowicie hidden (nie tylko zminimalizowany) - Excel 4 macro
     ' bo brak natywnej Application property. Restore w BeforeClose.
     Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",False)"
 
@@ -45,39 +45,39 @@ Private Sub Workbook_Open()
     ' 5. Landing na hub. Worksheet_Activate triggeruje RefreshDashboard.
     sh_LandingPage.Activate
 
-    ' 6. Sheet lock: user nie mo¿e edytowaæ komórek ani ich zaznaczaæ.
-    '    UserInterfaceOnly:=True pozwala VBA (RefreshDashboard) pisaæ do
-    '    komórek mimo protekcji. ScrollArea ogranicza scroll do landing area.
+    ' 6. Sheet lock: user nie moze edytowac komorek ani ich zaznaczac.
+    '    UserInterfaceOnly:=True pozwala VBA (RefreshDashboard) pisac do
+    '    komorek mimo protekcji. ScrollArea ogranicza scroll do landing area.
     LockLandingPage
     Exit Sub
 
 ErrorHandler:
     mod_Utils.LogError "ThisWorkbook.Workbook_Open", Err.Number, Err.Description
-    MsgBox "B³¹d podczas startu aplikacji: " & Err.Description, _
+    MsgBox "Blad podczas startu aplikacji: " & Err.Description, _
            vbExclamation, "BNC_Sender"
 End Sub
 
-' Restore Excel chrome przy zamkniêciu ¿eby inne pliki Excel otwarte
-' równolegle nie dziedziczy³y DisplayFullScreen + hidden ribbon.
+' Restore Excel chrome przy zamknieciu zeby inne pliki Excel otwarte
+' rownolegle nie dziedziczyly DisplayFullScreen + hidden ribbon.
 Private Sub Workbook_BeforeClose(Cancel As Boolean)
     On Error Resume Next
     Application.DisplayFullScreen = False
     Application.DisplayFormulaBar = True
     Application.ExecuteExcel4Macro "SHOW.TOOLBAR(""Ribbon"",True)"
 
-    ' Odkomentuj ¿eby wy³¹czyæ pytanie "Zapisaæ zmiany?" przy zamykaniu xlsm.
-    ' Bezpieczne: aplikacja robi auto-save po ka¿dej mutacji (SetAppValue,
+    ' Odkomentuj zeby wylaczyc pytanie "Zapisac zmiany?" przy zamykaniu xlsm.
+    ' Bezpieczne: aplikacja robi auto-save po kazdej mutacji (SetAppValue,
     ' AppendRecord, MarkAsSent, AddNewUser, SetCurrentUserField, itd.),
-    ' wiêc Saved=True nie gubi danych - tylko suppresses save prompt.
+    ' wiec Saved=True nie gubi danych - tylko suppresses save prompt.
     ' ThisWorkbook.Saved = True
 End Sub
 
-' Cell protection dla landing page. Wywo³ywane raz w Workbook_Open po
-' aktywacji sheeta. UserInterfaceOnly=True: VBA pisze do komórek, user nie.
+' Cell protection dla landing page. Wywolywane raz w Workbook_Open po
+' aktywacji sheeta. UserInterfaceOnly=True: VBA pisze do komorek, user nie.
 Private Sub LockLandingPage()
     On Error Resume Next
     With sh_LandingPage
-        .Unprotect  ' na wypadek istniej¹cej protekcji (bez has³a)
+        .Unprotect  ' na wypadek istniejacej protekcji (bez hasla)
         .Cells.Locked = True
         .EnableSelection = xlNoSelection
         .ScrollArea = "A1:H23"

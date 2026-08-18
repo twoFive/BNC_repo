@@ -3,26 +3,26 @@ Option Explicit
 
 ' ============================================================================
 '  mod_Diagnostic
-'  Diagnostyka stanu VB Project - inspekcja po rêcznej edycji w VBE.
+'  Diagnostyka stanu VB Project - inspekcja po recznej edycji w VBE.
 '
 '  Wymaga "Trust access to the VBA project object model" w Excel Trust
 '  Center -> Macro Settings.
 '
 '  Uruchamianie z Immediate Window (Ctrl+G):
-'    mod_Diagnostic.AuditFullProject       - pe³ny audit
-'    mod_Diagnostic.AuditModules           - modu³y + Public API
+'    mod_Diagnostic.AuditFullProject       - pelny audit
+'    mod_Diagnostic.AuditModules           - moduly + Public API
 '    mod_Diagnostic.AuditForms             - formularze (handlery + kontrolki)
-'    mod_Diagnostic.AuditFormControls "frm_Main"  - szczegó³ kontrolek
-'    mod_Diagnostic.AuditSheets            - arkusze + nag³ówki
+'    mod_Diagnostic.AuditFormControls "frm_Main"  - szczegol kontrolek
+'    mod_Diagnostic.AuditSheets            - arkusze + naglowki
 '    mod_Diagnostic.AuditThisWorkbook      - klasa ThisWorkbook
-'    mod_Diagnostic.DumpVBComponents       - flat lista modu³ów
+'    mod_Diagnostic.DumpVBComponents       - flat lista modulow
 '    mod_Diagnostic.ListPublicProcedures "mod_Utils"
 '    mod_Diagnostic.DumpModuleContent "mod_Utils"
 '    mod_Diagnostic.CountLinesTotal        - suma linii kodu
 ' ============================================================================
 
 ' ============================================================================
-'  EXPECTED PROJECT STATE - edytuj gdy zmienia siê architektura projektu.
+'  EXPECTED PROJECT STATE - edytuj gdy zmienia sie architektura projektu.
 ' ============================================================================
 
 Private Function ExpectedModules() As Variant
@@ -274,7 +274,7 @@ Public Sub AuditModules()
     Next i
 
     Debug.Print "  --> " & presentCount & "/" & (UBound(expected) - LBound(expected) + 1) & _
-                " modulow obecnych" & IIf(missingCount > 0, "  ·  " & missingCount & " MISSING", "")
+                " modulow obecnych" & IIf(missingCount > 0, "  -  " & missingCount & " MISSING", "")
 End Sub
 
 ' Sekcja FORMULARZE: obecnosc + code line count + handlery.
@@ -326,8 +326,8 @@ Public Sub AuditForms()
 
     Debug.Print "  --> " & presentCount & "/" & (UBound(expected) - LBound(expected) + 1) & _
                 " formularzy OK" & _
-                IIf(emptyCount > 0, "  ·  " & emptyCount & " EMPTY", "") & _
-                IIf(missingCount > 0, "  ·  " & missingCount & " MISSING", "")
+                IIf(emptyCount > 0, "  -  " & emptyCount & " EMPTY", "") & _
+                IIf(missingCount > 0, "  -  " & missingCount & " MISSING", "")
 End Sub
 
 ' Sekcja ARKUSZE: obecnosc + naglowki w wierszu 1.
@@ -382,7 +382,7 @@ Public Sub AuditSheets()
     Next i
 
     Debug.Print "  --> " & presentCount & "/" & (UBound(expected) - LBound(expected) + 1) & _
-                " arkuszy OK" & IIf(missingCount > 0, "  ·  " & missingCount & " MISSING", "")
+                " arkuszy OK" & IIf(missingCount > 0, "  -  " & missingCount & " MISSING", "")
 End Sub
 
 ' Sekcja THISWORKBOOK: obecnosc handlera Workbook_Open.
@@ -794,7 +794,7 @@ Public Sub DumpVBComponents()
                 countModules & " modul(y), " & _
                 countForms & " form(y), " & _
                 countClasses & " klas(y), " & _
-                countDocs & " dokument(y)   ·   " & _
+                countDocs & " dokument(y)   -   " & _
                 totalLines & " lin. lacznie"
     Debug.Print String(90, "=")
     Exit Sub
@@ -857,7 +857,7 @@ Public Sub ListPublicProcedures(moduleName As String)
 
 NotFound:
     Debug.Print "Module not found: " & moduleName & _
-        "  ·  uzyj DumpVBComponents zeby zobaczyc dostepne moduly"
+        "  -  uzyj DumpVBComponents zeby zobaczyc dostepne moduly"
 End Sub
 
 ' Wypisuje pelna zawartosc modulu do Immediate Window.

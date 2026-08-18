@@ -7,7 +7,7 @@ Option Explicit
 '  source of truth dla user data.
 '
 '  Current user access przez GetCurrentUserField/SetCurrentUserField -
-'  bezpoœredni odczyt/zapis wiersza aktualnego usera identyfikowanego przez
+'  bezposredni odczyt/zapis wiersza aktualnego usera identyfikowanego przez
 '  _CurrentUserID w ws_AppState.
 '
 '  Format UserID: UZYTKOWNIK_<autoinc>_CNA<cna> (ADR-008).
@@ -32,12 +32,12 @@ Private Const REG_DONT_SHOW_SETUP As Long = 12
 Private Const REG_LAST_LOGIN As Long = 13
 Private Const REG_TOTAL_COLS As Long = 13
 
-' Klucz w ws_AppState przechowuj¹cy UserID aktualnie zalogowanego usera.
+' Klucz w ws_AppState przechowujacy UserID aktualnie zalogowanego usera.
 Private Const CURRENT_USER_KEY As String = "_CurrentUserID"
 
 ' ----- Public API - Registry (users list) ---------------------------------
 
-' Liczba zarejestrowanych userów. 0 = pierwsze uruchomienie.
+' Liczba zarejestrowanych userow. 0 = pierwsze uruchomienie.
 Public Function GetUsersCount() As Long
     Dim ws As Worksheet
     Set ws = EnsureRegistrySheet()
@@ -51,7 +51,7 @@ Public Function GetUsersCount() As Long
     If lastRow < 2 Then
         GetUsersCount = 0
     Else
-        GetUsersCount = lastRow - 1  ' wiersz 1 = nag³ówek
+        GetUsersCount = lastRow - 1  ' wiersz 1 = naglowek
     End If
 End Function
 
@@ -62,7 +62,7 @@ Public Function CurrentUserID() As String
 End Function
 
 ' Wszyscy zarejestrowani userzy jako Collection of Scripting.Dictionary.
-' U¿ywane przez frm_UserPicker.
+' Uzywane przez frm_UserPicker.
 Public Function GetAllUsers() As Collection
     Set GetAllUsers = New Collection
 
@@ -80,16 +80,16 @@ Public Function GetAllUsers() As Collection
     Next r
 End Function
 
-' Prze³¹cza aktywnego usera. Trivial (ADR-009): Registry jest source of truth,
-' wystarczy zmieniæ marker + update LastLogin.
+' Przelacza aktywnego usera. Trivial (ADR-009): Registry jest source of truth,
+' wystarczy zmienic marker + update LastLogin.
 Public Sub SwitchUser(userId As String)
     mod_AppStateSync.SetAppValue CURRENT_USER_KEY, userId
     UpdateLastLoginInRegistry userId
     mod_Utils.LogInfo "SwitchUser: aktywny user = " & userId
 End Sub
 
-' Dodaje nowego usera do Registry i prze³¹cza na niego.
-' Wywo³ywane z frm_Setup.btn_Save.
+' Dodaje nowego usera do Registry i przelacza na niego.
+' Wywolywane z frm_Setup.btn_Save.
 ' Returns: wygenerowany UserID.
 Public Function AddNewUser(userData As Object) As String
     Dim newUserId As String
@@ -104,12 +104,12 @@ Public Function AddNewUser(userData As Object) As String
     AddNewUser = newUserId
 End Function
 
-' Auto-recreate: jeœli BNC_UsersRegistry.xlsx nie istnieje przy starcie,
-' tworzy go z aktualnej zawartoœci ws_UsersRegistry.
+' Auto-recreate: jesli BNC_UsersRegistry.xlsx nie istnieje przy starcie,
+' tworzy go z aktualnej zawartosci ws_UsersRegistry.
 Public Sub EnsureRegistryCacheFileExists()
     Dim folderPath As String
     folderPath = CStr(GetCurrentUserField("CacheFolderPath"))
-    If Len(folderPath) = 0 Then Exit Sub  ' setup jeszcze nieukoñczony
+    If Len(folderPath) = 0 Then Exit Sub  ' setup jeszcze nieukonczony
 
     mod_Utils.EnsureFolderExists folderPath
 
@@ -198,7 +198,7 @@ Public Function GetCurrentUserData() As Object
     Set GetCurrentUserData = RowToUserDict(ws, r)
 End Function
 
-' Batch update - kilka pól aktualnego usera jednym save+sync.
+' Batch update - kilka pol aktualnego usera jednym save+sync.
 Public Sub UpdateCurrentUserFields(fieldsDict As Object)
     Dim userId As String
     userId = CurrentUserID()
@@ -227,7 +227,7 @@ Public Sub UpdateCurrentUserFields(fieldsDict As Object)
 End Sub
 
 ' Convention over configuration (ADR-005): user jest kierownikiem gdy sam
-' siebie wpisa³ jako EmailKierownika.
+' siebie wpisal jako EmailKierownika.
 Public Function IsUserManager() As Boolean
     Dim handlowca As String, kierownika As String
     handlowca = LCase$(Trim$(CStr(GetCurrentUserField("EmailHandlowca"))))
@@ -264,7 +264,7 @@ Private Function FieldNameToColumn(fieldName As String) As Long
 End Function
 
 ' Buduje Dictionary z wiersza Registry. Zero duplikacji mapping code
-' miêdzy GetAllUsers a GetCurrentUserData.
+' miedzy GetAllUsers a GetCurrentUserData.
 Private Function RowToUserDict(ws As Worksheet, r As Long) As Object
     Dim d As Object
     Set d = CreateObject("Scripting.Dictionary")
@@ -284,8 +284,8 @@ Private Function RowToUserDict(ws As Worksheet, r As Long) As Object
     Set RowToUserDict = d
 End Function
 
-' Zwraca ws_UsersRegistry, tworz¹c go jeœli nie istnieje. Sheet very hidden.
-' Ustawia nag³ówek. Idempotentne.
+' Zwraca ws_UsersRegistry, tworzac go jesli nie istnieje. Sheet very hidden.
+' Ustawia naglowek. Idempotentne.
 Private Function EnsureRegistrySheet() As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
@@ -409,7 +409,7 @@ Private Sub UpdateLastLoginInRegistry(userId As String)
 End Sub
 
 ' Best-effort sync ws_UsersRegistry -> BNC_UsersRegistry.xlsx.
-' Bez clipboard (ADR-002). Wo³any po ka¿dej mutacji Registry.
+' Bez clipboard (ADR-002). Wolany po kazdej mutacji Registry.
 Private Sub SyncRegistryToFile()
     Dim wbOut As Workbook
     Dim restoreScreen As Boolean
@@ -468,7 +468,7 @@ Cleanup:
     If restoreScreen Then Application.ScreenUpdating = True
 End Sub
 
-' Bezpieczny dostêp do pól Dictionary - "" jeœli klucz nie istnieje.
+' Bezpieczny dostep do pol Dictionary - "" jesli klucz nie istnieje.
 Private Function SafeGet(d As Object, key As String) As Variant
     If d Is Nothing Then
         SafeGet = ""

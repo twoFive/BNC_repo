@@ -1,14 +1,14 @@
 ' ============================================================================
 '  frm_Setup
 '  Konfiguracja nowego usera. Post-ADR-009: zawsze tworzy NOWEGO usera
-'  (nigdy nie edytuje). Edycja profilu = future feature (poza Faz¹ A).
+'  (nigdy nie edytuje). Edycja profilu = future feature (poza Faza A).
 ' ============================================================================
 
 Option Explicit
 
-' EmailBNC i CacheFolderPath = sta³e polityki projektowej (ADR-003), zabronione
-' do edycji przez usera. Ustawiane w Initialize jako bezpiecznik gdyby ktoœ
-' zmieni³ Locked=False w Designerze.
+' EmailBNC i CacheFolderPath = stale polityki projektowej (ADR-003), zabronione
+' do edycji przez usera. Ustawiane w Initialize jako bezpiecznik gdyby ktos
+' zmienil Locked=False w Designerze.
 Private Const HARDCODED_EMAIL_BNC As String = "gitara101warszawa@gmail.com"
 Private Const HARDCODED_CACHE_FOLDER As String = "C:\BNC_CacheFolder\"
 
@@ -23,14 +23,14 @@ End Sub
 
 ' ----- Buttons -------------------------------------------------------------
 
-' Samouczek - 5-page wizard. Modal blokuje frm_Setup do zamkniêcia tutoriala.
+' Samouczek - 5-page wizard. Modal blokuje frm_Setup do zamkniecia tutoriala.
 Private Sub btn_ShowTutorial_Click()
     If mod_Utils.IsFormOpen("frm_Tutorial") Then Exit Sub
     frm_Tutorial.Show vbModal
 End Sub
 
 ' Tworzy folder cache na dysku. EnsureFolderExists jest idempotentne -
-' jeœli folder ju¿ istnieje, user dostaje neutralne potwierdzenie.
+' jesli folder juz istnieje, user dostaje neutralne potwierdzenie.
 Private Sub btn_CreateCacheFolder_Click()
     Dim path As String
     path = Trim$(txt_CacheFolderPath.Text)
@@ -43,7 +43,7 @@ Private Sub btn_CreateCacheFolder_Click()
     mod_Utils.EnsureFolderExists path
 
     If alreadyExisted Then
-        MsgBox "Folder cache ju¿ istnia³:" & vbCrLf & path, _
+        MsgBox "Folder cache juz istnial:" & vbCrLf & path, _
                vbInformation, "Folder cache"
     Else
         MsgBox "Folder cache utworzony:" & vbCrLf & path, _
@@ -54,8 +54,8 @@ Private Sub btn_CreateCacheFolder_Click()
 CreateError:
     mod_Utils.LogError "frm_Setup.btn_CreateCacheFolder_Click", _
                        Err.Number, Err.Description
-    MsgBox "Nie uda³o siê utworzyæ folderu cache:" & vbCrLf & path & vbCrLf & vbCrLf & _
-           "B³¹d: " & Err.Description, vbExclamation, "B³¹d folderu cache"
+    MsgBox "Nie udalo sie utworzyc folderu cache:" & vbCrLf & path & vbCrLf & vbCrLf & _
+           "Blad: " & Err.Description, vbExclamation, "Blad folderu cache"
 End Sub
 
 Private Sub btn_Save_Click()
@@ -78,11 +78,11 @@ Private Sub btn_Save_Click()
     Dim errMsg As String
     errMsg = mod_Validation.ValidateSetupData(userData)
     If Len(errMsg) > 0 Then
-        MsgBox errMsg, vbExclamation, "B³¹d walidacji"
+        MsgBox errMsg, vbExclamation, "Blad walidacji"
         Exit Sub
     End If
 
-    ' 3. Folder cache - defensywnie (gdyby user zapomnia³ klikn¹æ btn_Create...)
+    ' 3. Folder cache - defensywnie (gdyby user zapomnial kliknac btn_Create...)
     On Error GoTo FolderError
     mod_Utils.EnsureFolderExists CStr(userData("CacheFolderPath"))
     On Error GoTo 0
@@ -95,20 +95,20 @@ Private Sub btn_Save_Click()
     mod_DataCacheSync.EnsureCacheFileExists
 
     mod_Utils.LogInfo "Setup zakonczony - user=" & CStr(userData("EmailHandlowca")) & _
-                     " · UserID=" & newUserId
+                     " - UserID=" & newUserId
 
     ' 6. Return do sh_LandingPage (hub-and-spoke)
     Me.Hide
     Exit Sub
 
 FolderError:
-    MsgBox "Nie uda³o siê utworzyæ folderu cache:" & vbCrLf & _
+    MsgBox "Nie udalo sie utworzyc folderu cache:" & vbCrLf & _
            CStr(userData("CacheFolderPath")) & vbCrLf & vbCrLf & _
-           "B³¹d: " & Err.Description, vbExclamation, "B³¹d folderu cache"
+           "Blad: " & Err.Description, vbExclamation, "Blad folderu cache"
 End Sub
 
-' Anuluj: return do sh_LandingPage (hub-and-spoke). Landing page dzia³a
-' niezale¿nie od setup completion status.
+' Anuluj: return do sh_LandingPage (hub-and-spoke). Landing page dziala
+' niezaleznie od setup completion status.
 Private Sub btn_Cancel_Click()
     Me.Hide
 End Sub

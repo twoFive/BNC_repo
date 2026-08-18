@@ -1,36 +1,36 @@
 ' ============================================================================
 '  frm_Main
-'  G³ówny formularz: dodawanie zg³oszeñ + wysy³ka batcha.
+'  Glowny formularz: dodawanie zgloszen + wysylka batcha.
 '
-'  ListBox refresh przez wlaœciwoœæ List (2D array) - ~10x szybsze ni¿
-'  AddItem + List(i, j) w pêtli, bez migotania.
+'  ListBox refresh przez wlasciwosc List (2D array) - ~10x szybsze niz
+'  AddItem + List(i, j) w petli, bez migotania.
 ' ============================================================================
 
 Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' Initialize - static setup (raz na instancjê):
-' identity caption, role detection, default miesi¹c obrotu.
+' Initialize - static setup (raz na instancje):
+' identity caption, role detection, default miesiac obrotu.
 Private Sub UserForm_Initialize()
     lbl_UserInfo.Caption = "Zalogowany: " & _
         CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
         CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko")) & _
         " (CNA: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")) & _
-        ", oddzia³: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")) & ")"
+        ", oddzial: " & CStr(mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")) & ")"
 
     If mod_UsersRegistrySync.IsUserManager() Then
-        lbl_RoleInfo.Caption = "Tryb: KIEROWNIK (wnioski wysy³ane wprost do BNC)"
+        lbl_RoleInfo.Caption = "Tryb: KIEROWNIK (wnioski wysylane wprost do BNC)"
     Else
-        lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysy³ane do kierownika)"
+        lbl_RoleInfo.Caption = "Tryb: HANDLOWIEC (wnioski wysylane do kierownika)"
     End If
 
     txt_MiesiacObrotu.Text = Format(mod_Utils.GetCurrentMonthYear(), "yyyy-mm")
-    ' Fake header labels (lbl_HdrID/FK/Nazwa/MiesiacObrotu/CNA) maj¹ Captions
+    ' Fake header labels (lbl_HdrID/FK/Nazwa/MiesiacObrotu/CNA) maja Captions
     ' ustawione statycznie w Designerze - zero kodu runtime.
 End Sub
 
-' Activate - dynamic refresh (przy ka¿dym Show, tak¿e po powrocie z frm_Log).
+' Activate - dynamic refresh (przy kazdym Show, takze po powrocie z frm_Log).
 Private Sub UserForm_Activate()
     RefreshPendingList
 End Sub
@@ -47,7 +47,7 @@ Private Sub btn_AddToList_Click()
     Dim errMsg As String
     errMsg = mod_Validation.ValidateReportData(reportData)
     If Len(errMsg) > 0 Then
-        MsgBox errMsg, vbExclamation, "B³¹d walidacji"
+        MsgBox errMsg, vbExclamation, "Blad walidacji"
         Exit Sub
     End If
 
@@ -68,20 +68,20 @@ Private Sub btn_SendBatch_Click()
     Set pending = mod_DataCacheSync.GetPendingRecords()
 
     If pending.Count = 0 Then
-        MsgBox "Brak zg³oszeñ do wys³ania.", vbInformation, "BNC_Sender"
+        MsgBox "Brak zgloszen do wyslania.", vbInformation, "BNC_Sender"
         Exit Sub
     End If
 
     Dim msg As String
     If mod_UsersRegistrySync.IsUserManager() Then
-        msg = "Wys³aæ " & pending.Count & " zg³oszeñ wprost do BNC?"
+        msg = "Wyslac " & pending.Count & " zgloszen wprost do BNC?"
     Else
-        msg = "Wys³aæ " & pending.Count & " zg³oszeñ do kierownika " & _
+        msg = "Wyslac " & pending.Count & " zgloszen do kierownika " & _
               "(" & CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika")) & ")?"
     End If
-    If MsgBox(msg, vbYesNo + vbQuestion, "Potwierdzenie wysy³ki") <> vbYes Then Exit Sub
+    If MsgBox(msg, vbYesNo + vbQuestion, "Potwierdzenie wysylki") <> vbYes Then Exit Sub
 
-    ' Disable przyciski podczas wysy³ki - prevent double-click.
+    ' Disable przyciski podczas wysylki - prevent double-click.
     DisableActionButtons True
     Application.Cursor = xlWait
 
@@ -92,11 +92,11 @@ Private Sub btn_SendBatch_Click()
     DisableActionButtons False
 
     If success Then
-        MsgBox "Batch wys³any pomyœlnie.", vbInformation, "BNC_Sender"
+        MsgBox "Batch wyslany pomyslnie.", vbInformation, "BNC_Sender"
         RefreshPendingList
     Else
-        MsgBox "B³¹d wysy³ki. SprawdŸ Immediate Window (Ctrl+G) dla szczegó³ów.", _
-               vbExclamation, "B³¹d wysy³ki"
+        MsgBox "Blad wysylki. Sprawdz Immediate Window (Ctrl+G) dla szczegolow.", _
+               vbExclamation, "Blad wysylki"
     End If
 End Sub
 
@@ -106,11 +106,11 @@ Private Sub btn_ShowLog_Click()
     frm_Log.Show vbModal
 End Sub
 
-' Hard delete pending recordu (ADR-006). Potwierdzenie z ID + nazw¹ klienta
-' ¿eby user mia³ szansê zatrzymaæ siê przed pomy³k¹.
+' Hard delete pending recordu (ADR-006). Potwierdzenie z ID + nazwa klienta
+' zeby user mial szanse zatrzymac sie przed pomylka.
 Private Sub btn_DeleteSelected_Click()
     If lst_PendingBatch.ListIndex < 0 Then
-        MsgBox "Najpierw zaznacz zg³oszenie do usuniêcia z listy.", _
+        MsgBox "Najpierw zaznacz zgloszenie do usuniecia z listy.", _
                vbInformation, "Brak zaznaczenia"
         Exit Sub
     End If
@@ -124,10 +124,10 @@ Private Sub btn_DeleteSelected_Click()
     nazwa = CStr(lst_PendingBatch.List(idx, 2))
 
     Dim msg As String
-    msg = "Potwierdzenie usuniêcia zg³oszenia BNC" & vbCrLf & vbCrLf & _
+    msg = "Potwierdzenie usuniecia zgloszenia BNC" & vbCrLf & vbCrLf & _
           "ID: " & reportID & vbCrLf & _
           "Klient: " & nazwa & vbCrLf & vbCrLf & _
-          "Operacja nieodwracalna. Kontynuowaæ?"
+          "Operacja nieodwracalna. Kontynuowac?"
 
     Dim answer As VbMsgBoxResult
     answer = MsgBox(msg, vbYesNo + vbQuestion + vbDefaultButton2, "Potwierdzenie")
@@ -137,8 +137,8 @@ Private Sub btn_DeleteSelected_Click()
         mod_Utils.LogInfo "Usunieto zgloszenie ID=" & reportID
         RefreshPendingList
     Else
-        MsgBox "Nie uda³o siê usun¹æ zg³oszenia. SprawdŸ Immediate Window (Ctrl+G).", _
-               vbExclamation, "B³¹d usuwania"
+        MsgBox "Nie udalo sie usunac zgloszenia. Sprawdz Immediate Window (Ctrl+G).", _
+               vbExclamation, "Blad usuwania"
     End If
 End Sub
 
@@ -147,22 +147,22 @@ End Sub
 Private Sub ClearFormFields()
     txt_KlientFK.Text = ""
     txt_NazwaKlienta.Text = ""
-    ' MiesiacObrotu zostaje (user mo¿e dodaæ kilka zg³oszeñ na ten sam miesi¹c).
+    ' MiesiacObrotu zostaje (user moze dodac kilka zgloszen na ten sam miesiac).
     On Error Resume Next
     txt_KlientFK.SetFocus
     On Error GoTo 0
 End Sub
 
-' Odœwie¿enie listy pending. Buduje 2D array i przypisuje do ListBox.List
-' jednym ruchem - ~10x szybsze ni¿ AddItem w pêtli.
+' Odswiezenie listy pending. Buduje 2D array i przypisuje do ListBox.List
+' jednym ruchem - ~10x szybsze niz AddItem w petli.
 '
-' Newest first - iterujemy od koñca do pocz¹tku, bo GetPendingRecords zwraca
-' rekordy w kolejnoœci arkusza (najstarsze pierwsze).
+' Newest first - iterujemy od konca do poczatku, bo GetPendingRecords zwraca
+' rekordy w kolejnosci arkusza (najstarsze pierwsze).
 Private Sub RefreshPendingList()
     Dim pending As Collection
     Set pending = mod_DataCacheSync.GetPendingRecords()
 
-    lbl_BatchCount.Caption = "Lista zg³oszeñ do wys³ania (" & pending.Count & ")"
+    lbl_BatchCount.Caption = "Lista zgloszen do wyslania (" & pending.Count & ")"
     btn_DeleteSelected.Enabled = (pending.Count > 0)
 
     lst_PendingBatch.Clear
@@ -187,7 +187,7 @@ Private Sub RefreshPendingList()
     lst_PendingBatch.List = arr
 End Sub
 
-' Disable Add/Send/Delete podczas wysy³ki. Po Disable=False stan
+' Disable Add/Send/Delete podczas wysylki. Po Disable=False stan
 ' btn_DeleteSelected dostaje z RefreshPendingList (pending.Count > 0).
 Private Sub DisableActionButtons(disabled As Boolean)
     btn_AddToList.Enabled = Not disabled

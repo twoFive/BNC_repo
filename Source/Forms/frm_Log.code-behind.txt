@@ -1,14 +1,14 @@
 ' ============================================================================
 '  frm_Log
-'  Historia wszystkich zg³oszeñ (pending + sent) + eksport DataCache do xlsx.
+'  Historia wszystkich zgloszen (pending + sent) + eksport DataCache do xlsx.
 ' ============================================================================
 
 Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' LoadRecords w Activate (nie Initialize) bo Activate fires przy KA¯DYM Show.
-' Bez tego widok by³by sta³y gdy user usunie pending w frm_Main i wróci
+' LoadRecords w Activate (nie Initialize) bo Activate fires przy KAZDYM Show.
+' Bez tego widok bylby staly gdy user usunie pending w frm_Main i wroci
 ' do frm_Log (patrz ADR-007).
 Private Sub UserForm_Activate()
     LoadRecords
@@ -22,7 +22,7 @@ Private Sub btn_Export_Click()
 
     Dim targetPath As String
     targetPath = ShowSaveDialog(suggested)
-    If Len(targetPath) = 0 Then Exit Sub  ' user anulowa³
+    If Len(targetPath) = 0 Then Exit Sub  ' user anulowal
 
     Application.Cursor = xlWait
     Dim ok As Boolean
@@ -33,12 +33,12 @@ Private Sub btn_Export_Click()
         MsgBox "Wyeksportowano do:" & vbCrLf & targetPath, _
                vbInformation, "Eksport"
     Else
-        MsgBox "B³¹d eksportu. SprawdŸ Immediate Window (Ctrl+G) dla szczegó³ów.", _
-               vbExclamation, "B³¹d eksportu"
+        MsgBox "Blad eksportu. Sprawdz Immediate Window (Ctrl+G) dla szczegolow.", _
+               vbExclamation, "Blad eksportu"
     End If
 End Sub
 
-' Hub-and-spoke: zamkniêcie = return do sh_LandingPage.
+' Hub-and-spoke: zamkniecie = return do sh_LandingPage.
 Private Sub btn_Back_Click()
     Me.Hide
 End Sub
@@ -66,8 +66,8 @@ Private Sub LoadRecords()
     lst_AllRecords.Clear
     If allRecords.Count = 0 Then Exit Sub
 
-    ' 7 kolumn: ID | FK | Nazwa | CNA | Status | Wys³any | Data wys³ania
-    ' Najnowsze na górze (odwracamy kolejnoœæ).
+    ' 7 kolumn: ID | FK | Nazwa | CNA | Status | Wyslany | Data wyslania
+    ' Najnowsze na gorze (odwracamy kolejnosc).
     Dim n As Long
     n = allRecords.Count
     Dim arr() As Variant
@@ -76,7 +76,7 @@ Private Sub LoadRecords()
     Dim i As Long, idx As Long
     i = 0
     For Each record In allRecords
-        idx = n - 1 - i  ' odwrotna kolejnoœæ - najnowsze na górze
+        idx = n - 1 - i  ' odwrotna kolejnosc - najnowsze na gorze
         arr(idx, 0) = record("ReportID")
         arr(idx, 1) = record("KlientFK")
         arr(idx, 2) = record("NazwaKlienta")
@@ -118,7 +118,7 @@ Private Function ShowSaveDialog(defaultName As String) As String
         Title:="Zapisz eksport jako")
 
     If TypeName(result) = "Boolean" Then
-        ShowSaveDialog = ""  ' user anulowa³
+        ShowSaveDialog = ""  ' user anulowal
     Else
         ShowSaveDialog = CStr(result)
     End If

@@ -4,7 +4,7 @@ Option Explicit
 ' ============================================================================
 '  mod_MailSender
 '  Serce logiki "kierownik vs handlowiec" (ADR-005). Decyduje o adresacie,
-'  generuje plik tymczasowy xlsx w %TEMP% (ADR-004), wysy³a mail przez
+'  generuje plik tymczasowy xlsx w %TEMP% (ADR-004), wysyla mail przez
 '  Outlook COM, zapisuje adresata do EmailRecipient (audit trail).
 ' ============================================================================
 
@@ -13,8 +13,8 @@ Private Const olMailItem As Long = 0
 
 ' ----- Public API ---------------------------------------------------------
 
-' G³ówna funkcja: czyta pending z DataCache, generuje plik tymczasowy,
-' decyduje adresata, wysy³a, oznacza jako sent, sprz¹ta plik tymczasowy.
+' Glowna funkcja: czyta pending z DataCache, generuje plik tymczasowy,
+' decyduje adresata, wysyla, oznacza jako sent, sprzata plik tymczasowy.
 Public Function SendBatch() As Boolean
     Dim tempFilePath As String
     Dim recipientInfo As Object
@@ -61,10 +61,10 @@ ErrorHandler:
     SendBatch = False
 End Function
 
-' Decision diamond - kierownik vs handlowiec. Public dla testowalnoœci
+' Decision diamond - kierownik vs handlowiec. Public dla testowalnosci
 ' (czysta funkcja bez side effects).
 '
-' Convention over configuration: je¿eli EmailKierownika == EmailHandlowca,
+' Convention over configuration: jezeli EmailKierownika == EmailHandlowca,
 ' user jest kierownikiem -> mail wprost do BNC. W p.p. -> mail do kierownika.
 Public Function DetermineRecipient() As Object
     Dim result As Object
@@ -84,17 +84,17 @@ Public Function DetermineRecipient() As Object
         ' KIEROWNIK - wprost do BNC.
         result("To") = emailBNC
         result("Subject") = "Wniosek BNC - " & dateTag
-        result("Body") = "Dzieñ dobry," & vbCrLf & vbCrLf & _
-            "W za³¹czeniu wniosek BNC. Proszê o weryfikacjê." & vbCrLf & vbCrLf & _
+        result("Body") = "Dzien dobry," & vbCrLf & vbCrLf & _
+            "W zalaczeniu wniosek BNC. Prosze o weryfikacje." & vbCrLf & vbCrLf & _
             "Pozdrawiam," & vbCrLf & _
             CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
             CStr(mod_UsersRegistrySync.GetCurrentUserField("Nazwisko"))
     Else
-        ' HANDLOWIEC - do kierownika z proœb¹ o przekazanie do BNC.
+        ' HANDLOWIEC - do kierownika z prosba o przekazanie do BNC.
         result("To") = emailKierownika
         result("Subject") = "Wniosek BNC do akceptacji - " & dateTag
-        result("Body") = "Dzieñ dobry," & vbCrLf & vbCrLf & _
-            "W za³¹czeniu wniosek BNC. Proszê o weryfikacjê i przekazanie do " & _
+        result("Body") = "Dzien dobry," & vbCrLf & vbCrLf & _
+            "W zalaczeniu wniosek BNC. Prosze o weryfikacje i przekazanie do " & _
             emailBNC & "." & vbCrLf & vbCrLf & _
             "Pozdrawiam," & vbCrLf & _
             CStr(mod_UsersRegistrySync.GetCurrentUserField("Imie")) & " " & _
@@ -107,7 +107,7 @@ End Function
 ' ----- Private - plik tymczasowy + Outlook COM ----------------------------
 
 ' Tworzy plik xlsx w %TEMP% z aktualnym batchem (ADR-004).
-' Returns: pe³na œcie¿ka do utworzonego pliku.
+' Returns: pelna sciezka do utworzonego pliku.
 Private Function GenerateTempFile(records As Collection) As String
     Dim tempFolder As String
     Dim fileName As String
@@ -131,7 +131,7 @@ Private Function GenerateTempFile(records As Collection) As String
     Set ws = wb.Worksheets(1)
     ws.Name = "BNC_Wniosek"
 
-    ' Nag³ówki wniosku - subset z DataCache (bez pól wewnêtrznych typu Status).
+    ' Naglowki wniosku - subset z DataCache (bez pol wewnetrznych typu Status).
     ws.Cells(1, 1).Value = "ReportID"
     ws.Cells(1, 2).Value = "KlientFK"
     ws.Cells(1, 3).Value = "NazwaKlienta"
@@ -166,7 +166,7 @@ Private Function GenerateTempFile(records As Collection) As String
     GenerateTempFile = fullPath
 End Function
 
-' Wysy³ka maila przez Outlook COM. Wymaga zaufanego dostêpu do Outlook
+' Wysylka maila przez Outlook COM. Wymaga zaufanego dostepu do Outlook
 ' (Trust Center -> "Trust access to the Outlook object model" lub polityka IT).
 Private Sub SendMailWithAttachment(recipient As String, _
                                     subject As String, _
@@ -190,7 +190,7 @@ Private Sub SendMailWithAttachment(recipient As String, _
     Set outlookApp = Nothing
 End Sub
 
-' Best-effort delete pliku tymczasowego - b³êdy ignorowane.
+' Best-effort delete pliku tymczasowego - bledy ignorowane.
 Private Sub CleanupTempFile(filePath As String)
     On Error Resume Next
     If Len(filePath) = 0 Then Exit Sub

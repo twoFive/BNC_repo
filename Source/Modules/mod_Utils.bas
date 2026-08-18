@@ -3,10 +3,10 @@ Option Explicit
 
 ' ============================================================================
 '  mod_Utils
-'  Helpery dostêpne z ca³ej aplikacji: log, daty, pliki, walidacja typów,
+'  Helpery dostepne z calej aplikacji: log, daty, pliki, walidacja typow,
 '  UI single-instance guard.
 '
-'  Warstwa niska - nie wo³a innych modu³ów aplikacji.
+'  Warstwa niska - nie wola innych modulow aplikacji.
 ' ============================================================================
 
 ' ----- Logowanie -----------------------------------------------------------
@@ -26,7 +26,7 @@ Public Function FormatTimestampISO(dt As Date) As String
     FormatTimestampISO = Format(dt, "yyyy-mm-dd") & "T" & Format(dt, "hh:nn:ss")
 End Function
 
-' Pierwszy dzieñ bie¿¹cego miesi¹ca (np. dla MiesiacObrotu).
+' Pierwszy dzien biezacego miesiaca (np. dla MiesiacObrotu).
 Public Function GetCurrentMonthYear() As Date
     GetCurrentMonthYear = DateSerial(Year(Now()), Month(Now()), 1)
 End Function
@@ -45,7 +45,7 @@ Public Function FolderExists(folderPath As String) As Boolean
     FolderExists = fso.FolderExists(folderPath)
 End Function
 
-' Tworzy folder rekursywnie - przechodzi w górê drzewa a¿ do istniej¹cego rodzica.
+' Tworzy folder rekursywnie - przechodzi w gore drzewa az do istniejacego rodzica.
 Public Sub EnsureFolderExists(folderPath As String)
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -60,7 +60,7 @@ Public Sub EnsureFolderExists(folderPath As String)
     fso.CreateFolder folderPath
 End Sub
 
-' Buduje œcie¿kê folderPath\fileName niezale¿nie od separatora na koñcu folderu.
+' Buduje sciezke folderPath\fileName niezaleznie od separatora na koncu folderu.
 Public Function JoinPath(folderPath As String, fileName As String) As String
     If Len(folderPath) = 0 Then
         JoinPath = fileName
@@ -71,9 +71,9 @@ Public Function JoinPath(folderPath As String, fileName As String) As String
     End If
 End Function
 
-' ----- Walidacja typów -----------------------------------------------------
+' ----- Walidacja typow -----------------------------------------------------
 
-' Prosty test: cos@cos.cos - bez pe³nej regex RFC 5322, wystarczy dla UI.
+' Prosty test: cos@cos.cos - bez pelnej regex RFC 5322, wystarczy dla UI.
 Public Function IsValidEmail(text As String) As Boolean
     Dim t As String
     t = Trim$(text)
@@ -111,8 +111,8 @@ End Function
 ' Single-instance guard dla UserForm. Sprawdza czy forma jest AKTUALNIE
 ' widoczna, nie tylko czy istnieje w UserForms collection.
 '
-' Zombie hidden forms (po Me.Hide zostaj¹ w kolekcji) musz¹ byæ re-showable -
-' guard po samym istnieniu blokowa³ re-Show po Me.Hide (fix 2026-08-10).
+' Zombie hidden forms (po Me.Hide zostaja w kolekcji) musza byc re-showable -
+' guard po samym istnieniu blokowal re-Show po Me.Hide (fix 2026-08-10).
 Public Function IsFormOpen(formName As String) As Boolean
     On Error Resume Next
     Dim i As Long
