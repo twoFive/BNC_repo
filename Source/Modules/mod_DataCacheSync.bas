@@ -3,11 +3,11 @@ Option Explicit
 
 ' ============================================================================
 '  mod_DataCacheSync
-'  Repository Pattern dla ws_DataCache (tabela zg≈Çosze≈Ñ BNC). Kazdy wiersz =
-'  jedno zg≈Çoszenie. ReportID autoincrement w VBA.
+'  Repository Pattern dla ws_DataCache (tabela zg≥oszeÒ BNC). Kazdy wiersz =
+'  jedno zg≥oszenie. ReportID autoincrement w VBA.
 '
 '  CNA_HandlowcaID i NrOddzialu = snapshot z aktywnego usera w momencie
-'  zapisu (chroni historiƒô przed p√≥≈∫niejszymi zmianami w setupie).
+'  zapisu (chroni historiÍ przed pÛüniejszymi zmianami w setupie).
 '
 '  Write-through sync do BNC_DataCache.xlsx (jednostronny).
 ' ============================================================================
@@ -15,7 +15,7 @@ Option Explicit
 Private Const SHEET_NAME As String = "ws_DataCache"
 Private Const CACHE_FILE_NAME As String = "BNC_DataCache.xlsx"
 
-' Schemat kolumn (1-indexed). Nag≈Ç√≥wki w wierszu 1, dane od wiersza 2.
+' Schemat kolumn (1-indexed). Nag≥Ûwki w wierszu 1, dane od wiersza 2.
 Private Const COL_REPORT_ID As Long = 1
 Private Const COL_KLIENT_FK As Long = 2
 Private Const COL_NAZWA_KLIENTA As Long = 3
@@ -33,7 +33,7 @@ Public Const STATUS_SENT As String = "sent"
 
 ' ----- Public API ---------------------------------------------------------
 
-' Dodaje nowe zg≈Çoszenie ze Status=pending. Aplikacja uzupe≈Çnia sama:
+' Dodaje nowe zg≥oszenie ze Status=pending. Aplikacja uzupe≥nia sama:
 ' ReportID, CNA/NrOddzialu (snapshot z Registry), timestamp, Status.
 ' Zwraca: ReportID nowego rekordu.
 Public Function AppendRecord(reportData As Object) As Long
@@ -47,14 +47,14 @@ Public Function AppendRecord(reportData As Object) As Long
 
     Dim r As Long
     r = ws.Cells(ws.Rows.Count, COL_REPORT_ID).End(xlUp).row + 1
-    If r < 2 Then r = 2  ' nigdy nie nadpisuj nag≈Ç√≥wka
+    If r < 2 Then r = 2  ' nigdy nie nadpisuj nag≥Ûwka
 
     ws.Cells(r, COL_REPORT_ID).Value = newID
     ws.Cells(r, COL_KLIENT_FK).Value = SafeGet(reportData, "KlientFK")
     ws.Cells(r, COL_NAZWA_KLIENTA).Value = SafeGet(reportData, "NazwaKlienta")
     ws.Cells(r, COL_MIESIAC_OBROTU).Value = SafeGet(reportData, "MiesiacObrotu")
 
-    ' Snapshot z aktywnego usera - chroni historiƒô przed zmianami w setupie.
+    ' Snapshot z aktywnego usera - chroni historiÍ przed zmianami w setupie.
     ws.Cells(r, COL_CNA).Value = mod_UsersRegistrySync.GetCurrentUserField("CNA_HandlowcaID")
     ws.Cells(r, COL_NR_ODDZIALU).Value = mod_UsersRegistrySync.GetCurrentUserField("NrOddzialu")
 
@@ -86,7 +86,7 @@ Public Sub MarkAsSent(reportIDs As Collection, recipient As String)
     lastRow = ws.Cells(ws.Rows.Count, COL_REPORT_ID).End(xlUp).row
     If lastRow < 2 Then Exit Sub
 
-    ' Set ID-√≥w dla O(1) lookup.
+    ' Set ID-Ûw dla O(1) lookup.
     Dim sentSet As Object
     Set sentSet = CreateObject("Scripting.Dictionary")
     Dim id As Variant
@@ -111,8 +111,8 @@ Public Sub MarkAsSent(reportIDs As Collection, recipient As String)
 End Sub
 
 ' Hard delete pending recordu (ADR-006). Defensywnie tylko Status=pending -
-' sent records sƒÖ immutable (audit trail).
-' Returns True je≈õli usuniƒôto, False je≈õli ID nieznane LUB Status != pending.
+' sent records sπ immutable (audit trail).
+' Returns True jeúli usuniÍto, False jeúli ID nieznane LUB Status != pending.
 Public Function DeleteRecord(reportID As Long) As Boolean
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets(SHEET_NAME)
@@ -149,7 +149,7 @@ Public Function DeleteRecord(reportID As Long) As Boolean
     DeleteRecord = False
 End Function
 
-' Auto-recreate: tworzy BNC_DataCache.xlsx je≈õli nie istnieje (Workbook_Open).
+' Auto-recreate: tworzy BNC_DataCache.xlsx jeúli nie istnieje (Workbook_Open).
 Public Sub EnsureCacheFileExists()
     Dim folderPath As String
     folderPath = CStr(mod_UsersRegistrySync.GetCurrentUserField("CacheFolderPath"))
@@ -186,7 +186,7 @@ Private Function GetNextReportID(ws As Worksheet) As Long
     End If
 End Function
 
-' Tworzy nag≈Ç√≥wki tylko je≈õli wiersz 1 jest pusty - idempotentne.
+' Tworzy nag≥Ûwki tylko jeúli wiersz 1 jest pusty - idempotentne.
 Private Sub EnsureHeader(ws As Worksheet)
     If Len(CStr(ws.Cells(1, COL_REPORT_ID).Value)) > 0 Then Exit Sub
 
@@ -240,7 +240,7 @@ Private Function GetRecordsWhereStatus(statusFilter As String) As Collection
     Set GetRecordsWhereStatus = result
 End Function
 
-' Bezpieczny dostƒôp do p√≥l Dictionary - "" je≈õli klucz nie istnieje.
+' Bezpieczny dostÍp do pÛl Dictionary - "" jeúli klucz nie istnieje.
 Private Function SafeGet(d As Object, key As String) As Variant
     If d Is Nothing Then
         SafeGet = ""

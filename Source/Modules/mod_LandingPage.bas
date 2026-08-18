@@ -3,17 +3,17 @@ Option Explicit
 
 ' ============================================================================
 '  mod_LandingPage
-'  Handlery dla Form Controls buttonÃ³w na sh_LandingPage.
+'  Handlery dla Form Controls buttonów na sh_LandingPage.
 '
-'  Form Controls muszÄ… woÅ‚aÄ‡ macra ze standalone modules (Assign Macro dialog
+'  Form Controls musz¹ wo³aæ macra ze standalone modules (Assign Macro dialog
 '  nie widzi Sheet code modules) - dlatego handlery tutaj, nie w sh_LandingPage.
 '
 '  Form Controls (NIE ActiveX) dla production robustness: Trust Center policies
-'  IT mogÄ… blokowaÄ‡ ActiveX; Form Controls dziaÅ‚ajÄ… wszÄ™dzie (Windows/Mac/Web).
+'  IT mog¹ blokowaæ ActiveX; Form Controls dzia³aj¹ wszêdzie (Windows/Mac/Web).
 '
-'  Post-form refresh (2026-08-16): kaÅ¼dy handler po Show vbModal woÅ‚a
+'  Post-form refresh (2026-08-16): ka¿dy handler po Show vbModal wo³a
 '  RefreshDashboard. Worksheet_Activate NIE fire'uje po Me.Hide modal formu
-'  (sheet byÅ‚ juÅ¼ aktywny, form tylko go przykrywaÅ‚).
+'  (sheet by³ ju¿ aktywny, form tylko go przykrywa³).
 ' ============================================================================
 
 ' ----- Button handlers (przypisane w Excel przez Assign Macro) -------------

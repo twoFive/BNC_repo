@@ -3,7 +3,7 @@ Option Explicit
 
 ' ============================================================================
 '  mod_Tests
-'  Smoke testy dla moduÅ‚Ã³w Foundation. Uruchamiaj z Immediate Window:
+'  Smoke testy dla modu³ów Foundation. Uruchamiaj z Immediate Window:
 '      mod_Tests.RunAllTests
 '      mod_Tests.Test_mod_Utils
 '
@@ -55,7 +55,7 @@ Public Sub Test_mod_Utils()
     AssertEqual "JoinPath no-slash", "C:\foo\bar.txt", mod_Utils.JoinPath("C:\foo", "bar.txt")
     AssertEqual "JoinPath with-slash", "C:\foo\bar.txt", mod_Utils.JoinPath("C:\foo\", "bar.txt")
 
-    ' EnsureFolderExists - utwÃ³rz tymczasowy podfolder w %TEMP%
+    ' EnsureFolderExists - utwórz tymczasowy podfolder w %TEMP%
     Dim testFolder As String
     testFolder = mod_Utils.JoinPath(Environ("TEMP"), "BNC_Test_" & Format(Now(), "yyyymmddhhnnss"))
     mod_Utils.EnsureFolderExists testFolder
@@ -70,10 +70,10 @@ End Sub
 ' ----- IsFormOpen (regression guard: zombie hidden forms) ------------------
 
 ' Regression test dla bugfix 2026-08-10: IsFormOpen sprawdza .Visible,
-' nie tylko istnienie w UserForms. Bez testu regresja mogÅ‚aby cicho
-' przywrÃ³ciÄ‡ bug (blokada re-Show po Me.Hide).
+' nie tylko istnienie w UserForms. Bez testu regresja mog³aby cicho
+' przywróciæ bug (blokada re-Show po Me.Hide).
 '
-' Nie testujemy visible=True case - wymagaÅ‚oby to Show vbModal blokujÄ…cego
+' Nie testujemy visible=True case - wymaga³oby to Show vbModal blokuj¹cego
 ' wykonanie tego suba (modal loop). Manual testing dla visible case.
 Public Sub Test_IsFormOpen()
     Debug.Print "----- Test_IsFormOpen -----"
@@ -97,7 +97,7 @@ End Sub
 ' ----- mod_AppStateSync ---------------------------------------------------
 
 ' Pisze i odczytuje z ws_AppState pod tymczasowym kluczem "_TEST_RoundTrip_" -
-' na koÅ„cu kasuje. NIE dotyka _CurrentUserID Å¼eby nie zepsuÄ‡ sesji.
+' na koñcu kasuje. NIE dotyka _CurrentUserID ¿eby nie zepsuæ sesji.
 Public Sub Test_mod_AppStateSync()
     Debug.Print "----- Test_mod_AppStateSync -----"
 
@@ -140,7 +140,7 @@ End Sub
 
 ' ----- mod_DataCacheSync --------------------------------------------------
 
-' Pisze do ws_DataCache jeden tymczasowy rekord i kasuje na koÅ„cu.
+' Pisze do ws_DataCache jeden tymczasowy rekord i kasuje na koñcu.
 Public Sub Test_mod_DataCacheSync()
     Debug.Print "----- Test_mod_DataCacheSync -----"
 
@@ -228,7 +228,7 @@ Public Sub Test_mod_DataCacheSync()
 
     AssertEqual "DeleteRecord rejects unknown ID", False, mod_DataCacheSync.DeleteRecord(999999)
 
-    ' Cleanup sent rekordu bezpoÅ›rednio (bypass API - DeleteRecord odmawia
+    ' Cleanup sent rekordu bezpoœrednio (bypass API - DeleteRecord odmawia
     ' sent per ADR-006; bypass akceptowalny tylko w test cleanup).
     Dim r As Long
     Dim lastRow As Long
@@ -274,7 +274,7 @@ Public Sub Test_mod_Validation()
     AssertEqual "ValidateFolderPath unc", True, mod_Validation.ValidateFolderPath("\\server\share")
     AssertEqual "ValidateFolderPath bad", False, mod_Validation.ValidateFolderPath("Foo")
 
-    ' ValidateSetupData (zÅ‚oÅ¼one)
+    ' ValidateSetupData (z³o¿one)
     Dim setup As Object
     Set setup = CreateObject("Scripting.Dictionary")
     setup("Imie") = "Jan"
@@ -313,9 +313,9 @@ End Sub
 
 ' ----- mod_MailSender -----------------------------------------------------
 
-' NIE wysyÅ‚a maila - testuje tylko DetermineRecipient (czysta funkcja).
-' Manipuluje EmailKierownika w Registry Å¼eby sprawdziÄ‡ obie gaÅ‚Ä™zie
-' decision diamond, na koÅ„cu przywraca oryginalnÄ… wartoÅ›Ä‡.
+' NIE wysy³a maila - testuje tylko DetermineRecipient (czysta funkcja).
+' Manipuluje EmailKierownika w Registry ¿eby sprawdziæ obie ga³êzie
+' decision diamond, na koñcu przywraca oryginaln¹ wartoœæ.
 Public Sub Test_mod_MailSender()
     Debug.Print "----- Test_mod_MailSender -----"
 
@@ -324,7 +324,7 @@ Public Sub Test_mod_MailSender()
         Exit Sub
     End If
 
-    ' Backup oryginalnych wartoÅ›ci
+    ' Backup oryginalnych wartoœci
     Dim origKierownika As String, origHandlowca As String
     origKierownika = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailKierownika"))
     origHandlowca = CStr(mod_UsersRegistrySync.GetCurrentUserField("EmailHandlowca"))
@@ -350,7 +350,7 @@ Public Sub Test_mod_MailSender()
     AssertEqual "Kierownik.Subject NIE ma 'akceptacji'", _
         False, (InStr(CStr(r("Subject")), "akceptacji") > 0)
 
-    ' PrzywrÃ³Ä‡ oryginalne wartoÅ›ci
+    ' Przywróæ oryginalne wartoœci
     mod_UsersRegistrySync.SetCurrentUserField "EmailHandlowca", origHandlowca
     mod_UsersRegistrySync.SetCurrentUserField "EmailKierownika", origKierownika
 
@@ -401,7 +401,7 @@ End Sub
 ' GetAllUsers, SwitchUser back, xlsx sync po AddNewUser.
 '
 ' Testowy user oznaczony Imie="_TEST_" + CNA=999999 - pozostaje w Registry
-' (test nie kasuje). UsuÅ„ manualnie jeÅ›li nie potrzeba historii.
+' (test nie kasuje). Usuñ manualnie jeœli nie potrzeba historii.
 Public Sub Test_MultiUser()
     Debug.Print "----- Test_MultiUser (M3.3) -----"
 
@@ -471,7 +471,7 @@ Public Sub Test_MultiUser()
     AssertEqual "BNC_UsersRegistry.xlsx istnieje po AddNewUser", True, _
                 mod_Utils.FileExists(regCachePath)
 
-    ' SwitchUser back do poprzedniego (jeÅ›li byÅ‚)
+    ' SwitchUser back do poprzedniego (jeœli by³)
     If Len(origUserId) > 0 Then
         mod_UsersRegistrySync.SwitchUser origUserId
         AssertEqual "SwitchUser back: CurrentUserID", origUserId, mod_UsersRegistrySync.CurrentUserID()
@@ -486,7 +486,7 @@ Public Sub Test_MultiUser()
     Debug.Print "----- Test_MultiUser DONE -----"
 End Sub
 
-' ----- Helpery testÃ³w -----------------------------------------------------
+' ----- Helpery testów -----------------------------------------------------
 
 Private Sub AssertEqual(name As String, expected As Variant, actual As Variant)
     Dim okText As String

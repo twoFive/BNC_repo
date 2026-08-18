@@ -1,13 +1,13 @@
 ' ============================================================================
 '  frm_UserPicker
-'  WybÃ³r aktywnego usera z listy zarejestrowanych + opcja dodania nowego.
+'  Wybór aktywnego usera z listy zarejestrowanych + opcja dodania nowego.
 '  Pokazywany przez Workbook_Open gdy GetUsersCount() > 0.
 ' ============================================================================
 
 Option Explicit
 
-' UserID kaÅ¼dego item'u w cmb_Users - potrzebne do SwitchUser po klikniÄ™ciu
-' btn_SelectUser (ComboBox pokazuje "Imie Nazwisko Â· CNA:num", nie UserID).
+' UserID ka¿dego item'u w cmb_Users - potrzebne do SwitchUser po klikniêciu
+' btn_SelectUser (ComboBox pokazuje "Imie Nazwisko · CNA:num", nie UserID).
 Private m_UserIDs() As String
 Private m_UserCount As Long
 
@@ -19,10 +19,10 @@ End Sub
 
 ' ----- Buttons -------------------------------------------------------------
 
-' WybÃ³r zaznaczonego usera. SwitchUser -> update _CurrentUserID + LastLogin.
+' Wybór zaznaczonego usera. SwitchUser -> update _CurrentUserID + LastLogin.
 Private Sub btn_SelectUser_Click()
     If cmb_Users.ListIndex < 0 Then
-        MsgBox "Najpierw wybierz uÅ¼ytkownika z listy rozwijanej.", _
+        MsgBox "Najpierw wybierz u¿ytkownika z listy rozwijanej.", _
                vbInformation, "Brak wyboru"
         Exit Sub
     End If
@@ -40,8 +40,8 @@ Private Sub btn_SelectUser_Click()
 
 SwitchError:
     mod_Utils.LogError "frm_UserPicker.btn_SelectUser_Click", Err.Number, Err.Description
-    MsgBox "Nie udaÅ‚o siÄ™ zaÅ‚adowaÄ‡ uÅ¼ytkownika. SprawdÅº Immediate Window.", _
-           vbExclamation, "BÅ‚Ä…d"
+    MsgBox "Nie uda³o siê za³adowaæ u¿ytkownika. SprawdŸ Immediate Window.", _
+           vbExclamation, "B³¹d"
 End Sub
 
 ' Otwiera frm_Setup dla dodania nowego usera.
@@ -51,7 +51,7 @@ Private Sub btn_AddNew_Click()
     frm_Setup.Show vbModal
 End Sub
 
-' Anuluj: return do sh_LandingPage (hub-and-spoke). Landing page dziaÅ‚a
+' Anuluj: return do sh_LandingPage (hub-and-spoke). Landing page dzia³a
 ' z aktywnym userem (nawet gdy pusto - pokazuje "brak aktywnego").
 Private Sub btn_Cancel_Click()
     Me.Hide
@@ -59,8 +59,8 @@ End Sub
 
 ' ----- Helpers -------------------------------------------------------------
 
-' Åaduje listÄ™ userÃ³w z Registry do ComboBox jako "Imie Nazwisko Â· CNA:num".
-' RÃ³wnolegÅ‚y array m_UserIDs pamiÄ™ta UserID kaÅ¼dej pozycji (ComboBox pokazuje
+' £aduje listê userów z Registry do ComboBox jako "Imie Nazwisko · CNA:num".
+' Równoleg³y array m_UserIDs pamiêta UserID ka¿dej pozycji (ComboBox pokazuje
 ' tylko display string, nie UserID).
 Private Sub PopulateUserList()
     Dim users As Collection
@@ -85,14 +85,14 @@ Private Sub PopulateUserList()
     i = 0
     For Each u In users
         displayText = CStr(u("Imie")) & " " & _
-                      CStr(u("Nazwisko")) & " Â· CNA:" & _
+                      CStr(u("Nazwisko")) & " · CNA:" & _
                       CStr(u("CNA_HandlowcaID"))
         cmb_Users.AddItem displayText
         m_UserIDs(i) = CStr(u("UserID"))
         i = i + 1
     Next u
 
-    ' DomyÅ›lnie zaznaczony ostatnio zalogowany (LastLogin max) - konwencja UX
+    ' Domyœlnie zaznaczony ostatnio zalogowany (LastLogin max) - konwencja UX
     Dim defaultIdx As Long
     defaultIdx = FindLastLoggedInIndex(users)
     If defaultIdx >= 0 Then
@@ -102,8 +102,8 @@ Private Sub PopulateUserList()
     End If
 End Sub
 
-' Index usera z najnowszym LastLogin (dla domyÅ›lnej selekcji). -1 gdy wszyscy
-' majÄ… puste LastLogin.
+' Index usera z najnowszym LastLogin (dla domyœlnej selekcji). -1 gdy wszyscy
+' maj¹ puste LastLogin.
 Private Function FindLastLoggedInIndex(users As Collection) As Long
     Dim maxDate As Date
     Dim maxIdx As Long

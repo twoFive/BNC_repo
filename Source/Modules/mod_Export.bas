@@ -4,7 +4,7 @@ Option Explicit
 ' ============================================================================
 '  mod_Export
 '  Literal copy BNC_DataCache.xlsx do wybranej lokalizacji - bit-perfect,
-'  bez transformacji. Plik backupu w CacheFolderPath jest jedynym ≈∫r√≥d≈Çem
+'  bez transformacji. Plik backupu w CacheFolderPath jest jedynym ürÛd≥em
 '  prawdy o historii.
 ' ============================================================================
 
@@ -13,7 +13,7 @@ Private Const SOURCE_FILE_NAME As String = "BNC_DataCache.xlsx"
 ' ----- Public API ---------------------------------------------------------
 
 ' Kopiuje BNC_DataCache.xlsx z CacheFolderPath do targetPath (overwrite=True).
-' Returns: True je≈õli sukces, False je≈õli ≈∫r√≥d≈Ço nie istnieje albo b≈ÇƒÖd I/O.
+' Returns: True jeúli sukces, False jeúli ürÛd≥o nie istnieje albo b≥πd I/O.
 Public Function ExportDataCache(targetPath As String) As Boolean
     Dim sourcePath As String
     sourcePath = GetSourcePath()
@@ -59,7 +59,7 @@ Private Function GetSourcePath() As String
     GetSourcePath = mod_Utils.JoinPath(folderPath, SOURCE_FILE_NAME)
 End Function
 
-' Zamienia wszystkie znaki niedozwolone w nazwach plik√≥w Windows na "_".
+' Zamienia wszystkie znaki niedozwolone w nazwach plikÛw Windows na "_".
 Private Function SanitizeFileName(s As String) As String
     Dim invalid As String
     invalid = "\/:*?""<>| "

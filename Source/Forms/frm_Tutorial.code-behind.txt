@@ -1,11 +1,11 @@
 ' ============================================================================
 '  frm_Tutorial
-'  5-page wizard z ~360 sÅ‚Ã³w treÅ›ci. Zero persistencji - user zawsze
-'  Å›wiadomie wywoÅ‚uje przez frm_Setup.btn_ShowTutorial lub przycisk na
+'  5-page wizard z ~360 s³ów treœci. Zero persistencji - user zawsze
+'  œwiadomie wywo³uje przez frm_Setup.btn_ShowTutorial lub przycisk na
 '  sh_LandingPage.
 '
 '  Content source of truth: Source/Forms/frm_Tutorial.TEXT.md
-'  ASCII-safe emoji: Titles bez emoji, â†’ -> "->", â€¢ -> "-", Â· -> " - ".
+'  ASCII-safe emoji: Titles bez emoji, › -> "->", • -> "-", · -> " - ".
 ' ============================================================================
 
 Option Explicit
@@ -13,7 +13,7 @@ Option Explicit
 Private Const TOTAL_PAGES As Long = 5
 Private m_currentPage As Long  ' 1..TOTAL_PAGES
 
-' Screenshot area toggle - strony 3, 4 majÄ… image, 1/2/5 text-only.
+' Screenshot area toggle - strony 3, 4 maj¹ image, 1/2/5 text-only.
 Private Const BODY_HEIGHT_WITH_IMAGE As Long = 190
 Private Const BODY_HEIGHT_TEXT_ONLY As Long = 430
 
@@ -31,7 +31,7 @@ Private Sub btn_Next_Click()
         m_currentPage = m_currentPage + 1
         RenderPage
     Else
-        Me.Hide  ' ostatnia strona: Next == ZakoÅ„cz
+        Me.Hide  ' ostatnia strona: Next == Zakoñcz
     End If
 End Sub
 
@@ -48,13 +48,13 @@ End Sub
 
 ' ----- Rendering -----------------------------------------------------------
 
-' Dispatcher woÅ‚any po kaÅ¼dej zmianie strony.
+' Dispatcher wo³any po ka¿dej zmianie strony.
 Private Sub RenderPage()
     lbl_PageIndicator.Caption = "Strona " & m_currentPage & " z " & TOTAL_PAGES
     btn_Prev.Enabled = (m_currentPage > 1)
 
     If m_currentPage = TOTAL_PAGES Then
-        btn_Next.Caption = "ZakoÅ„cz"
+        btn_Next.Caption = "Zakoñcz"
     Else
         btn_Next.Caption = "Dalej ->"
     End If
@@ -94,13 +94,13 @@ Private Sub RenderPage1_Welcome()
     lbl_PageTitle.Caption = "Witaj w BNC_Sender"
 
     Dim s As String
-    s = "BNC_Sender to aplikacja do zbiorczej wysyÅ‚ki zgÅ‚oszeÅ„ BNC." & vbCrLf & vbCrLf
-    s = s & "Zamiast wypeÅ‚niaÄ‡ i wysyÅ‚aÄ‡ kaÅ¼de zgÅ‚oszenie osobno, " & _
-        "wpisujesz je do listy przez caÅ‚y miesiÄ…c, klikasz jeden przycisk " & _
-        "i mail ze wszystkimi zgÅ‚oszeniami jest wysyÅ‚any przez Outlook do " & _
-        "wÅ‚aÅ›ciwego adresata (do Twojego kierownika, a jeÅ›li sam nim jesteÅ›, " & _
-        "wprost na skrzynkÄ™ BNC)." & vbCrLf & vbCrLf
-    s = s & "Samouczek zajmie ~2 minuty. NaciÅ›nij " & Chr(34) & "Dalej ->" & Chr(34) & "."
+    s = "BNC_Sender to aplikacja do zbiorczej wysy³ki zg³oszeñ BNC." & vbCrLf & vbCrLf
+    s = s & "Zamiast wype³niaæ i wysy³aæ ka¿de zg³oszenie osobno, " & _
+        "wpisujesz je do listy przez ca³y miesi¹c, klikasz jeden przycisk " & _
+        "i mail ze wszystkimi zg³oszeniami jest wysy³any przez Outlook do " & _
+        "w³aœciwego adresata (do Twojego kierownika, a jeœli sam nim jesteœ, " & _
+        "wprost na skrzynkê BNC)." & vbCrLf & vbCrLf
+    s = s & "Samouczek zajmie ~2 minuty. Naciœnij " & Chr(34) & "Dalej ->" & Chr(34) & "."
 
     txt_PageBody.Text = s
 End Sub
@@ -109,76 +109,76 @@ Private Sub RenderPage2_Setup()
     lbl_PageTitle.Caption = "Konfiguracja (jednorazowa)"
 
     Dim s As String
-    s = "Przy pierwszym uruchomieniu aplikacji wypeÅ‚niasz formularz z Twoimi " & _
-        "danymi sÅ‚uÅ¼bowymi: ImiÄ™, Nazwisko, Email, CNA, Nr oddziaÅ‚u, " & _
-        "Email kierownika. DziÄ™ki temu nie musisz juÅ¼ powtarzaÄ‡ wpisywania " & _
-        "tych danych w kaÅ¼dym wniosku!" & vbCrLf & vbCrLf
-    s = s & "UWAGA: jeÅ›li sam jesteÅ› Kierownikiem, wpisz swÃ³j email takÅ¼e w polu " & _
+    s = "Przy pierwszym uruchomieniu aplikacji wype³niasz formularz z Twoimi " & _
+        "danymi s³u¿bowymi: Imiê, Nazwisko, Email, CNA, Nr oddzia³u, " & _
+        "Email kierownika. Dziêki temu nie musisz ju¿ powtarzaæ wpisywania " & _
+        "tych danych w ka¿dym wniosku!" & vbCrLf & vbCrLf
+    s = s & "UWAGA: jeœli sam jesteœ Kierownikiem, wpisz swój email tak¿e w polu " & _
         Chr(34) & "Email kierownika" & Chr(34) & ". " & _
-        "Aplikacja rozpozna TwojÄ… rolÄ™ automatycznie." & vbCrLf & vbCrLf
+        "Aplikacja rozpozna Twoj¹ rolê automatycznie." & vbCrLf & vbCrLf
     s = s & "Pola " & Chr(34) & "Email BNC" & Chr(34) & " i " & _
-        Chr(34) & "Folder cache" & Chr(34) & " sÄ… ustawione fabrycznie. " & _
-        "Kliknij " & Chr(34) & "UtwÃ³rz folder cache" & Chr(34) & _
-        " jeÅ›li folder jeszcze nie istnieje na dysku." & vbCrLf & vbCrLf
+        Chr(34) & "Folder cache" & Chr(34) & " s¹ ustawione fabrycznie. " & _
+        "Kliknij " & Chr(34) & "Utwórz folder cache" & Chr(34) & _
+        " jeœli folder jeszcze nie istnieje na dysku." & vbCrLf & vbCrLf
     s = s & "Kliknij " & Chr(34) & "Zapisz" & Chr(34) & ". Konfiguracja gotowa - " & _
-        "przechodzisz do gÅ‚Ã³wnego ekranu aplikacji (ekranu wysyÅ‚ki wniosku)."
+        "przechodzisz do g³ównego ekranu aplikacji (ekranu wysy³ki wniosku)."
 
     txt_PageBody.Text = s
 End Sub
 
 Private Sub RenderPage3_DailyWork()
-    lbl_PageTitle.Caption = "Dodawanie zgÅ‚oszeÅ„ i wysyÅ‚ka"
+    lbl_PageTitle.Caption = "Dodawanie zg³oszeñ i wysy³ka"
 
     Dim s As String
-    s = "DODAJESZ ZGÅOSZENIE:" & vbCrLf
-    s = s & "WypeÅ‚nij 3 pola: Klient FK, Nazwa klienta, MiesiÄ…c obrotu " & _
-        "(YYYY-MM, domyÅ›lnie bieÅ¼Ä…cy). Kliknij " & Chr(34) & _
+    s = "DODAJESZ ZG£OSZENIE:" & vbCrLf
+    s = s & "Wype³nij 3 pola: Klient FK, Nazwa klienta, Miesi¹c obrotu " & _
+        "(YYYY-MM, domyœlnie bie¿¹cy). Kliknij " & Chr(34) & _
         "Dodaj do listy" & Chr(34) & "." & vbCrLf & vbCrLf
-    s = s & "POMYÅKA:" & vbCrLf
-    s = s & "Kliknij na wiersz w liÅ›cie pending -> " & Chr(34) & _
-        "UsuÅ„ zaznaczone" & Chr(34) & " -> potwierdÅº. " & _
-        "WysÅ‚ane zgÅ‚oszenia sÄ… NIEUSUWALNE, sprawdzaj przed wysyÅ‚kÄ…." & _
+    s = s & "POMY£KA:" & vbCrLf
+    s = s & "Kliknij na wiersz w liœcie pending -> " & Chr(34) & _
+        "Usuñ zaznaczone" & Chr(34) & " -> potwierdŸ. " & _
+        "Wys³ane zg³oszenia s¹ NIEUSUWALNE, sprawdzaj przed wysy³k¹." & _
         vbCrLf & vbCrLf
-    s = s & "WYSYÅKA (najlepiej raz w miesiÄ…cu):" & vbCrLf
-    s = s & "Kliknij " & Chr(34) & "WyÅ›lij Wniosek BNC" & Chr(34) & _
+    s = s & "WYSY£KA (najlepiej raz w miesi¹cu):" & vbCrLf
+    s = s & "Kliknij " & Chr(34) & "Wyœlij Wniosek BNC" & Chr(34) & _
         " -> potwierdzenie -> mail wychodzi z Outlooka. " & _
-        "Lista pending czyÅ›ci siÄ™, zgÅ‚oszenia trafiajÄ… do historii."
+        "Lista pending czyœci siê, zg³oszenia trafiaj¹ do historii."
 
     txt_PageBody.Text = s
 End Sub
 
 Private Sub RenderPage4_HistoryExport()
-    lbl_PageTitle.Caption = "PokaÅ¼ historiÄ™ - Eksport"
+    lbl_PageTitle.Caption = "Poka¿ historiê - Eksport"
 
     Dim s As String
-    s = Chr(34) & "POKAÅ» HISTORIÄ˜" & Chr(34) & ": widzisz wszystkie zgÅ‚oszenia " & _
-        "(wysÅ‚ane + pending) z datÄ… i adresatem. Przydaje siÄ™ gdy BNC twierdzi " & _
-        Chr(34) & "nie dostaliÅ›my zgÅ‚oszenia" & Chr(34) & _
-        " - masz twardy dowÃ³d wysyÅ‚ki." & vbCrLf & vbCrLf
+    s = Chr(34) & "POKA¯ HISTORIÊ" & Chr(34) & ": widzisz wszystkie zg³oszenia " & _
+        "(wys³ane + pending) z dat¹ i adresatem. Przydaje siê gdy BNC twierdzi " & _
+        Chr(34) & "nie dostaliœmy zg³oszenia" & Chr(34) & _
+        " - masz twardy dowód wysy³ki." & vbCrLf & vbCrLf
     s = s & Chr(34) & "EKSPORTUJ DO PLIKU" & Chr(34) & " (w oknie historii): " & _
         "zapisuje wszystko do osobnego pliku xlsx w wybranej lokalizacji. " & _
-        "Backup / dla audytora / przekazanie zastÄ™pcy. " & _
-        "MoÅ¼esz eksportowaÄ‡ dowolnie czÄ™sto."
+        "Backup / dla audytora / przekazanie zastêpcy. " & _
+        "Mo¿esz eksportowaæ dowolnie czêsto."
 
     txt_PageBody.Text = s
 End Sub
 
 Private Sub RenderPage5_Help()
-    lbl_PageTitle.Caption = "Gdy coÅ› nie dziaÅ‚a - Kontakt"
+    lbl_PageTitle.Caption = "Gdy coœ nie dzia³a - Kontakt"
 
     Dim s As String
-    s = "NAJCZÄ˜STSZE:" & vbCrLf
-    s = s & "- Excel pyta o makra -> klik " & Chr(34) & "WÅ‚Ä…cz zawartoÅ›Ä‡" & _
+    s = "NAJCZÊSTSZE:" & vbCrLf
+    s = s & "- Excel pyta o makra -> klik " & Chr(34) & "W³¹cz zawartoœæ" & _
         Chr(34) & vbCrLf
-    s = s & "- Outlook pyta o pozwolenie na wysyÅ‚kÄ™ -> klik " & _
+    s = s & "- Outlook pyta o pozwolenie na wysy³kê -> klik " & _
         Chr(34) & "Allow" & Chr(34) & vbCrLf
-    s = s & "- " & Chr(34) & "WyÅ›lij" & Chr(34) & _
-        " nic nie robi -> sprawdÅº czy Outlook jest otwarty" & _
+    s = s & "- " & Chr(34) & "Wyœlij" & Chr(34) & _
+        " nic nie robi -> sprawdŸ czy Outlook jest otwarty" & _
         vbCrLf & vbCrLf & vbCrLf
     s = s & "Inne problemy / Sugestie:" & vbCrLf
     s = s & "tomasz.pirszel@inter-team.com.pl" & vbCrLf & vbCrLf
     s = s & "Powodzenia!" & vbCrLf
-    s = s & "Kliknij " & Chr(34) & "ZakoÅ„cz" & Chr(34) & " Å¼eby zamknÄ…Ä‡."
+    s = s & "Kliknij " & Chr(34) & "Zakoñcz" & Chr(34) & " ¿eby zamkn¹æ."
 
     txt_PageBody.Text = s
 End Sub

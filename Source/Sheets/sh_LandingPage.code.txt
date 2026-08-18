@@ -2,16 +2,16 @@
 '  sh_LandingPage
 '  Landing page (hub) aplikacji.
 '
-'  Form Controls buttons NIE ActiveX - dzia≈Ça niezale≈ºnie od IT policies.
+'  Form Controls buttons NIE ActiveX - dzia≥a niezaleønie od IT policies.
 '  Handlery -> mod_LandingPage.bas. Sheet trzyma Worksheet_Activate +
-'  RefreshDashboard (Public dla wywo≈Çania z mod_LandingPage po Show).
+'  RefreshDashboard (Public dla wywo≥ania z mod_LandingPage po Show).
 ' ============================================================================
 
 Option Explicit
 
 ' ----- Lifecycle -----------------------------------------------------------
 
-' Wo≈Çane przy KA≈ªDEJ aktywacji sheeta (po Workbook_Open, klik w tab).
+' Wo≥ane przy KAØDEJ aktywacji sheeta (po Workbook_Open, klik w tab).
 ' UWAGA: NIE fire'uje po Me.Hide modal formu - patrz mod_LandingPage.
 Private Sub Worksheet_Activate()
     RefreshDashboard
@@ -20,7 +20,7 @@ End Sub
 ' ----- Rendering -----------------------------------------------------------
 
 ' Aktualizuje dynamic cells: user info (B3, B4, B5) + statystyki (B20, E20).
-' Public ≈ºeby mod_LandingPage m√≥g≈Ç force refresh po powrocie z modal formu.
+' Public øeby mod_LandingPage mÛg≥ force refresh po powrocie z modal formu.
 Public Sub RefreshDashboard()
     On Error GoTo Cleanup
 
@@ -35,12 +35,12 @@ Public Sub RefreshDashboard()
 
     If Len(imie) = 0 Then
         ' Brak aktywnego usera (edge case - _CurrentUserID puste)
-        Me.Range("B3").Value = "(brak aktywnego u≈ºytkownika)"
+        Me.Range("B3").Value = "(brak aktywnego uøytkownika)"
         Me.Range("B4").Value = ""
-        Me.Range("B5").Value = "Wybierz u≈ºytkownika przez 'Prze≈ÇƒÖcz usera'"
+        Me.Range("B5").Value = "Wybierz uøytkownika przez 'Prze≥πcz usera'"
     Else
         Me.Range("B3").Value = imie & " " & nazwisko
-        Me.Range("B4").Value = cna & " ¬∑ Oddzia≈Ç: " & oddzial
+        Me.Range("B4").Value = cna & " ∑ Oddzia≥: " & oddzial
 
         If mod_UsersRegistrySync.IsUserManager() Then
             Me.Range("B5").Value = "KIEROWNIK (mail wprost do BNC)"
@@ -61,8 +61,8 @@ Public Sub RefreshDashboard()
     Exit Sub
 
 Cleanup:
-    ' Best-effort refresh - je≈õli co≈õ padnie (np. registry pusty), zostawiamy
-    ' stare warto≈õci i logujemy b≈ÇƒÖd. Dashboard nie mo≈ºe padnƒÖƒá przy
+    ' Best-effort refresh - jeúli coú padnie (np. registry pusty), zostawiamy
+    ' stare wartoúci i logujemy b≥πd. Dashboard nie moøe padnπÊ przy
     ' niekompletnym setupie.
     mod_Utils.LogError "sh_LandingPage.RefreshDashboard", Err.Number, Err.Description
 End Sub
