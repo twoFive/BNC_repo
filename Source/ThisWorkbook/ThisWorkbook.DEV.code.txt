@@ -1,0 +1,65 @@
+' ============================================================================
+'  ThisWorkbook - DEV VERSION (alternatywa dla ThisWorkbook.code.txt)
+'
+'  Kiedy uzywac: praca w dev env - Excel chrome zostaje widoczny (ribbon,
+'  formula bar, headings, gridlines, tab bar), cells niezablokowane,
+'  scroll wolny, brak protekcji sheeta. Pelny dostep do debug/edit.
+'
+'  Roznice wzgledem prod (ThisWorkbook.code.txt):
+'  - Brak DisplayFullScreen, DisplayFormulaBar, DisplayHeadings, DisplayGridlines
+'  - Brak DisplayWorkbookTabs = False (tabs zostaja)
+'  - Brak SHOW.TOOLBAR ribbon hide (ribbon zostaje)
+'  - Brak LockLandingPage() (cells nie zablokowane, scroll area free)
+'  - Workbook_BeforeClose: nic do restore
+'
+'  Zachowane (identyczne z prod):
+'  - EnsureAppStateSheet (session marker _CurrentUserID)
+'  - EnsureCacheFileExists (DataCache + Registry xlsx auto-recreate)
+'  - Routing multi-user (0 userow -> Setup, >=1 -> Picker)
+'  - Landing na sh_LandingPage
+'  - Error handler przy Workbook_Open
+'
+'  Swap prod <-> dev: paste content tego pliku do VBE ThisWorkbook zamiast
+'  zawartosci ThisWorkbook.code.txt (klasa ThisWorkbook nie importuje sie,
+'  tylko copy-paste).
+' ============================================================================
+
+Option Explicit
+
+Private Sub Workbook_Open()
+    On Error GoTo ErrorHandler
+
+    ' 1. Ensure app state sheet (ADR-009 session marker _CurrentUserID)
+    mod_AppStateSync.EnsureAppStateSheet
+
+    ' 2. Auto-recreate cache xlsx (no-op gdy CacheFolderPath nieustawiony)
+    mod_DataCacheSync.EnsureCacheFileExists              ' BNC_DataCache.xlsx
+    mod_UsersRegistrySync.EnsureRegistryCacheFileExists  ' BNC_UsersRegistry.xlsx
+
+    ' 3. Routing multi-user
+    If mod_UsersRegistrySync.GetUsersCount() = 0 Then
+        mod_Utils.LogInfo "Workbook_Open [DEV]: Registry pusty, pokazuje frm_Setup"
+        frm_Setup.Show vbModal
+    Else
+        mod_Utils.LogInfo "Workbook_Open [DEV]: " & mod_UsersRegistrySync.GetUsersCount() & _
+                         " uzytkownikow, pokazuje frm_UserPicker"
+        frm_UserPicker.Show vbModal
+    End If
+
+    ' 4. Landing na hub. Worksheet_Activate triggeruje RefreshDashboard.
+    sh_LandingPage.Activate
+    Exit Sub
+
+ErrorHandler:
+    mod_Utils.LogError "ThisWorkbook.Workbook_Open [DEV]", Err.Number, Err.Description
+    MsgBox "Blad podczas startu aplikacji: " & Err.Description, _
+           vbExclamation, "BNC_Sender [DEV]"
+End Sub
+
+' DEV: nic do restore (brak app-like state do zresetowania).
+' Zostawione jako placeholder zeby nie usuwac struktury - latwiej swap na prod.
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    ' Odkomentuj zeby wylaczyc pytanie "Zapisac zmiany?" przy zamykaniu xlsm.
+    ' Aplikacja robi auto-save po kazdej mutacji, wiec Saved=True nie gubi danych.
+    ' ThisWorkbook.Saved = True
+End Sub
