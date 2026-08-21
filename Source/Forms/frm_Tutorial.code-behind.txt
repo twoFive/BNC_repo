@@ -5,7 +5,7 @@
 '  sh_LandingPage.
 '
 '  Content source of truth: Source/Forms/frm_Tutorial.TEXT.md
-'  ASCII-safe emoji: Titles bez emoji, › -> "->", • -> "-", - -> " - ".
+'  ASCII-safe emoji: Titles bez emoji, ? -> "->", ? -> "-", - -> " - ".
 ' ============================================================================
 
 Option Explicit
@@ -14,7 +14,9 @@ Private Const TOTAL_PAGES As Long = 5
 Private m_currentPage As Long  ' 1..TOTAL_PAGES
 
 ' Screenshot area toggle - strony 3, 4 maja image, 1/2/5 text-only.
-Private Const BODY_HEIGHT_WITH_IMAGE As Long = 190
+' TODO: kod screenshot toggle wylaczony do momentu dodania kontrolek
+' img_ScreenshotMain i img_ScreenshotLog w Designerze frm_Tutorial.
+' Uncomment blok "Screenshot area" w RenderPage + HideAllScreenshots po dodaniu.
 Private Const BODY_HEIGHT_TEXT_ONLY As Long = 430
 
 ' ----- Lifecycle -----------------------------------------------------------
@@ -59,20 +61,25 @@ Private Sub RenderPage()
         btn_Next.Caption = "Dalej ->"
     End If
 
-    Dim hasImage As Boolean
-    hasImage = (m_currentPage = 3 Or m_currentPage = 4)
+    ' Screenshot area - stale text-only do momentu dodania Image controls
+    ' (img_ScreenshotMain, img_ScreenshotLog) w Designerze frm_Tutorial.
+    txt_PageBody.Height = BODY_HEIGHT_TEXT_ONLY
 
-    HideAllScreenshots  ' zawsze zaczynaj od hide
-
-    If hasImage Then
-        txt_PageBody.Height = BODY_HEIGHT_WITH_IMAGE
-        Select Case m_currentPage
-            Case 3: img_ScreenshotMain.Visible = True
-            Case 4: img_ScreenshotLog.Visible = True
-        End Select
-    Else
-        txt_PageBody.Height = BODY_HEIGHT_TEXT_ONLY
-    End If
+    ' TODO: po dodaniu Image controls, uncomment blok ponizej i usun
+    ' powyzsze przypisanie BODY_HEIGHT_TEXT_ONLY:
+    '
+    ' Dim hasImage As Boolean
+    ' hasImage = (m_currentPage = 3 Or m_currentPage = 4)
+    ' HideAllScreenshots
+    ' If hasImage Then
+    '     txt_PageBody.Height = BODY_HEIGHT_WITH_IMAGE
+    '     Select Case m_currentPage
+    '         Case 3: img_ScreenshotMain.Visible = True
+    '         Case 4: img_ScreenshotLog.Visible = True
+    '     End Select
+    ' Else
+    '     txt_PageBody.Height = BODY_HEIGHT_TEXT_ONLY
+    ' End If
 
     Select Case m_currentPage
         Case 1: RenderPage1_Welcome
@@ -83,10 +90,12 @@ Private Sub RenderPage()
     End Select
 End Sub
 
-Private Sub HideAllScreenshots()
-    img_ScreenshotMain.Visible = False
-    img_ScreenshotLog.Visible = False
-End Sub
+' TODO: uncomment po dodaniu Image controls img_ScreenshotMain/img_ScreenshotLog
+' w Designerze frm_Tutorial.
+'Private Sub HideAllScreenshots()
+'    img_ScreenshotMain.Visible = False
+'    img_ScreenshotLog.Visible = False
+'End Sub
 
 ' ----- Per-page renderers (content z frm_Tutorial.TEXT.md) ----------------
 
