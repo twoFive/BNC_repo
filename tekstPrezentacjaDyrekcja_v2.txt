@@ -1,0 +1,102 @@
+Punkt prezentacji | Komunikat
+
+1. Kontekst biznesowy | Automatyzujemy proces, który bezpośrednio wpływa na realizacje celów sprzedażowych
+
+2. Punkt wyjścia | Rozproszone zgłoszenia, niska jakość danych i ręczna obsługa utrudniają kontrolę nad procesem
+
+3. Docelowy proces (BPMN 06_Proces_biznesowy) | Każdy uczestnik procesu ma swoją rolę, a przepływ informacji jest uporządkowany i kontrolowany
+
+4. Aplikacja BNC Sender - jak korzysta z niej Handlowiec/Kierownik | Handlowiec/Kierownik otrzymuje ustandaryzowany kanał zgłoszeń nowych klientów
+
+5. Obsługa zgłoszenia | Zgłoszenie przestaje być pojedynczą wiadomością, staje się kontrolowanym rekordem w procesie biznesowym
+
+6. Architektura - część większego systemu | Budujemy nie tylko interfejs, ale uporządkowane źródło danych dla kolejnych etapów automatyzacji
+
+7. Wartość biznesowa | Automatyzacja pozwala przesunąć wysiłek zespołów handlowych z obsługi administracyjnej na działania sprzedażowe, jednocześnie skracając czas rozpatrywania wniosków
+
+8. Ograniczenia w fazie A i kierunek rozwoju | Obecna aplikacja jest pierwszym elementem docelowego, zintegrowanego procesu
+
+9. Podsumowanie | Przenosimy proces z modelu ręcznej obsługi do modelu kontrolowanego przepływu danych
+
+
+1. Kontekst biznesowy
+
+- Program BNC wspiera pozyskiwanie nowych klientów przez Zespoły Handlowe
+- Zgłoszenia wymagają przyjęcia, weryfikacji i rozpatrzenia
+- Proces obejmuje zarówno działania Handlowców i Kierowników, jak i obsługę administracyjną
+
+
+2. Punkt wyjścia
+
+- Każdego miesiąca PH zgłaszają średnio od 90 do 120 klientów do programu BNC
+- Obecnie każde zgłoszenie wymaga wypełnienie osobnego arkusza i wysłanie na adres [...]
+- Wymusza to na Zespołach Handlowych konieczność ręcznego wprowadzania danych co skutkuje problemami z jakością danych. Pomimo instrukcji i próśb często dostaję wnioski bez kluczowych pól co wydłuża proces ich weryfikacji - tym więcej wniosków tym więcej błędów i tym dłuższy jest czas weryfikacji.
+
+Zamiast walczyć z przyzwyczajeniami Zespołów Handlowych lepiej jest zapewnić im narzędzie, które częściowo przejmie odpowiedzialność za wymaganą higienę danych.
+
+
+3. Docelowy proces (BPMN 06_Proces_biznesowy)
+
+- Diagram BPMN opisuje pełny przebieg zgłoszenia - od momentu wpisania przez Handlowca aż do rozpatrzenia przez Zespół BNC
+- Każdy uczestnik procesu (Handlowiec, Kierownik, Zespół BNC) ma wyraźnie zdefiniowaną rolę i zakres odpowiedzialności
+- Punkty decyzyjne (weryfikacja, akceptacja, przekazanie) są z góry ustalone - eliminujemy ad-hoc komunikację mailową między uczestnikami
+- Każdy krok procesu ma znanego właściciela i mierzalny moment zakończenia
+
+Uporządkowany model procesu pozwala identyfikować wąskie gardła i mierzyć efektywność na każdym etapie - czego przy obecnej rozproszonej obsłudze mailowej nie jesteśmy w stanie zrobić.
+
+
+4. Aplikacja BNC Sender - jak korzysta z niej Handlowiec/Kierownik
+
+- Jedno okno, jedno zgłoszenie, zawsze te same pola - nie ma miejsca na pomyłkę w strukturze danych
+- Dane Handlowca (imię, CNA, oddział, email) są pamiętane między sesjami - nie wpisuje się ich przy każdym kolejnym wniosku
+- Walidacja na wejściu wymusza poprawność kluczowych pól - zgłoszenie z pustym numerem klienta czy błędnym miesiącem obrotu nawet nie zostanie dodane do listy
+- Wnioski gromadzą się na liście pending przez cały miesiąc, Handlowiec jednym kliknięciem wysyła cały batch do Kierownika albo wprost do BNC
+- Historia wszystkich zgłoszeń dostępna z poziomu aplikacji - bez przeszukiwania skrzynki mailowej
+
+Handlowiec dostaje narzędzie, które nie tylko przyspiesza pracę, ale usuwa źródła typowych błędów - jakość danych jest wymuszona konstrukcją formularza, a nie dyscypliną użytkownika.
+
+
+5. Obsługa zgłoszenia
+
+- Każde zgłoszenie dostaje unikalny identyfikator już w momencie dodania do listy - od tego momentu jest trwałym rekordem, nie czymś co może zginąć w skrzynce
+- Metadane (autor, data utworzenia, data wysyłki, adresat) są zapisywane automatycznie i nie można ich zmodyfikować po wysyłce
+- Zgłoszenie wysłane jest trwale oznaczone jako wysłane - nie można go przypadkiem skasować ani zmodyfikować, co stanowi twarde zabezpieczenie audytowe
+- Eksport historii do pliku xlsx umożliwia Kierownikom i audytorom analizę bez angażowania IT
+
+W efekcie każde zgłoszenie od momentu utworzenia funkcjonuje jak rekord w bazie danych - można je raportować, analizować, rozliczać. Przestaje być tylko mailem.
+
+
+6. Architektura - część większego systemu
+
+- Dane zgłoszeń trafiają do centralnego cache w ustandaryzowanej strukturze - jeden format, jedna lokalizacja, jeden sposób dostępu
+- Rejestr użytkowników z pełnymi danymi Handlowców (CNA, oddział, email, kierownik) stanowi gotowe źródło identyfikacji autora każdego zgłoszenia
+- Warstwy aplikacji są rozdzielone: UI (formularze), logika biznesowa (walidacja, decyzja o adresacie), dane (cache + xlsx) - każdą warstwę można w przyszłości wymienić bez przebudowy pozostałych
+- Struktura danych jest gotowa do podłączenia do PowerBI, SharePoint List, albo docelowego systemu CRM/BPM
+
+Faza A to nie tylko narzędzie dla Zespołów Handlowych na dziś. To fundament danych, na którym w kolejnych fazach zbudujemy pełną automatyzację procesu BNC bez konieczności migrowania historii zgłoszeń.
+
+
+7. Wartość biznesowa
+Porównanie KPI punktu wyjściowego i prognoza po wdrożeniu:
+- Średni czas obsługi jednego klienta
+- Odsetek zgłoszeń wymagających korekty
+
+
+8. Ograniczenia w fazie A i kierunek rozwoju
+
+- Faza A jest świadomie zrealizowana jako aplikacja Excel/VBA - niski koszt wdrożenia, zero zależności od zewnętrznego IT, działa na każdym stanowisku z Officem
+- Wysyłka odbywa się mailowo przez Outlook - docelowo zgłoszenia powinny trafiać wprost do systemu kolejki wniosków w narzędziu BPM
+- Dane są synchronizowane do plików xlsx - docelowo zastąpimy je bazą danych lub SharePoint List z dostępem przez API
+- Autoryzacja opiera się na konwencji (user wpisujący swój email w polu kierownika jest kierownikiem) - docelowo integracja z Active Directory
+
+Każde z tych ograniczeń jest świadomą decyzją i akceptowalnym kompromisem w fazie A - pozwoliły uruchomić narzędzie w tygodnie zamiast miesięcy. W fazie B podmieniamy warstwy po kolei, bez przerywania pracy Zespołów Handlowych.
+
+
+9. Podsumowanie
+
+- Zamiast walczyć z jakością maili - wymuszamy strukturę danych już na wejściu
+- Zamiast szukać wniosków w skrzynce mailowej - mamy historię dostępną w aplikacji z audytem
+- Zamiast przekazywania informacji ad-hoc - mamy zdefiniowany, powtarzalny proces z jasnym podziałem ról
+- Zamiast rozproszonego Excela każdego Handlowca - mamy jedno źródło prawdy
+
+Faza A dostarcza wartość biznesową już dziś, jednocześnie przygotowując grunt pod głębszą automatyzację w fazie B. Decyzja o kontynuacji oznacza inwestycję w fundament, który będzie służył przez lata - nie w jednorazowe narzędzie.
