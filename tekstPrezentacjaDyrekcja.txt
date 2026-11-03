@@ -1,0 +1,39 @@
+Punkt prezentacji | Komunikat
+
+1. Kontekst biznesowy | Automatyzujemy proces, który bezpośrednio wpływa na realizacje celów sprzedażowych 
+
+2. Punkt wyjścia | Rozproszone zgłoszenia, niska jakość danych i ręczna obsługa utrudniają kontrolę nad procesem  
+
+3. Docelowy proces (BPMN 06_Proces_biznesowy) | Każdy uczestnik procesu ma swoją rolę, a przepływ informacji jest uporządkowany i kontrolowany
+
+4. Aplikacja BNC Sender - jak korzysta z niej Handlowiec/Kierownik | Handlowiec/Kierownik otrzymuje ustandaryzowany kanał zgłoszeń nowych klientów
+
+5. Obsługa zgłoszenia | Zgłoszenie przestaje być pojedynczą wiadomością, staje się kontrolowanym rekordem w procesie biznesowym
+
+6. Architektura - część większego systemu | Budujemy nie tylko interfejs, ale uporządkowane źródło danych dla kolejnych etapów automatyzacji
+
+7. Wartość biznesowa | Automatyzacja pozwala przesunąć wysiłek zespołów handlowych z obsługi administracyjnej na działania sprzedażowe, jednocześnie skracając czas rozpatrywania wniosków
+
+8. Ograniczenia w fazie A i kierunek rozwoju | Obecna aplikacja jest pierwszym elementem docelowego, zintegrowanego procesu
+
+9. Podsumowanie | Przenosimy proces z modelu ręcznej obsługi do modelu kontrolowanego przepływu danych
+
+
+1. Kontekst biznesowy
+
+- Program BNC wspiera pozyskiwanie nowych klientów przez Zespoły Handlowe
+- Zgłoszenia wymagają przyjęcia, weryfikacji i rozpatrzenia
+- Proces obejmuje zarówno działania Handlowców i Kierowników, jak i obsługę administracyjną
+
+2. Punkt wyjścia
+
+-Każdego miesiąca PH zgłaszają średnio od 90 do 120 klientów do programu BNC 
+-Obecnie każde zgłoszenie wymaga wypełnienie osobnego arkusza i wysłanie na adres [...] 
+-Wymusza to na Zespołach Handlowych konieczność ręcznego wprowadzania danych co skutkuje problemami z jakością danych. Pomimo instrukcji i próśb często dostaję wnioski bez kluczowych pól co wydłuża proces ich weryfikacji - tym więcej wniosków tym więcej błędów i tym dłuższy jest czas weryfikacji. 
+
+Zamiast walczyć z przyzwyczajeniami Zespołów Handlowych lepiej jest zapewnić im narzędzie, które częściowo przejmie odpowiedzialność za wymaganą higienę danych.
+
+7. Wartość biznesowa
+Porównanie KPI punktu wyjściowego i prognoza po wdrożeniu:
+- Średni czas obsługi jednego klienta 
+- Odsetek zgłoszeń wymagających korekty
